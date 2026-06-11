@@ -1,0 +1,123 @@
+{
+  "name": "zs-codegraph",
+  "displayName": "ZS CodeGraph",
+  "description": "中萨数字科技交易所 - CodeGraph 代码智能分析插件",
+  "version": "0.1.0",
+  "publisher": "zs-exchange",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "codegraph",
+    "code-intelligence",
+    "symbol-search",
+    "impact-analysis",
+    "zs-exchange"
+  ],
+  "activationEvents": [
+    "onLanguage:typescript",
+    "onLanguage:typescriptreact",
+    "workspaceContains:.codegraph"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "zsCodegraph.search",
+        "title": "CodeGraph: 搜索符号",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.showDefinition",
+        "title": "CodeGraph: 显示完整定义",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.showCallers",
+        "title": "CodeGraph: 显示调用者",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.showCallees",
+        "title": "CodeGraph: 显示被调者",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.showImpact",
+        "title": "CodeGraph: 影响分析",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.explore",
+        "title": "CodeGraph: Q&A 探索",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.status",
+        "title": "CodeGraph: 查看状态",
+        "category": "CodeGraph"
+      },
+      {
+        "command": "zsCodegraph.sync",
+        "title": "CodeGraph: 同步索引",
+        "category": "CodeGraph"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "zsCodegraph.showDefinition",
+          "when": "editorHasSelection",
+          "group": "zsCodegraph"
+        },
+        {
+          "command": "zsCodegraph.showCallers",
+          "when": "editorHasSelection",
+          "group": "zsCodegraph"
+        },
+        {
+          "command": "zsCodegraph.showImpact",
+          "when": "editorHasSelection",
+          "group": "zsCodegraph"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "zsCodegraph.search",
+        "key": "ctrl+shift+g",
+        "mac": "cmd+shift+g"
+      },
+      {
+        "command": "zsCodegraph.showDefinition",
+        "key": "ctrl+shift+d",
+        "mac": "cmd+shift+d",
+        "when": "editorHasSelection"
+      },
+      {
+        "command": "zsCodegraph.showImpact",
+        "key": "ctrl+shift+i",
+        "mac": "cmd+shift+i",
+        "when": "editorHasSelection"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
