@@ -1,0 +1,1970 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// core Schema - 用户/认证/权限/配置
+// ============================================================
+
+model CoreUser {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  username            String     @unique @db.VarChar(50)
+  email               String     @unique @db.VarChar(255)
+  passwordHash        String     @db.VarChar(255)
+  phone               String?    @db.VarChar(20)
+  countryCode         String     @default("CN") @db.Char(2)
+  status              String     @default("active") @db.VarChar(20)
+  kycLevel            Int        @default(0)
+  referralCode        String?    @unique @db.VarChar(20)
+  referredBy          String?    @db.Uuid
+  userType            String     @default("retail") @db.VarChar(20)
+  vipLevel            Int        @default(0)
+  feeDiscount         Decimal    @default(0) @db.Decimal(5, 4)
+  tradingEnabled      Boolean    @default(false)
+  withdrawalEnabled   Boolean    @default(false)
+  depositEnabled      Boolean    @default(true)
+  lastLoginAt         DateTime?  @db.Timestamptz
+  totpEnabled         Boolean    @default(false)
+  totpSecret          String?    @db.VarChar(255)
+  apiKeyCount         Int        @default(0)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  deletedAt           DateTime?  @db.Timestamptz
+
+  sessions            CoreSession[]
+  apiKeys             CoreApiKey[]
+  profiles            CoreUserProfile[]
+  addresses           CoreUserAddress[]
+  notifications       CoreNotification[]
+  userRoles           CoreUserRole[]
+}
+
+model CoreSession {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String     @db.Uuid
+  token        String     @unique @db.VarChar(512)
+  refreshToken String     @unique @db.VarChar(512)
+  expiresAt    DateTime   @db.Timestamptz
+  ipAddress    String?    @db.VarChar(50)
+  userAgent    String?    @db.VarChar(512)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoreApiKey {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String     @db.Uuid
+  name         String     @db.VarChar(100)
+  apiKey       String     @unique @db.VarChar(255)
+  secretKey    String     @db.VarChar(255)
+  permissions  Json       @db.JsonB
+  status       String     @default("active") @db.VarChar(20)
+  lastUsedAt   DateTime?  @db.Timestamptz
+  expiresAt    DateTime?  @db.Timestamptz
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoreUserProfile {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String     @db.Uuid
+  firstName    String?    @db.VarChar(50)
+  lastName     String?    @db.VarChar(50)
+  avatar       String?    @db.VarChar(512)
+  bio          String?    @db.Text
+  timezone     String     @default("Asia/Shanghai") @db.VarChar(50)
+  language     String     @default("zh") @db.VarChar(10)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoreUserAddress {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String     @db.Uuid
+  address      String     @db.VarChar(512)
+  tag          String     @db.VarChar(50)
+  city         String?    @db.VarChar(100)
+  province     String?    @db.VarChar(100)
+  country      String     @db.VarChar(50)
+  isDefault    Boolean    @default(false)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoreNotification {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String     @db.Uuid
+  type         String     @db.VarChar(50)
+  title        String     @db.VarChar(200)
+  content      String     @db.Text
+  read         Boolean    @default(false)
+  actionUrl    String?    @db.VarChar(512)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  readAt       DateTime?  @db.Timestamptz
+
+  user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoreRole {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name         String     @unique @db.VarChar(50)
+  description  String?    @db.VarChar(500)
+  permissions  Json       @db.JsonB
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  userRoles    CoreUserRole[]
+}
+
+model CoreUserRole {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String     @db.Uuid
+  roleId       String     @db.Uuid
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+
+  user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         CoreRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+}
+
+model CoreSystemConfig {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  key          String     @unique @db.VarChar(100)
+  value        Json       @db.JsonB
+  category     String     @db.VarChar(50)
+  description  String?    @db.VarChar(500)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+  updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+model CoreAppVersion {
+  id           String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  platform     String     @db.VarChar(20)
+  version      String     @db.VarChar(30)
+  buildNumber  String     @db.VarChar(20)
+  forceUpdate  Boolean    @default(false)
+  changelog    String?    @db.Text
+  downloadUrl  String     @db.VarChar(512)
+  createdAt    DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// trade Schema - 交易/订单/成交/账本
+// ============================================================
+
+model TradePair {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  baseCurrency        String     @db.VarChar(20)
+  quoteCurrency       String     @db.VarChar(20)
+  symbol              String     @unique @db.VarChar(50)
+  status              String     @default("active") @db.VarChar(20)
+  basePrecision       Int        @default(8)
+  quotePrecision      Int        @default(8)
+  minOrderAmount      Decimal    @default(0) @db.Decimal(36, 18)
+  minOrderValue       Decimal    @default(0) @db.Decimal(36, 18)
+  makerFeeRate        Decimal    @default(0.001) @db.Decimal(5, 4)
+  takerFeeRate        Decimal    @default(0.001) @db.Decimal(5, 4)
+  priceTickSize       Decimal    @default(0.00000001) @db.Decimal(36, 18)
+  amountTickSize      Decimal    @default(0.00000001) @db.Decimal(36, 18)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  orders              TradeOrder[]
+  trades              TradeTrade[]
+  orderBooks          TradeOrderBook[]
+}
+
+model TradeOrder {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  pairId              String     @db.Uuid
+  symbol              String     @db.VarChar(50)
+  side                String     @db.VarChar(10)
+  type                String     @db.VarChar(20)
+  status              String     @default("pending") @db.VarChar(20)
+  price               Decimal?   @db.Decimal(36, 18)
+  amount              Decimal    @db.Decimal(36, 18)
+  filledAmount        Decimal    @default(0) @db.Decimal(36, 18)
+  remainingAmount     Decimal    @default(0) @db.Decimal(36, 18)
+  executedValue       Decimal    @default(0) @db.Decimal(36, 18)
+  fee                 Decimal    @default(0) @db.Decimal(36, 18)
+  feeCurrency         String?    @db.VarChar(20)
+  clientOrderId       String?    @db.VarChar(100)
+  stopPrice           Decimal?   @db.Decimal(36, 18)
+  timeInForce         String     @default("GTC") @db.VarChar(10)
+  source              String     @default("web") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  closedAt            DateTime?  @db.Timestamptz
+
+  trades              TradeTrade[]
+  pair                TradePair  @relation(fields: [pairId], references: [id])
+}
+
+model TradeTrade {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  orderId             String     @db.Uuid
+  counterOrderId      String     @db.Uuid
+  pairId              String     @db.Uuid
+  userId              String     @db.Uuid
+  counterUserId       String     @db.Uuid
+  symbol              String     @db.VarChar(50)
+  side                String     @db.VarChar(10)
+  price               Decimal    @db.Decimal(36, 18)
+  amount              Decimal    @db.Decimal(36, 18)
+  value               Decimal    @db.Decimal(36, 18)
+  fee                 Decimal    @default(0) @db.Decimal(36, 18)
+  feeCurrency         String     @db.VarChar(20)
+  liquidityType       String     @db.VarChar(10)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+
+  order               TradeOrder @relation(fields: [orderId], references: [id])
+  pair                TradePair  @relation(fields: [pairId], references: [id])
+}
+
+model TradeBalance {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  currency            String     @db.VarChar(20)
+  balance             Decimal    @default(0) @db.Decimal(36, 18)
+  available           Decimal    @default(0) @db.Decimal(36, 18)
+  frozen              Decimal    @default(0) @db.Decimal(36, 18)
+  locked              Decimal    @default(0) @db.Decimal(36, 18)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+model TradeOrderBook {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  pairId              String     @db.Uuid
+  symbol              String     @db.VarChar(50)
+  side                String     @db.VarChar(10)
+  price               Decimal    @db.Decimal(36, 18)
+  amount              Decimal    @db.Decimal(36, 18)
+  count               Int        @default(0)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  pair                TradePair  @relation(fields: [pairId], references: [id])
+}
+
+model TradePosition {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  symbol              String     @db.VarChar(50)
+  positionSide        String     @db.VarChar(10)
+  size                Decimal    @default(0) @db.Decimal(36, 18)
+  entryPrice          Decimal    @default(0) @db.Decimal(36, 18)
+  markPrice           Decimal    @default(0) @db.Decimal(36, 18)
+  unrealizedPnl       Decimal    @default(0) @db.Decimal(36, 18)
+  margin              Decimal    @default(0) @db.Decimal(36, 18)
+  leverage            Int        @default(1)
+  liquidationPrice    Decimal    @default(0) @db.Decimal(36, 18)
+  maintenanceMargin   Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("open") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  closedAt            DateTime?  @db.Timestamptz
+}
+
+model TradeTransaction {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  type                String     @db.VarChar(20)
+  currency            String     @db.VarChar(20)
+  amount              Decimal    @db.Decimal(36, 18)
+  balance             Decimal    @db.Decimal(36, 18)
+  description         String?    @db.VarChar(500)
+  referenceId         String?    @db.VarChar(100)
+  referenceType       String?    @db.VarChar(50)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model TradeFeeRecord {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  tradeId             String?    @db.Uuid
+  orderId             String?    @db.Uuid
+  currency            String     @db.VarChar(20)
+  amount              Decimal    @default(0) @db.Decimal(36, 18)
+  rate                Decimal    @default(0) @db.Decimal(5, 4)
+  type                String     @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// wallet Schema - 钱包/资产/充提/地址
+// ============================================================
+
+model WalletCurrency {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol              String     @unique @db.VarChar(20)
+  name                String     @db.VarChar(100)
+  decimals            Int        @default(18)
+  blockchain          String     @db.VarChar(50)
+  contractAddress     String?    @db.VarChar(100)
+  isFiat              Boolean    @default(false)
+  isActive            Boolean    @default(true)
+  depositEnabled      Boolean    @default(true)
+  withdrawalEnabled   Boolean    @default(true)
+  minDepositAmount    Decimal    @default(0) @db.Decimal(36, 18)
+  minWithdrawalAmount Decimal    @default(0) @db.Decimal(36, 18)
+  withdrawalFee       Decimal    @default(0) @db.Decimal(36, 18)
+  withdrawalFeeRate   Decimal    @default(0) @db.Decimal(5, 4)
+  confirmationCount   Int        @default(1)
+  explorerUrl         String?    @db.VarChar(512)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  deposits            WalletDeposit[]
+  withdrawals         WalletWithdrawal[]
+  addresses           WalletAddress[]
+  hotCold             WalletHotCold[]
+}
+
+model WalletDeposit {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  currencyId          String     @db.Uuid
+  addressId           String     @db.Uuid
+  txHash              String     @unique @db.VarChar(128)
+  amount              Decimal    @db.Decimal(36, 18)
+  fee                 Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("pending") @db.VarChar(20)
+  confirmations       Int        @default(0)
+  requiredConfirmations Int      @default(1)
+  blockNumber         String?    @db.VarChar(50)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  confirmedAt         DateTime?  @db.Timestamptz
+
+  currency            WalletCurrency   @relation(fields: [currencyId], references: [id])
+  address             WalletAddress    @relation(fields: [addressId], references: [id])
+}
+
+model WalletWithdrawal {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  currencyId          String     @db.Uuid
+  amount              Decimal    @db.Decimal(36, 18)
+  fee                 Decimal    @default(0) @db.Decimal(36, 18)
+  totalAmount         Decimal    @db.Decimal(36, 18)
+  destinationAddress  String     @db.VarChar(512)
+  txHash              String?    @db.VarChar(128)
+  status              String     @default("pending") @db.VarChar(20)
+  memo                String?    @db.VarChar(200)
+  blockNumber         String?    @db.VarChar(50)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  confirmedAt         DateTime?  @db.Timestamptz
+
+  currency            WalletCurrency   @relation(fields: [currencyId], references: [id])
+}
+
+model WalletAddress {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  currencyId          String     @db.Uuid
+  address             String     @unique @db.VarChar(512)
+  tag                 String?    @db.VarChar(100)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+
+  currency            WalletCurrency   @relation(fields: [currencyId], references: [id])
+  deposits            WalletDeposit[]
+}
+
+model WalletHotCold {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  type                String     @db.VarChar(20)
+  currencyId          String     @db.Uuid
+  address             String     @db.VarChar(512)
+  balance             Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  currency            WalletCurrency   @relation(fields: [currencyId], references: [id])
+}
+
+model WalletInternalTransfer {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  fromUserId          String     @db.Uuid
+  toUserId            String     @db.Uuid
+  currency            String     @db.VarChar(20)
+  amount              Decimal    @db.Decimal(36, 18)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+}
+
+// ============================================================
+// kyc Schema - KYC/实名/合规检查
+// ============================================================
+
+model KycApplication {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  level               Int        @default(1)
+  status              String     @default("pending") @db.VarChar(20)
+  firstName           String     @db.VarChar(100)
+  lastName            String     @db.VarChar(100)
+  nationality         String     @db.VarChar(50)
+  idType              String     @db.VarChar(50)
+  idNumber            String     @db.VarChar(100)
+  idExpiryDate        DateTime?  @db.Timestamptz
+  idFrontImage        String     @db.VarChar(512)
+  idBackImage         String?    @db.VarChar(512)
+  selfieImage         String?    @db.VarChar(512)
+  address             String?    @db.VarChar(500)
+  proofOfAddressImage String?    @db.VarChar(512)
+  reviewedBy          String?    @db.Uuid
+  reviewNotes         String?    @db.Text
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  reviewedAt          DateTime?  @db.Timestamptz
+}
+
+model KycRiskAssessment {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  level               String     @db.VarChar(20)
+  score               Int        @default(0)
+  factors             Json       @db.JsonB
+  recommendation      String?    @db.Text
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+model KycComplianceFreeze {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  type                String     @db.VarChar(50)
+  reason              String     @db.VarChar(500)
+  status              String     @default("active") @db.VarChar(20)
+  frozenAt            DateTime   @default(now()) @db.Timestamptz
+  unfrozenAt          DateTime?  @db.Timestamptz
+  frozenBy            String     @db.Uuid
+}
+
+// ============================================================
+// market Schema - 行情/K线/交易对/深度
+// ============================================================
+
+model MarketTicker {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol              String     @db.VarChar(50)
+  pairId              String?    @db.Uuid
+  price               Decimal    @db.Decimal(36, 18)
+  open                Decimal    @db.Decimal(36, 18)
+  high                Decimal    @db.Decimal(36, 18)
+  low                 Decimal    @db.Decimal(36, 18)
+  volume              Decimal    @db.Decimal(36, 18)
+  quoteVolume         Decimal    @db.Decimal(36, 18)
+  change              Decimal    @db.Decimal(10, 4)
+  changePercent       Decimal    @db.Decimal(10, 4)
+  bidPrice            Decimal    @db.Decimal(36, 18)
+  bidAmount           Decimal    @db.Decimal(36, 18)
+  askPrice            Decimal    @db.Decimal(36, 18)
+  askAmount           Decimal    @db.Decimal(36, 18)
+  timestamp           DateTime   @default(now()) @db.Timestamptz
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model MarketKline {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol              String     @db.VarChar(50)
+  interval            String     @db.VarChar(20)
+  openTime            DateTime   @db.Timestamptz
+  closeTime           DateTime   @db.Timestamptz
+  open                Decimal    @db.Decimal(36, 18)
+  high                Decimal    @db.Decimal(36, 18)
+  low                 Decimal    @db.Decimal(36, 18)
+  close               Decimal    @db.Decimal(36, 18)
+  volume              Decimal    @db.Decimal(36, 18)
+  quoteVolume         Decimal    @db.Decimal(36, 18)
+  trades              Int        @default(0)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model MarketDepth {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol              String     @db.VarChar(50)
+  bids                Json       @db.JsonB
+  asks                Json       @db.JsonB
+  timestamp           DateTime   @default(now()) @db.Timestamptz
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model MarketSource {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @unique @db.VarChar(50)
+  baseUrl             String     @db.VarChar(512)
+  apiKey              String?    @db.VarChar(255)
+  secretKey           String?    @db.VarChar(255)
+  enabled             Boolean    @default(true)
+  priority            Int        @default(100)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+model MarketPriceDiscovery {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol              String     @db.VarChar(50)
+  price               Decimal    @db.Decimal(36, 18)
+  sources             Json       @db.JsonB
+  confidence          Decimal    @default(1) @db.Decimal(3, 2)
+  timestamp           DateTime   @default(now()) @db.Timestamptz
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// defi Schema - DeFi/质押/流动性/收益
+// ============================================================
+
+model DefiStakingPool {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @db.VarChar(100)
+  currency            String     @db.VarChar(20)
+  contractAddress     String     @db.VarChar(100)
+  apy                 Decimal    @default(0) @db.Decimal(10, 4)
+  totalStaked         Decimal    @default(0) @db.Decimal(36, 18)
+  minStakeAmount      Decimal    @default(0) @db.Decimal(36, 18)
+  maxStakeAmount      Decimal    @default(0) @db.Decimal(36, 18)
+  lockupDays          Int        @default(0)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  stakes              DefiStaking[]
+}
+
+model DefiStaking {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  poolId              String     @db.Uuid
+  amount              Decimal    @db.Decimal(36, 18)
+  reward              Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("staking") @db.VarChar(20)
+  stakedAt            DateTime   @default(now()) @db.Timestamptz
+  unlockedAt          DateTime?  @db.Timestamptz
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+
+  pool                DefiStakingPool @relation(fields: [poolId], references: [id])
+}
+
+model DefiLiquidityPool {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @db.VarChar(100)
+  token0              String     @db.VarChar(20)
+  token1              String     @db.VarChar(20)
+  contractAddress     String     @db.VarChar(100)
+  tvl                 Decimal    @default(0) @db.Decimal(36, 18)
+  apy                 Decimal    @default(0) @db.Decimal(10, 4)
+  feeRate             Decimal    @default(0.003) @db.Decimal(5, 4)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  positions           DefiLiquidityPosition[]
+}
+
+model DefiLiquidityPosition {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  poolId              String     @db.Uuid
+  amount0             Decimal    @db.Decimal(36, 18)
+  amount1             Decimal    @db.Decimal(36, 18)
+  reward              Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  pool                DefiLiquidityPool @relation(fields: [poolId], references: [id])
+}
+
+model DefiSwap {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  fromToken           String     @db.VarChar(20)
+  toToken             String     @db.VarChar(20)
+  fromAmount          Decimal    @db.Decimal(36, 18)
+  toAmount            Decimal    @db.Decimal(36, 18)
+  fee                 Decimal    @default(0) @db.Decimal(36, 18)
+  txHash              String?    @db.VarChar(128)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+}
+
+model DefiReward {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  type                String     @db.VarChar(20)
+  currency            String     @db.VarChar(20)
+  amount              Decimal    @db.Decimal(36, 18)
+  referenceId         String?    @db.VarChar(100)
+  referenceType       String?    @db.VarChar(50)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// blockchain Schema - 链上数据/存证/监听
+// ============================================================
+
+model BlockchainTransaction {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  txHash              String     @unique @db.VarChar(128)
+  chainId             String     @db.VarChar(20)
+  fromAddress         String     @db.VarChar(512)
+  toAddress           String?    @db.VarChar(512)
+  value               Decimal    @db.Decimal(36, 18)
+  gasUsed             Decimal    @db.Decimal(36, 18)
+  gasPrice            Decimal    @db.Decimal(36, 18)
+  blockNumber         String     @db.VarChar(50)
+  status              String     @db.VarChar(20)
+  data                String?    @db.Text
+  decodedData         Json?      @db.JsonB
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  confirmedAt         DateTime?  @db.Timestamptz
+}
+
+model BlockchainContract {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  chainId             String     @db.VarChar(20)
+  address             String     @unique @db.VarChar(100)
+  name                String     @db.VarChar(100)
+  abi                 Json       @db.JsonB
+  bytecode            String?    @db.Text
+  verified            Boolean    @default(false)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+model BlockchainNotarization {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  hash                String     @unique @db.VarChar(128)
+  dataType            String     @db.VarChar(50)
+  dataHash            String     @db.VarChar(128)
+  chainId             String     @db.VarChar(20)
+  txHash              String?    @db.VarChar(128)
+  blockNumber         String?    @db.VarChar(50)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  confirmedAt         DateTime?  @db.Timestamptz
+}
+
+model BlockchainNode {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @db.VarChar(100)
+  chainId             String     @db.VarChar(20)
+  rpcUrl              String     @db.VarChar(512)
+  wsUrl               String?    @db.VarChar(512)
+  apiKey              String?    @db.VarChar(255)
+  status              String     @default("active") @db.VarChar(20)
+  priority            Int        @default(1)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+// ============================================================
+// ai Schema - AI模型/智能体/分析结果
+// ============================================================
+
+model AiModel {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @unique @db.VarChar(100)
+  provider            String     @db.VarChar(50)
+  modelId             String     @db.VarChar(100)
+  apiKey              String?    @db.VarChar(255)
+  baseUrl             String?    @db.VarChar(512)
+  enabled             Boolean    @default(true)
+  priority            Int        @default(100)
+  costPerToken        Decimal    @default(0) @db.Decimal(15, 10)
+  maxTokens           Int        @default(4096)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  completions         AiCompletion[]
+  agents              AiAgent[]
+}
+
+model AiCompletion {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  modelId             String     @db.Uuid
+  userId              String?    @db.Uuid
+  prompt              String     @db.Text
+  response            String?    @db.Text
+  promptTokens        Int        @default(0)
+  completionTokens    Int        @default(0)
+  totalTokens         Int        @default(0)
+  cost                Decimal    @default(0) @db.Decimal(15, 10)
+  status              String     @default("pending") @db.VarChar(20)
+  error               String?    @db.Text
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+
+  model               AiModel    @relation(fields: [modelId], references: [id])
+}
+
+model AiAgent {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @unique @db.VarChar(100)
+  description         String?    @db.Text
+  systemPrompt        String     @db.Text
+  modelId             String     @db.Uuid
+  tools               Json       @db.JsonB
+  enabled             Boolean    @default(true)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  model               AiModel    @relation(fields: [modelId], references: [id])
+  agentTasks          AiAgentTask[]
+}
+
+model AiAgentTask {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  agentId             String     @db.Uuid
+  userId              String?    @db.Uuid
+  input               Json       @db.JsonB
+  output              Json?      @db.JsonB
+  status              String     @default("pending") @db.VarChar(20)
+  error               String?    @db.Text
+  steps               Json?      @db.JsonB
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+
+  agent               AiAgent    @relation(fields: [agentId], references: [id])
+}
+
+model AiAnalysis {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  type                String     @db.VarChar(50)
+  userId              String?    @db.Uuid
+  inputData           Json       @db.JsonB
+  result              Json       @db.JsonB
+  confidence          Decimal    @default(1) @db.Decimal(3, 2)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// audit Schema - 审计日志/操作记录/变更追踪
+// ============================================================
+
+model AuditLog {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  operatorId          String     @db.Uuid
+  operatorName        String     @db.VarChar(100)
+  operatorRole        String     @db.VarChar(50)
+  module              String     @db.VarChar(50)
+  action              String     @db.VarChar(50)
+  details             String?    @db.Text
+  status              String     @db.VarChar(20)
+  targetId            String?    @db.VarChar(100)
+  targetType          String?    @db.VarChar(50)
+  ipAddress           String?    @db.VarChar(50)
+  userAgent           String?    @db.VarChar(512)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model AuditChangeLog {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tableName           String     @db.VarChar(100)
+  recordId            String     @db.VarChar(100)
+  operation           String     @db.VarChar(20)
+  beforeValue         Json?      @db.JsonB
+  afterValue          Json?      @db.JsonB
+  changedBy           String     @db.Uuid
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model AuditLoginLog {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String?    @db.Uuid
+  username            String?    @db.VarChar(50)
+  ipAddress           String     @db.VarChar(50)
+  userAgent           String?    @db.VarChar(512)
+  status              String     @db.VarChar(20)
+  errorMessage        String?    @db.VarChar(500)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+model AuditApiAccessLog {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String?    @db.Uuid
+  apiKeyId            String?    @db.Uuid
+  endpoint            String     @db.VarChar(512)
+  method              String     @db.VarChar(10)
+  statusCode          Int        @default(0)
+  responseTime        Int        @default(0)
+  requestSize         Int        @default(0)
+  responseSize        Int        @default(0)
+  ipAddress           String     @db.VarChar(50)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// nft Schema - NFT/系列/铸造/市场
+// ============================================================
+
+model NftCategory {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                String     @db.VarChar(100)
+  description         String?    @db.Text
+  coverImage          String?    @db.VarChar(512)
+  contractAddress     String     @db.VarChar(100)
+  chainId             String     @db.VarChar(20)
+  totalSupply         Int        @default(0)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  items               NftItem[]
+  mints               NftMint[]
+}
+
+model NftItem {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  categoryId          String     @db.Uuid
+  tokenId             String     @db.VarChar(100)
+  ownerId             String?    @db.Uuid
+  metadata            Json       @db.JsonB
+  imageUrl            String?    @db.VarChar(512)
+  mintedAt            DateTime?  @db.Timestamptz
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  category            NftCategory @relation(fields: [categoryId], references: [id])
+  orders              NftOrder[]
+}
+
+model NftOrder {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  itemId              String     @db.Uuid
+  sellerId            String     @db.Uuid
+  buyerId             String?    @db.Uuid
+  price               Decimal    @db.Decimal(36, 18)
+  currency            String     @db.VarChar(20)
+  type                String     @db.VarChar(20)
+  status              String     @default("active") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+
+  item                NftItem    @relation(fields: [itemId], references: [id])
+}
+
+model NftMint {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  categoryId          String     @db.Uuid
+  tokenId             String?    @db.VarChar(100)
+  txHash              String?    @db.VarChar(128)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+
+  category            NftCategory @relation(fields: [categoryId], references: [id])
+}
+
+// ============================================================
+// settlement Schema - 结算/清算/资金流水
+// ============================================================
+
+model SettlementBatch {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  type                String     @db.VarChar(20)
+  status              String     @default("pending") @db.VarChar(20)
+  startTime           DateTime   @db.Timestamptz
+  endTime             DateTime   @db.Timestamptz
+  totalAmount         Decimal    @default(0) @db.Decimal(36, 18)
+  currency            String     @db.VarChar(20)
+  recordsCount        Int        @default(0)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+
+  records             SettlementRecord[]
+}
+
+model SettlementRecord {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  batchId             String     @db.Uuid
+  userId              String     @db.Uuid
+  currency            String     @db.VarChar(20)
+  amount              Decimal    @db.Decimal(36, 18)
+  balance             Decimal    @db.Decimal(36, 18)
+  type                String     @db.VarChar(20)
+  referenceId         String?    @db.VarChar(100)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+
+  batch               SettlementBatch @relation(fields: [batchId], references: [id])
+}
+
+model SettlementClearing {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tradeId             String     @db.Uuid
+  buyerId             String     @db.Uuid
+  sellerId            String     @db.Uuid
+  currency            String     @db.VarChar(20)
+  amount              Decimal    @db.Decimal(36, 18)
+  fee                 Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  completedAt         DateTime?  @db.Timestamptz
+}
+
+// ============================================================
+// perp Schema - 永续合约/仓位/强平/资金费/保险基金
+// ============================================================
+
+model PerpContract {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol                  String     @unique @db.VarChar(64)
+  baseAsset               String     @db.VarChar(32)
+  quoteAsset              String     @db.VarChar(32)
+  marginAsset             String     @db.VarChar(32)
+  contractType            String     @default("perpetual") @db.VarChar(32)
+  maxLeverage             Int        @default(20)
+  minOrderQty             Decimal    @default(0) @db.Decimal(36, 18)
+  maxOrderQty             Decimal    @default(0) @db.Decimal(36, 18)
+  maxPositionQty          Decimal    @default(0) @db.Decimal(36, 18)
+  initialMarginRate       Decimal    @db.Decimal(18, 8)
+  maintenanceMarginRate   Decimal    @db.Decimal(18, 8)
+  makerFeeRate            Decimal    @db.Decimal(18, 8)
+  takerFeeRate            Decimal    @db.Decimal(18, 8)
+  fundingIntervalMinutes  Int        @default(480)
+  fundingCap              Decimal    @default(0) @db.Decimal(18, 8)
+  fundingFloor            Decimal    @default(0) @db.Decimal(18, 8)
+  pricePrecision          Int        @default(2)
+  qtyPrecision            Int        @default(4)
+  status                  String     @default("active") @db.VarChar(32)
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  positions               PerpPosition[]
+  orders                  PerpOrder[]
+  trades                  PerpTrade[]
+  fundingRates            PerpFundingRate[]
+  fundingPayments         PerpFundingPayment[]
+  liquidations            PerpLiquidation[]
+  indexPrices             PerpIndexPrice[]
+  markPrices              PerpMarkPrice[]
+  insuranceFund           PerpInsuranceFund?
+}
+
+model PerpAccount {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId                  String     @db.Uuid
+  accountType             String     @db.VarChar(32)
+  asset                   String     @db.VarChar(32)
+  balance                 Decimal    @default(0) @db.Decimal(36, 18)
+  availableBalance        Decimal    @default(0) @db.Decimal(36, 18)
+  frozenBalance           Decimal    @default(0) @db.Decimal(36, 18)
+  marginBalance           Decimal    @default(0) @db.Decimal(36, 18)
+  unrealizedPnl           Decimal    @default(0) @db.Decimal(36, 18)
+  realizedPnl             Decimal    @default(0) @db.Decimal(36, 18)
+  fundingFeePaid          Decimal    @default(0) @db.Decimal(36, 18)
+  fundingFeeReceived      Decimal    @default(0) @db.Decimal(36, 18)
+  riskRate                Decimal    @default(0) @db.Decimal(18, 8)
+  status                  String     @default("active") @db.VarChar(32)
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  positions               PerpPosition[]
+  orders                  PerpOrder[]
+  fundingPayments         PerpFundingPayment[]
+  liquidations            PerpLiquidation[]
+  ledgerRecords            PerpLedger[]
+
+  @@unique([userId, asset, accountType], map: "uk_perp_user_asset_type")
+  @@index([userId])
+  @@index([status])
+}
+
+model PerpPosition {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId                  String     @db.Uuid
+  accountId               String     @db.Uuid
+  contractId              String     @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  side                    String     @db.VarChar(16)
+  positionQty             Decimal    @default(0) @db.Decimal(36, 18)
+  entryPrice              Decimal    @default(0) @db.Decimal(36, 18)
+  markPrice               Decimal    @default(0) @db.Decimal(36, 18)
+  liquidationPrice        Decimal    @default(0) @db.Decimal(36, 18)
+  leverage                Int        @default(1)
+  marginMode              String     @db.VarChar(16)
+  isolatedMargin          Decimal    @default(0) @db.Decimal(36, 18)
+  crossMarginUsed         Decimal    @default(0) @db.Decimal(36, 18)
+  positionMargin          Decimal    @default(0) @db.Decimal(36, 18)
+  unrealizedPnl           Decimal    @default(0) @db.Decimal(36, 18)
+  realizedPnl             Decimal    @default(0) @db.Decimal(36, 18)
+  feePaid                 Decimal    @default(0) @db.Decimal(36, 18)
+  fundingFeePaid          Decimal    @default(0) @db.Decimal(36, 18)
+  openTime                DateTime   @default(now()) @db.Timestamptz
+  updateTime              DateTime   @default(now()) @updatedAt @db.Timestamptz
+  closeTime               DateTime?  @db.Timestamptz
+  status                  String     @default("active") @db.VarChar(32)
+
+  account                 PerpAccount    @relation(fields: [accountId], references: [id])
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  orders                  PerpOrder[]
+  trades                  PerpTrade[]
+  fundingPayments         PerpFundingPayment[]
+  liquidations            PerpLiquidation[]
+
+  @@unique([userId, symbol, side, marginMode], map: "uk_perp_user_symbol_side_margin")
+  @@index([userId])
+  @@index([accountId])
+  @@index([contractId])
+  @@index([symbol])
+  @@index([status])
+}
+
+model PerpOrder {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  orderNo                 String     @unique @db.VarChar(64)
+  userId                  String     @db.Uuid
+  accountId               String     @db.Uuid
+  contractId              String     @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  side                    String     @db.VarChar(16)
+  positionSide            String     @db.VarChar(16)
+  orderType               String     @db.VarChar(32)
+  price                   Decimal    @default(0) @db.Decimal(36, 18)
+  qty                     Decimal    @db.Decimal(36, 18)
+  filledQty               Decimal    @default(0) @db.Decimal(36, 18)
+  avgFillPrice            Decimal    @default(0) @db.Decimal(36, 18)
+  leverage                Int        @default(1)
+  marginMode              String     @db.VarChar(16)
+  reduceOnly              Boolean    @default(false)
+  postOnly                Boolean    @default(false)
+  timeInForce             String     @default("GTC") @db.VarChar(16)
+  triggerPrice            Decimal    @default(0) @db.Decimal(36, 18)
+  stopPrice               Decimal    @default(0) @db.Decimal(36, 18)
+  status                  String     @default("pending") @db.VarChar(32)
+  clientOrderId           String?    @db.VarChar(64)
+  source                  String     @default("api") @db.VarChar(32)
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+  canceledAt              DateTime?  @db.Timestamptz
+
+  account                 PerpAccount    @relation(fields: [accountId], references: [id])
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  position                PerpPosition? @relation(fields: [positionId], references: [id])
+  positionId              String?     @db.Uuid
+  trades                  PerpTrade[]
+
+  @@index([orderNo])
+  @@index([userId])
+  @@index([accountId])
+  @@index([contractId])
+  @@index([symbol])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PerpTrade {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tradeNo                 String     @unique @db.VarChar(64)
+  orderId                 String     @db.Uuid
+  userId                  String     @db.Uuid
+  contractId              String     @db.Uuid
+  positionId              String?    @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  side                    String     @db.VarChar(16)
+  positionSide            String     @db.VarChar(16)
+  price                   Decimal    @db.Decimal(36, 18)
+  qty                     Decimal    @db.Decimal(36, 18)
+  notional                Decimal    @db.Decimal(36, 18)
+  makerFee                Decimal    @default(0) @db.Decimal(36, 18)
+  takerFee                Decimal    @default(0) @db.Decimal(36, 18)
+  realizedPnl             Decimal    @default(0) @db.Decimal(36, 18)
+  liquidityRole           String     @db.VarChar(16)
+  tradeTime               DateTime   @default(now()) @db.Timestamptz
+
+  order                   PerpOrder     @relation(fields: [orderId], references: [id])
+  contract                PerpContract  @relation(fields: [contractId], references: [id])
+  position                PerpPosition? @relation(fields: [positionId], references: [id])
+
+  @@index([tradeNo])
+  @@index([orderId])
+  @@index([userId])
+  @@index([symbol])
+  @@index([tradeTime])
+}
+
+model PerpIndexPrice {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  indexPrice              Decimal    @db.Decimal(36, 18)
+  sourcePrice             Decimal    @db.Decimal(36, 18)
+  sourceWeight            Decimal    @default(0) @db.Decimal(18, 8)
+  source                  String     @db.VarChar(64)
+  priceTime               DateTime   @db.Timestamptz
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  contractId              String     @db.Uuid
+
+  @@index([symbol, priceTime])
+  @@index([priceTime])
+}
+
+model PerpMarkPrice {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  indexPrice              Decimal    @db.Decimal(36, 18)
+  premiumIndex            Decimal    @default(0) @db.Decimal(36, 18)
+  markPrice               Decimal    @db.Decimal(36, 18)
+  fundingRate             Decimal    @default(0) @db.Decimal(18, 8)
+  priceTime               DateTime   @db.Timestamptz
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  contractId              String     @db.Uuid
+
+  @@index([symbol, priceTime])
+  @@index([priceTime])
+}
+
+model PerpFundingRate {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  premiumIndex            Decimal    @default(0) @db.Decimal(36, 18)
+  interestRate            Decimal    @default(0) @db.Decimal(18, 8)
+  fundingRate             Decimal    @db.Decimal(18, 8)
+  fundingCap              Decimal    @default(0) @db.Decimal(18, 8)
+  fundingFloor            Decimal    @default(0) @db.Decimal(18, 8)
+  indexPrice              Decimal    @db.Decimal(36, 18)
+  markPrice               Decimal    @db.Decimal(36, 18)
+  fundingTime             DateTime   @db.Timestamptz
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  contractId              String     @db.Uuid
+
+  @@index([symbol, fundingTime])
+  @@index([fundingTime])
+}
+
+model PerpFundingPayment {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  paymentNo               String     @unique @db.VarChar(64)
+  userId                  String     @db.Uuid
+  accountId               String     @db.Uuid
+  positionId              String     @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  fundingRate             Decimal    @db.Decimal(18, 8)
+  fundingAmount           Decimal    @db.Decimal(36, 18)
+  direction               String     @db.VarChar(16)
+  fundingTime             DateTime   @db.Timestamptz
+  status                  String     @default("pending") @db.VarChar(32)
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  account                 PerpAccount  @relation(fields: [accountId], references: [id])
+  position                PerpPosition @relation(fields: [positionId], references: [id])
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  contractId              String     @db.Uuid
+
+  @@index([paymentNo])
+  @@index([userId])
+  @@index([accountId])
+  @@index([positionId])
+  @@index([symbol, fundingTime])
+}
+
+model PerpLiquidation {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  liquidationNo           String     @unique @db.VarChar(64)
+  userId                  String     @db.Uuid
+  accountId               String     @db.Uuid
+  positionId              String     @db.Uuid
+  symbol                  String     @db.VarChar(64)
+  side                    String     @db.VarChar(16)
+  liquidationQty          Decimal    @db.Decimal(36, 18)
+  liquidationPrice        Decimal    @db.Decimal(36, 18)
+  bankruptcyPrice         Decimal    @db.Decimal(36, 18)
+  markPrice               Decimal    @db.Decimal(36, 18)
+  liquidationValue        Decimal    @db.Decimal(36, 18)
+  realizedPnl             Decimal    @db.Decimal(36, 18)
+  fee                     Decimal    @default(0) @db.Decimal(36, 18)
+  insuranceFundUsed       Decimal    @default(0) @db.Decimal(36, 18)
+  adlTriggered            Boolean    @default(false)
+  status                  String     @default("pending") @db.VarChar(32)
+  reason                  String?    @db.VarChar(255)
+  liquidationTime           DateTime   @default(now()) @db.Timestamptz
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  account                 PerpAccount  @relation(fields: [accountId], references: [id])
+  position                PerpPosition @relation(fields: [positionId], references: [id])
+  contract                PerpContract @relation(fields: [contractId], references: [id])
+  contractId              String     @db.Uuid
+
+  @@index([liquidationNo])
+  @@index([userId])
+  @@index([accountId])
+  @@index([positionId])
+  @@index([symbol])
+  @@index([status])
+}
+
+model PerpInsuranceFund {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol                  String     @unique @db.VarChar(64)
+  balance                 Decimal    @default(0) @db.Decimal(36, 18)
+  totalContributed        Decimal    @default(0) @db.Decimal(36, 18)
+  totalUsed               Decimal    @default(0) @db.Decimal(36, 18)
+  asset                   String     @db.VarChar(32)
+  contractId              String?    @unique @db.Uuid
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  contract                PerpContract? @relation(fields: [contractId], references: [id])
+}
+
+model PerpLedger {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ledgerNo                String     @unique @db.VarChar(64)
+  userId                  String     @db.Uuid
+  accountId               String     @db.Uuid
+  asset                   String     @db.VarChar(32)
+  changeAmount            Decimal    @db.Decimal(36, 18)
+  balanceAfter            Decimal    @db.Decimal(36, 18)
+  type                    String     @db.VarChar(32)
+  direction               String     @db.VarChar(16)
+  referenceId             String?    @db.VarChar(100)
+  referenceType           String?    @db.VarChar(50)
+  description             String?    @db.VarChar(500)
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+
+  account                 PerpAccount @relation(fields: [accountId], references: [id])
+
+  @@index([ledgerNo])
+  @@index([userId])
+  @@index([accountId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model PerpRiskConfig {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  symbol                  String     @unique @db.VarChar(64)
+  maxLeverage             Int        @default(125)
+  maxPositionValue        Decimal    @default(0) @db.Decimal(36, 18)
+  maxOpenOrderValue       Decimal    @default(0) @db.Decimal(36, 18)
+  maxDailyLoss            Decimal    @default(0) @db.Decimal(36, 18)
+  priceDeviationLimit     Decimal    @default(0) @db.Decimal(18, 8)
+  marginModeAllowed       Json       @db.JsonB
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+  updatedAt               DateTime   @default(now()) @updatedAt @db.Timestamptz
+}
+
+model PerpAuditLog {
+  id                      String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  operatorId              String     @db.Uuid
+  operatorName            String     @db.VarChar(100)
+  module                  String     @db.VarChar(50)
+  action                  String     @db.VarChar(50)
+  details                 String?    @db.Text
+  status                  String     @db.VarChar(20)
+  targetId                String?    @db.VarChar(100)
+  targetType              String?    @db.VarChar(50)
+  ipAddress               String?    @db.VarChar(50)
+  userAgent               String?    @db.VarChar(512)
+  createdAt               DateTime   @default(now()) @db.Timestamptz
+}
+
+// ============================================================
+// web3 Schema - Web3钱包 / 自托管 / MPC / 多链 / 风控 / 审计
+// ============================================================
+
+model Web3WalletProfile {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletNo              String     @unique @db.VarChar(64)
+  userId                String     @db.Uuid
+  walletType            String     @db.VarChar(32)
+  label                 String?    @db.VarChar(128)
+  status                String     @default("active") @db.VarChar(32)
+  riskLevel             String     @default("normal") @db.VarChar(32)
+  primaryChainType      String?    @db.VarChar(32)
+  lastUsedAt            DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  keyMaterials          Web3WalletKeyMaterial[]
+  addresses             Web3WalletAddress[]
+  transactions          Web3WalletTransaction[]
+  signatureRequests     Web3WalletSignatureRequest[]
+  dappSessions          Web3WalletDappSession[]
+  securityEvents        Web3WalletSecurityEvent[]
+  mpcWallets            Web3MpcWallet[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([walletType])
+  @@index([riskLevel])
+}
+
+model Web3WalletKeyMaterial {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletId              String     @db.Uuid
+  keyType               String     @db.VarChar(32)
+  encryptionVersion     String     @default("v1") @db.VarChar(32)
+  encryptedMnemonic     String?    @db.Text
+  encryptedPrivateKey   String?    @db.Text
+  publicKey             String?    @db.Text
+  keyRef                String?    @db.VarChar(255)
+  derivationRoot        String?    @db.VarChar(128)
+  kmsProvider           String?    @db.VarChar(64)
+  status                String     @default("active") @db.VarChar(32)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([keyType])
+  @@index([status])
+  @@index([kmsProvider])
+}
+
+model Web3WalletAddress {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  address               String     @db.VarChar(255)
+  publicKey             String?    @db.Text
+  derivationPath        String?    @db.VarChar(128)
+  addressIndex          Int        @default(0)
+  isPrimary             Boolean    @default(false)
+  isWatchOnly           Boolean    @default(false)
+  label                 String?    @db.VarChar(128)
+  status                String     @default("active") @db.VarChar(32)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  balanceSnapshots      Web3WalletBalanceSnapshot[]
+
+  @@unique([chainType, chainId, address])
+  @@index([walletId])
+  @@index([userId])
+  @@index([chainType, chainId])
+  @@index([status])
+}
+
+model Web3WalletChainConfig {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  chainName             String     @db.VarChar(128)
+  rpcUrl                String     @db.VarChar(512)
+  wsUrl                 String?    @db.VarChar(512)
+  explorerUrl           String?    @db.VarChar(512)
+  nativeTokenSymbol     String     @db.VarChar(32)
+  nativeTokenDecimals   Int        @default(18)
+  confirmationBlocks    Int        @default(12)
+  gasTokenSymbol        String?    @db.VarChar(32)
+  enabled               Boolean    @default(true)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  assets                Web3WalletAsset[]
+
+  @@unique([chainType, chainId])
+  @@index([enabled])
+}
+
+model Web3WalletAsset {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  symbol                String     @db.VarChar(64)
+  name                  String?    @db.VarChar(128)
+  contractAddress       String?    @db.VarChar(255)
+  tokenStandard         String?    @db.VarChar(32)
+  decimals              Int        @default(18)
+  logoUrl               String?    @db.VarChar(512)
+  isNative              Boolean    @default(false)
+  isStablecoin          Boolean    @default(false)
+  riskLevel             String     @default("normal") @db.VarChar(32)
+  enabled               Boolean    @default(true)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  chainConfig           Web3WalletChainConfig @relation(fields: [chainType, chainId], references: [chainType, chainId])
+  balanceSnapshots      Web3WalletBalanceSnapshot[]
+
+  @@unique([chainType, chainId, symbol, contractAddress])
+  @@index([chainType, chainId])
+  @@index([symbol])
+  @@index([enabled])
+}
+
+model Web3WalletBalanceSnapshot {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  addressId             String     @db.Uuid
+  address               String     @db.VarChar(255)
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  assetSymbol           String     @db.VarChar(64)
+  contractAddress       String?    @db.VarChar(255)
+  balance               Decimal    @default(0) @db.Decimal(65, 18)
+  balanceUsd            Decimal?   @db.Decimal(36, 8)
+  blockNumber           BigInt?    @db.BigInt
+  snapshotTime          DateTime   @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+
+  walletAddress         Web3WalletAddress @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  asset                 Web3WalletAsset? @relation(fields: [chainType, chainId, assetSymbol, contractAddress], references: [chainType, chainId, symbol, contractAddress])
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([address, chainType, chainId])
+  @@index([snapshotTime])
+}
+
+model Web3WalletTransaction {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  txNo                  String     @unique @db.VarChar(64)
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  txHash                String?    @db.VarChar(255)
+  txType                String     @db.VarChar(32)
+  fromAddress           String     @db.VarChar(255)
+  toAddress             String?    @db.VarChar(255)
+  assetSymbol           String?    @db.VarChar(64)
+  contractAddress       String?    @db.VarChar(255)
+  value                 Decimal    @default(0) @db.Decimal(65, 18)
+  valueUsd              Decimal?   @db.Decimal(36, 8)
+  gasLimit              Decimal?   @db.Decimal(65, 18)
+  gasUsed               Decimal?   @db.Decimal(65, 18)
+  gasPrice              Decimal?   @db.Decimal(65, 18)
+  maxFeePerGas          Decimal?   @db.Decimal(65, 18)
+  maxPriorityFeePerGas  Decimal?   @db.Decimal(65, 18)
+  nonce                 BigInt?    @db.BigInt
+  rawTx                 String?    @db.Text
+  txData                String?    @db.Text
+  blockNumber           BigInt?    @db.BigInt
+  confirmations         Int        @default(0)
+  status                String     @default("draft") @db.VarChar(32)
+  failureReason         String?    @db.VarChar(512)
+  riskScore             Int        @default(0)
+  riskLevel             String     @default("low") @db.VarChar(32)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+  broadcastAt           DateTime?  @db.Timestamptz
+  confirmedAt           DateTime?  @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([txHash])
+  @@index([chainType, chainId, status])
+  @@index([fromAddress])
+  @@index([createdAt])
+}
+
+model Web3WalletSignatureRequest {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  requestNo             String     @unique @db.VarChar(64)
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  address               String     @db.VarChar(255)
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  signType              String     @db.VarChar(32)
+  payloadHash           String?    @db.VarChar(255)
+  payload               String     @db.Text
+  signature             String?    @db.Text
+  status                String     @default("pending") @db.VarChar(32)
+  riskScore             Int        @default(0)
+  riskLevel             String     @default("low") @db.VarChar(32)
+  rejectReason          String?    @db.VarChar(512)
+  expiresAt             DateTime?  @db.Timestamptz
+  signedAt              DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([address])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Web3WalletDappSession {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sessionNo             String     @unique @db.VarChar(64)
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  address               String     @db.VarChar(255)
+  dappName              String?    @db.VarChar(128)
+  dappDomain            String     @db.VarChar(255)
+  dappUrl               String?    @db.VarChar(512)
+  dappIcon              String?    @db.VarChar(512)
+  walletconnectTopic    String?    @db.VarChar(255)
+  chainIds              Json?      @db.JsonB
+  permissions           Json?      @db.JsonB
+  status                String     @default("active") @db.VarChar(32)
+  riskLevel             String     @default("low") @db.VarChar(32)
+  connectedAt           DateTime   @default(now()) @db.Timestamptz
+  lastUsedAt            DateTime?  @db.Timestamptz
+  revokedAt             DateTime?  @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([dappDomain])
+  @@index([status])
+}
+
+model Web3WalletApproval {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  ownerAddress          String     @db.VarChar(255)
+  spenderAddress        String     @db.VarChar(255)
+  assetSymbol           String     @db.VarChar(64)
+  contractAddress       String?    @db.VarChar(255)
+  approvedAmount        Decimal    @default(0) @db.Decimal(65, 18)
+  usedAmount            Decimal    @default(0) @db.Decimal(65, 18)
+  remainingAmount       Decimal    @default(0) @db.Decimal(65, 18)
+  isUnlimited           Boolean    @default(false)
+  isNft                 Boolean    @default(false)
+  tokenId               String?    @db.VarChar(128)
+  txHash                String?    @db.VarChar(255)
+  status                String     @default("active") @db.VarChar(32)
+  riskLevel             String     @default("medium") @db.VarChar(32)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+  expiresAt             DateTime?  @db.Timestamptz
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([ownerAddress])
+  @@index([spenderAddress])
+  @@index([status])
+}
+
+model Web3WalletSecurityEvent {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  eventNo               String     @unique @db.VarChar(64)
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  eventType             String     @db.VarChar(64)
+  severity              String     @db.VarChar(32)
+  title                 String     @db.VarChar(255)
+  description           String?    @db.Text
+  source                String     @db.VarChar(64)
+  ruleCode              String?    @db.VarChar(64)
+  riskScore             Int        @default(0)
+  status                String     @default("new") @db.VarChar(32)
+  ipAddress             String?    @db.VarChar(50)
+  deviceId              String?    @db.VarChar(128)
+  userAgent             String?    @db.VarChar(512)
+  location              String?    @db.VarChar(255)
+  metadata              Json?      @db.JsonB
+  handledBy             String?    @db.Uuid
+  handledAt             DateTime?  @db.Timestamptz
+  handleNote            String?    @db.Text
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([eventType])
+  @@index([severity])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Web3WalletRecoveryRequest {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  requestNo             String     @unique @db.VarChar(64)
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  recoveryType          String     @db.VarChar(32)
+  status                String     @default("pending") @db.VarChar(32)
+  verifierEmail         String?    @db.VarChar(255)
+  verifierPhone         String?    @db.VarChar(32)
+  kycVerified           Boolean    @default(false)
+  socialRecoveryCount   Int        @default(0)
+  requiredConfirmations Int        @default(2)
+  newAddress            String?    @db.VarChar(255)
+  rejectReason          String?    @db.VarChar(512)
+  expiresAt             DateTime?  @db.Timestamptz
+  completedAt           DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([walletId])
+  @@index([userId])
+  @@index([status])
+}
+
+model Web3WalletAddressBook {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId                String     @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  address               String     @db.VarChar(255)
+  label                 String     @db.VarChar(128)
+  notes                 String?    @db.VarChar(512)
+  isWhitelist           Boolean    @default(false)
+  isBlacklist           Boolean    @default(false)
+  riskLevel             String     @default("normal") @db.VarChar(32)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@unique([userId, chainType, chainId, address])
+  @@index([userId])
+  @@index([chainType, chainId])
+  @@index([isWhitelist])
+  @@index([isBlacklist])
+}
+
+model Web3WalletAuditLog {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  auditNo               String     @unique @db.VarChar(64)
+  domain                String     @db.VarChar(32)
+  action                String     @db.VarChar(64)
+  userId                String?    @db.Uuid
+  walletId              String?    @db.Uuid
+  operatorId            String?    @db.Uuid
+  operatorName          String?    @db.VarChar(128)
+  targetId              String?    @db.VarChar(128)
+  targetType            String?    @db.VarChar(64)
+  beforeState           Json?      @db.JsonB
+  afterState            Json?      @db.JsonB
+  changes               Json?      @db.JsonB
+  ipAddress             String?    @db.VarChar(50)
+  userAgent             String?    @db.VarChar(512)
+  requestId             String?    @db.VarChar(128)
+  status                String     @default("success") @db.VarChar(32)
+  errorMessage          String?    @db.Text
+  metadata              Json?      @db.JsonB
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+
+  @@index([domain, action])
+  @@index([userId])
+  @@index([walletId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+model Web3RiskRule {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ruleCode              String     @unique @db.VarChar(64)
+  ruleName              String     @db.VarChar(128)
+  ruleType              String     @db.VarChar(32)
+  description           String?    @db.Text
+  riskScore             Int        @default(0)
+  riskLevel             String     @default("medium") @db.VarChar(32)
+  action                String     @default("warn") @db.VarChar(32)
+  config                Json?      @db.JsonB
+  enabled               Boolean    @default(true)
+  priority              Int        @default(0)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([ruleType])
+  @@index([enabled])
+  @@index([priority])
+}
+
+model Web3RiskBlacklist {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  category              String     @db.VarChar(32)
+  chainType             String?    @db.VarChar(32)
+  address               String     @db.VarChar(255)
+  label                 String?    @db.VarChar(128)
+  description           String?    @db.Text
+  riskLevel             String     @default("high") @db.VarChar(32)
+  source                String     @db.VarChar(64)
+  addedBy               String?    @db.Uuid
+  expiresAt             DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+
+  @@unique([chainType, address])
+  @@index([category])
+  @@index([riskLevel])
+  @@index([source])
+}
+
+model Web3RiskPhishingDomain {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  domain                String     @unique @db.VarChar(255)
+  domainType            String     @db.VarChar(32)
+  label                 String?    @db.VarChar(128)
+  description           String?    @db.Text
+  riskLevel             String     @default("critical") @db.VarChar(32)
+  source                String     @db.VarChar(64)
+  detectedAt            DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+
+  @@index([domainType])
+  @@index([riskLevel])
+  @@index([source])
+}
+
+model Web3MpcWallet {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletNo              String     @unique @db.VarChar(64)
+  walletId              String     @db.Uuid
+  orgId                 String?    @db.Uuid
+  vaultId               String     @db.VarChar(128)
+  provider              String     @db.VarChar(64)
+  custodyType           String     @db.VarChar(32)
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  address               String     @db.VarChar(255)
+  publicKey             String?    @db.Text
+  keyRef                String     @db.VarChar(255)
+  status                String     @default("active") @db.VarChar(32)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  wallet                Web3WalletProfile @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  signingRequests       Web3MpcSigningRequest[]
+
+  @@index([walletId])
+  @@index([provider])
+  @@index([custodyType])
+  @@index([chainType, chainId])
+  @@index([status])
+}
+
+model Web3MpcSigningRequest {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  requestNo             String     @unique @db.VarChar(64)
+  mpcWalletId           String     @db.Uuid
+  walletId              String     @db.Uuid
+  userId                String     @db.Uuid
+  chainType             String     @db.VarChar(32)
+  chainId               String     @db.VarChar(64)
+  signType              String     @db.VarChar(32)
+  payload               String     @db.Text
+  payloadHash           String?    @db.VarChar(255)
+  signature             String?    @db.Text
+  status                String     @default("created") @db.VarChar(32)
+  currentStage          String     @default("risk_checking") @db.VarChar(32)
+  riskScore             Int        @default(0)
+  riskLevel             String     @default("low") @db.VarChar(32)
+  policyResult          Json?      @db.JsonB
+  approvalWorkflowId    String?    @db.Uuid
+  providerRequestId     String?    @db.VarChar(128)
+  rejectReason          String?    @db.VarChar(512)
+  expiresAt             DateTime?  @db.Timestamptz
+  signedAt              DateTime?  @db.Timestamptz
+  broadcastAt           DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  mpcWallet             Web3MpcWallet @relation(fields: [mpcWalletId], references: [id], onDelete: Cascade)
+
+  @@index([mpcWalletId])
+  @@index([walletId])
+  @@index([userId])
+  @@index([status])
+  @@index([currentStage])
+  @@index([createdAt])
+}
+
+model Web3MpcPolicy {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  policyNo              String     @unique @db.VarChar(64)
+  policyName            String     @db.VarChar(128)
+  orgId                 String?    @db.Uuid
+  vaultId               String?    @db.VarChar(128)
+  policyType            String     @db.VarChar(32)
+  description           String?    @db.Text
+  rules                 Json?      @db.JsonB
+  approvers             Json?      @db.JsonB
+  threshold             Int        @default(1)
+  priority              Int        @default(0)
+  enabled               Boolean    @default(true)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([orgId])
+  @@index([vaultId])
+  @@index([policyType])
+  @@index([enabled])
+}
+
+model Web3ApprovalWorkflow {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  workflowNo            String     @unique @db.VarChar(64)
+  requestType           String     @db.VarChar(32)
+  requestId             String     @db.VarChar(128)
+  walletId              String?    @db.Uuid
+  userId                String     @db.Uuid
+  status                String     @default("pending") @db.VarChar(32)
+  currentStep           Int        @default(1)
+  totalSteps            Int        @default(1)
+  requiredApprovals     Int        @default(1)
+  receivedApprovals     Int        @default(0)
+  approvers             Json?      @db.JsonB
+  approvals             Json?      @db.JsonB
+  rejectReason          String?    @db.VarChar(512)
+  expiresAt             DateTime?  @db.Timestamptz
+  completedAt           DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([requestType, requestId])
+  @@index([walletId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Web3ComplianceReport {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  reportNo              String     @unique @db.VarChar(64)
+  reportType            String     @db.VarChar(32)
+  reportFormat          String     @default("pdf") @db.VarChar(16)
+  userId                String?    @db.Uuid
+  walletId              String?    @db.Uuid
+  orgId                 String?    @db.Uuid
+  periodStart           DateTime   @db.Timestamptz
+  periodEnd             DateTime   @db.Timestamptz
+  status                String     @default("generating") @db.VarChar(32)
+  fileUrl               String?    @db.VarChar(512)
+  fileSize              BigInt?    @db.BigInt
+  generatedBy           String?    @db.Uuid
+  generatedAt           DateTime?  @db.Timestamptz
+  expiresAt             DateTime?  @db.Timestamptz
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([reportType])
+  @@index([userId])
+  @@index([walletId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Web3EvidencePack {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  packNo                String     @unique @db.VarChar(64)
+  caseId                String     @db.VarChar(64)
+  caseType              String     @db.VarChar(32)
+  userId                String?    @db.Uuid
+  walletId              String?    @db.Uuid
+  title                 String     @db.VarChar(255)
+  description           String?    @db.Text
+  items                 Json?      @db.JsonB
+  fileUrl               String?    @db.VarChar(512)
+  fileHash              String?    @db.VarChar(255)
+  status                String     @default("draft") @db.VarChar(32)
+  createdBy             String?    @db.Uuid
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+  sealedAt              DateTime?  @db.Timestamptz
+
+  @@index([caseId])
+  @@index([caseType])
+  @@index([userId])
+  @@index([walletId])
+  @@index([status])
+}
+
+model Web3WalletNotification {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  notificationNo        String     @unique @db.VarChar(64)
+  userId                String     @db.Uuid
+  walletId              String?    @db.Uuid
+  type                  String     @db.VarChar(32)
+  category              String     @db.VarChar(32)
+  priority              String     @default("normal") @db.VarChar(32)
+  title                 String     @db.VarChar(255)
+  content               String     @db.Text
+  metadata              Json?      @db.JsonB
+  read                  Boolean    @default(false)
+  readAt                DateTime?  @db.Timestamptz
+  channel               String     @default("in_app") @db.VarChar(32)
+  webhookUrl            String?    @db.VarChar(512)
+  webhookStatus         String?    @db.VarChar(32)
+  webhookRetryCount     Int        @default(0)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([type, category])
+  @@index([read])
+  @@index([createdAt])
+}
+
+model Web3WalletWebhook {
+  id                    String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  webhookNo             String     @unique @db.VarChar(64)
+  userId                String     @db.Uuid
+  walletId              String?    @db.Uuid
+  name                  String     @db.VarChar(128)
+  url                   String     @db.VarChar(512)
+  secret                String     @db.VarChar(255)
+  events                Json?      @db.JsonB
+  enabled               Boolean    @default(true)
+  status                String     @default("active") @db.VarChar(32)
+  lastTriggeredAt       DateTime?  @db.Timestamptz
+  failureCount          Int        @default(0)
+  createdAt             DateTime   @default(now()) @db.Timestamptz
+  updatedAt             DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([enabled])
+  @@index([status])
+}
+
+// Exchange/service API key storage (Binance, Alchemy, MoonPay, etc.)
+model ExchangeApiKey {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  provider      String    @db.VarChar(100)
+  name          String    @db.VarChar(100)
+  apiKey        String    @db.VarChar(512)
+  secretKey     String?   @db.VarChar(512)
+  passphrase    String?   @db.VarChar(512)
+  description   String?   @db.VarChar(500)
+  status        String    @default("active") @db.VarChar(20)
+  expiresAt     DateTime? @db.Timestamptz
+  lastUsedAt    DateTime? @db.Timestamptz
+  createdAt     DateTime  @default(now()) @db.Timestamptz
+  updatedAt     DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  @@index([provider])
+  @@index([status])
+  @@map("exchange_api_keys")
+}

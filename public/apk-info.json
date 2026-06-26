@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "versionCode": 1,
+  "fileSize": 44964862,
+  "fileSizeFormatted": "42.88 MB",
+  "downloadUrl": "/zs-exchange.apk",
+  "packageName": "com.smy.exchange.smy_exchange_mobile",
+  "minAndroidVersion": "5.1 (API 22)",
+  "targetAndroidVersion": "14 (API 34)",
+  "architecture": [
+    "arm64-v8a",
+    "armeabi-v7a",
+    "x86_64"
+  ],
+  "releaseDate": "2026-06-26",
+  "buildTime": "2026-06-24T07:07:45.536Z",
+  "sha256": "05cae39538d0462c4d4e6da4dcc7dc1691538ee33bd2f358068715937a6c58ee",
+  "md5": "3c4563fc8a92e3fadd54b1863ee7acad",
+  "features": [
+    "实时行情推送",
+    "毫秒级订单撮合",
+    "KYC 实名认证",
+    "DeFi 流动性挖矿",
+    "NFT 市场",
+    "合约交易",
+    "多语言支持"
+  ]
+}

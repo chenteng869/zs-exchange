@@ -1,0 +1,1003 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+ *  ZS Exchange Color System v7 (Aurora Premium)
+ *  升级自 V6 Royal Premium - 引入 "Aurora Premium" 极光尊享主题
+ *  调研：Stripe 2026 / Coinbase Advanced / OKX Web3 / Kraken Pro / Bybit V5
+ *
+ * 核心变化：
+ *   - 抛弃纯色背景 #0B1124 → 引入 #0F1B3D + 多层极光渐变网格
+ *   - 玻璃卡片 opacity 0.95 → 0.65（更通透）
+ *   - 引入极光五色（金/青/紫/翠/粉）
+ *   - 极光呼吸动画 aurora-flow
+ *   - Glassmorphism 2.0 工具类
+ * ============================================================ */
+
+:root {
+  /* === 品牌色 === */
+  --brand-primary: #1677FF;
+  --brand-hover: #4096FF;
+  --brand-active: #0958D9;
+  --brand-neon: #38BDF8;
+  --brand-web3: #7C3AED;
+  --brand-compliance: #4F46E5;
+  --brand-gold: #F0B90B;
+  --brand-gold-bright: #FCD535;
+  --brand-gold-deep: #E8A317;
+  --brand-diamond: #38BDF8;
+  --brand-ruby: #DC2626;
+  --brand-emerald: #10B981;
+  /* v7 极光新色 */
+  --aurora-violet: #A78BFA;
+  --aurora-cyan: #22D3EE;
+  --aurora-rose: #F472B6;
+
+  /* === 交易色（涨跌） === */
+  --color-up: #16C784;
+  --color-up-admin: #16A34A;
+  --color-down: #EA3943;
+  --color-down-admin: #DC2626;
+  --color-up-bg: rgba(22, 199, 132, 0.12);
+  --color-up-bg-lighter: rgba(22, 199, 132, 0.08);
+  --color-down-bg: rgba(234, 57, 67, 0.12);
+  --color-down-bg-lighter: rgba(234, 57, 67, 0.08);
+
+  /* === 警示色 === */
+  --color-warning: #F59E0B;
+  --color-warning-bg: rgba(245, 158, 11, 0.10);
+  --color-high-risk: #F97316;
+  --color-high-risk-bg: rgba(249, 115, 22, 0.10);
+  --color-info: #1677FF;
+  --color-info-bg: rgba(22, 119, 255, 0.10);
+  --color-frozen: #7C3AED;
+  --color-frozen-bg: rgba(124, 58, 237, 0.10);
+
+  /* === v7 官网 极光尊享深色系统 升级 === */
+  --bg-aurora-primary: #0F1B3D;       /* 皇家深蓝（不再是纯黑） */
+  --bg-aurora-secondary: #15224A;     /* 星空靛 - 区块 */
+  --bg-aurora-card: rgba(26, 36, 86, 0.55);        /* 玻璃卡片 */
+  --bg-aurora-card-solid: #1A2456;
+  --bg-aurora-elevated: rgba(30, 42, 95, 0.65);    /* 悬浮层 */
+  --bg-aurora-tertiary: rgba(15, 27, 61, 0.7);
+  --bg-aurora-border: rgba(148, 163, 184, 0.18);   /* 细腻玻璃边框 */
+  --bg-aurora-border-muted: rgba(148, 163, 184, 0.10);
+  --bg-aurora-border-solid: #2E3A6B;
+
+  /* === 后台 浅色背景 === */
+  --bg-light-primary: #F5F7FA;
+  --bg-light-card: #FFFFFF;
+  --bg-light-thead: #F9FAFB;
+  --bg-light-hover: #F3F4F6;
+  --bg-light-border: #E5E7EB;
+  --bg-light-border-muted: #D1D5DB;
+  --bg-sidebar: #111827;
+  --bg-topbar: #FFFFFF;
+
+  /* === 文字 v7 升级更白 === */
+  --text-primary: #F8FAFC;
+  --text-emphasis: #FFFFFF;
+  --text-secondary: #B4C0E0;
+  --text-muted: #7B89B8;
+  --text-disabled: #4A5680;
+
+  /* === 字体 === */
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'DIN', 'Roboto Mono', Consolas, monospace;
+  --font-number: 'DIN', 'Roboto Mono', 'JetBrains Mono', monospace;
+}
+
+.dark-theme {
+  --text-primary: #F8FAFC;
+  --text-emphasis: #FFFFFF;
+  --text-secondary: #B4C0E0;
+  --text-muted: #7B89B8;
+  --text-disabled: #4A5680;
+}
+
+/* ==================== Base Reset ==================== */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--bg-aurora-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  /* 防止页面切换时字体未加载导致的布局抖动（FOIT/FOUT） */
+  font-display: swap;
+}
+
+::selection {
+  background-color: rgba(56, 189, 248, 0.3);
+  color: inherit;
+}
+
+::-moz-selection {
+  background-color: rgba(56, 189, 248, 0.3);
+  color: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-aurora-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-aurora-border-solid);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-aurora-border-solid) var(--bg-aurora-secondary);
+}
+
+*:focus-visible {
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* ============================================================
+ *  v7 AURORA PREMIUM 极光系统 - 核心
+ * ============================================================ */
+
+/* === v7 极光背景 - 多层渐变网格 === */
+.aurora-bg {
+  background-color: #0F1B3D;
+  background-image:
+    radial-gradient(ellipse 80% 60% at 20% 0%, rgba(240, 185, 11, 0.18) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 10%, rgba(167, 139, 250, 0.16) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 70% at 50% 30%, rgba(56, 189, 248, 0.10) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 50% at 30% 60%, rgba(124, 58, 237, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 80% 70%, rgba(56, 189, 248, 0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 80% 60% at 50% 100%, rgba(99, 102, 241, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, #0F1B3D 0%, #131E45 50%, #0F1B3D 100%);
+  position: relative;
+}
+
+/* === v7 极光光斑 - 浮动装饰 === */
+.aurora-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.aurora-orb-gold {
+  background: radial-gradient(circle, rgba(240, 185, 11, 0.45) 0%, transparent 70%);
+}
+.aurora-orb-cyan {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.40) 0%, transparent 70%);
+}
+.aurora-orb-violet {
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.40) 0%, transparent 70%);
+}
+.aurora-orb-emerald {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.30) 0%, transparent 70%);
+}
+.aurora-orb-rose {
+  background: radial-gradient(circle, rgba(244, 114, 182, 0.32) 0%, transparent 70%);
+}
+.aurora-orb-blue {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.38) 0%, transparent 70%);
+}
+
+/* === v7 极光呼吸动画 === */
+@keyframes auroraFlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.7;
+  }
+  33% {
+    transform: translate3d(40px, -30px, 0) scale(1.15);
+    opacity: 1;
+  }
+  66% {
+    transform: translate3d(-30px, 20px, 0) scale(0.9);
+    opacity: 0.85;
+  }
+}
+@keyframes auroraDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translate3d(-50px, 40px, 0) scale(1.2);
+    opacity: 0.95;
+  }
+}
+@keyframes auroraRise {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(20px, -40px, 0) scale(1.1);
+  }
+}
+@keyframes goldShine {
+  0%, 100% { box-shadow: 0 0 24px rgba(240, 185, 11, 0.3); }
+  50% { box-shadow: 0 0 48px rgba(240, 185, 11, 0.6); }
+}
+
+.anim-aurora-flow {
+  animation: auroraFlow 14s ease-in-out infinite;
+}
+.anim-aurora-drift {
+  animation: auroraDrift 18s ease-in-out infinite;
+}
+.anim-aurora-rise {
+  animation: auroraRise 22s ease-in-out infinite;
+}
+.anim-gold-shine {
+  animation: goldShine 3s ease-in-out infinite;
+}
+
+/* === v7 极光玻璃卡片 - Glassmorphism 2.0 === */
+.glass-aurora {
+  background: linear-gradient(180deg, rgba(26, 36, 86, 0.55) 0%, rgba(21, 34, 74, 0.70) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow:
+    0 8px 32px rgba(15, 27, 61, 0.4),
+    0 0 0 1px rgba(148, 163, 184, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.glass-aurora-light {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.glass-aurora-hover {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-aurora-hover:hover {
+  border-color: rgba(240, 185, 11, 0.40);
+  background: linear-gradient(180deg, rgba(30, 42, 95, 0.65) 0%, rgba(26, 36, 86, 0.80) 100%);
+  box-shadow:
+    0 12px 40px rgba(15, 27, 61, 0.5),
+    0 0 32px rgba(240, 185, 11, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+/* === v7 极光卡片 - 顶级配置（顶部金线） === */
+.card-aurora {
+  background: linear-gradient(180deg, rgba(26, 36, 86, 0.55) 0%, rgba(21, 34, 74, 0.70) 100%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 8px 32px rgba(15, 27, 61, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.card-aurora::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(240, 185, 11, 0.50) 20%,
+    rgba(252, 213, 53, 0.80) 50%,
+    rgba(240, 185, 11, 0.50) 80%,
+    transparent 100%
+  );
+}
+
+.card-aurora-cyan::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(56, 189, 248, 0.50) 20%,
+    rgba(34, 211, 238, 0.80) 50%,
+    rgba(56, 189, 248, 0.50) 80%,
+    transparent 100%
+  );
+}
+
+.card-aurora-violet::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.50) 20%,
+    rgba(124, 58, 237, 0.80) 50%,
+    rgba(167, 139, 250, 0.50) 80%,
+    transparent 100%
+  );
+}
+
+.card-aurora-rainbow::before {
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(240, 185, 11, 0.50) 25%,
+    rgba(56, 189, 248, 0.80) 50%,
+    rgba(167, 139, 250, 0.50) 75%,
+    transparent 100%
+  );
+}
+
+/* === v7 极光金边 === */
+.border-aurora-gold {
+  border: 1px solid rgba(240, 185, 11, 0.40);
+}
+.border-aurora-gold-strong {
+  border: 1px solid rgba(240, 185, 11, 0.70);
+  box-shadow: 0 0 24px rgba(240, 185, 11, 0.20);
+}
+
+/* === v7 极光渐变文字 === */
+.gradient-text-aurora {
+  background: linear-gradient(135deg, #FCD535 0%, #38BDF8 50%, #A78BFA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-aurora-gold {
+  background: linear-gradient(135deg, #FEF3C7 0%, #FCD535 30%, #F0B90B 70%, #E8A317 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, #FCD535 0%, #F0B90B 50%, #E8A317 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-cyan {
+  background: linear-gradient(135deg, #67E8F9 0%, #38BDF8 50%, #0EA5E9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-violet {
+  background: linear-gradient(135deg, #C4B5FD 0%, #A78BFA 50%, #7C3AED 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === v7 极光按钮 === */
+.btn-aurora-cta {
+  background: linear-gradient(135deg, #38BDF8 0%, #1677FF 50%, #7C3AED 100%);
+  color: #FFFFFF;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-weight: 600;
+  box-shadow:
+    0 4px 24px rgba(56, 189, 248, 0.35),
+    0 0 48px rgba(56, 189, 248, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.20);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.btn-aurora-cta::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.30) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.btn-aurora-cta:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(56, 189, 248, 0.50),
+    0 0 64px rgba(56, 189, 248, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.btn-aurora-cta:hover::before {
+  opacity: 1;
+}
+
+.btn-aurora-gold {
+  background: linear-gradient(135deg, #FCD535 0%, #F0B90B 100%);
+  color: #0F1B3D;
+  border-radius: 12px;
+  padding: 12px 28px;
+  font-weight: 700;
+  box-shadow:
+    0 4px 24px rgba(240, 185, 11, 0.40),
+    0 0 48px rgba(240, 185, 11, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+.btn-aurora-gold::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.40) 50%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.btn-aurora-gold:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 8px 32px rgba(240, 185, 11, 0.55),
+    0 0 64px rgba(240, 185, 11, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.40);
+}
+.btn-aurora-gold:hover::before {
+  opacity: 1;
+}
+
+/* === v7 极光光带 - 顶部装饰 === */
+.aurora-beam-top {
+  position: relative;
+}
+.aurora-beam-top::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(240, 185, 11, 0.50) 20%,
+    rgba(56, 189, 248, 0.80) 50%,
+    rgba(167, 139, 250, 0.50) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.50);
+}
+
+/* === v7 极光光效 === */
+.glow-aurora {
+  box-shadow:
+    0 8px 32px rgba(56, 189, 248, 0.20),
+    0 0 64px rgba(167, 139, 250, 0.15);
+}
+.glow-aurora-gold {
+  box-shadow:
+    0 0 24px rgba(240, 185, 11, 0.35),
+    0 0 48px rgba(240, 185, 11, 0.15);
+}
+.glow-aurora-cyan {
+  box-shadow:
+    0 0 24px rgba(56, 189, 248, 0.35),
+    0 0 48px rgba(56, 189, 248, 0.15);
+}
+.glow-aurora-violet {
+  box-shadow:
+    0 0 24px rgba(167, 139, 250, 0.35),
+    0 0 48px rgba(167, 139, 250, 0.15);
+}
+
+/* === v7 极光徽章 === */
+.badge-aurora {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: linear-gradient(135deg,
+    rgba(240, 185, 11, 0.15) 0%,
+    rgba(56, 189, 248, 0.10) 100%
+  );
+  border: 1px solid rgba(240, 185, 11, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 16px rgba(240, 185, 11, 0.15);
+}
+
+/* === v7 极光网格背景 === */
+.grid-aurora {
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.06) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+  -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+}
+
+/* === v7 极光分隔线 === */
+.divider-aurora {
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(148, 163, 184, 0.30) 30%,
+    rgba(240, 185, 11, 0.40) 50%,
+    rgba(148, 163, 184, 0.30) 70%,
+    transparent 100%
+  );
+}
+
+/* === 通用工具类 === */
+@layer components {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  .card-deep {
+    background: var(--bg-aurora-card);
+    border: 1px solid var(--bg-aurora-border);
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .card-light {
+    background: var(--bg-light-card);
+    border: 1px solid var(--bg-light-border);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+
+  .glass-dark {
+    background: linear-gradient(180deg, rgba(22, 27, 44, 0.92) 0%, rgba(17, 24, 39, 0.96) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--bg-aurora-border);
+  }
+
+  .gradient-text-primary {
+    background: linear-gradient(135deg, #1677FF 0%, #7C3AED 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-tech {
+    background: linear-gradient(135deg, #1677FF 0%, #38BDF8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-up { color: var(--color-up); }
+  .text-up-admin { color: var(--color-up-admin); }
+  .bg-up { background-color: var(--color-up-bg); }
+  .bg-up-lighter { background-color: var(--color-up-bg-lighter); }
+
+  .text-down { color: var(--color-down); }
+  .text-down-admin { color: var(--color-down-admin); }
+  .bg-down { background-color: var(--color-down-bg); }
+  .bg-down-lighter { background-color: var(--color-down-bg-lighter); }
+
+  .text-warning { color: var(--color-warning); }
+  .bg-warning { background-color: var(--color-warning-bg); }
+  .text-high-risk { color: var(--color-high-risk); }
+  .bg-high-risk { background-color: var(--color-high-risk-bg); }
+  .text-frozen { color: var(--color-frozen); }
+  .bg-frozen { background-color: var(--color-frozen-bg); }
+
+  .btn-primary {
+    background: var(--brand-primary);
+    color: #FFFFFF;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .btn-primary:hover {
+    background: var(--brand-hover);
+    box-shadow: 0 4px 12px rgba(22, 119, 255, 0.3);
+  }
+  .btn-primary:active { background: var(--brand-active); }
+
+  .btn-secondary {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--bg-aurora-border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .btn-secondary:hover {
+    border-color: var(--brand-primary);
+    color: var(--brand-primary);
+  }
+
+  .btn-cta {
+    background: linear-gradient(135deg, #1677FF 0%, #7C3AED 100%);
+    color: #FFFFFF;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(22, 119, 255, 0.3);
+    transition: all 0.2s ease;
+  }
+  .btn-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(22, 119, 255, 0.4);
+  }
+
+  .btn-danger {
+    background: var(--color-down-admin);
+    color: #FFFFFF;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+  }
+  .btn-danger:hover { background: #B91C1C; }
+
+  .btn-success {
+    background: var(--color-up-admin);
+    color: #FFFFFF;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+  }
+  .btn-success:hover { background: #15803D; }
+
+  .btn-warning {
+    background: var(--color-warning);
+    color: #111827;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 500;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-success { background: var(--color-up-bg); color: var(--color-up); }
+  .badge-success-admin { background: var(--color-up-admin); color: #FFFFFF; }
+  .badge-error { background: var(--color-down-bg); color: var(--color-down); }
+  .badge-error-admin { background: var(--color-down-admin); color: #FFFFFF; }
+  .badge-warning { background: var(--color-warning-bg); color: var(--color-warning); }
+  .badge-info { background: var(--color-info-bg); color: var(--color-info); }
+  .badge-frozen { background: var(--color-frozen-bg); color: var(--color-frozen); }
+  .badge-default { background: rgba(107, 114, 128, 0.15); color: #6B7280; }
+
+  .glow-blue { box-shadow: 0 0 24px rgba(22, 119, 255, 0.30); }
+  .glow-purple { box-shadow: 0 0 24px rgba(124, 58, 237, 0.30); }
+  .glow-gold { box-shadow: 0 0 24px rgba(240, 185, 11, 0.35), 0 0 48px rgba(240, 185, 11, 0.15); }
+  .glow-gold-strong { box-shadow: 0 4px 24px rgba(240, 185, 11, 0.45), 0 0 56px rgba(240, 185, 11, 0.20); }
+
+  .kline-grid { stroke: var(--bg-aurora-border); stroke-width: 1; }
+  .kline-axis { fill: var(--text-muted); font-size: 11px; }
+
+  .gradient-text-diamond {
+    background: linear-gradient(135deg, #38BDF8 0%, #1677FF 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-emerald {
+    background: linear-gradient(135deg, #10B981 0%, #14B8A6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-violet {
+    background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .btn-royal-gold {
+    background: linear-gradient(135deg, #FCD535 0%, #F0B90B 100%);
+    color: #0F1B3D;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 16px rgba(240, 185, 11, 0.30);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-royal-gold::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.30) 50%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  .btn-royal-gold:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(240, 185, 11, 0.50);
+  }
+  .btn-royal-gold:hover::before { opacity: 1; }
+
+  .glass-royal {
+    background: linear-gradient(180deg, rgba(19, 26, 46, 0.85) 0%, rgba(15, 24, 48, 0.95) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid var(--bg-aurora-border);
+  }
+
+  .border-royal-gold { border: 1px solid rgba(240, 185, 11, 0.30); }
+  .border-royal-gold-strong { border: 1px solid rgba(240, 185, 11, 0.60); }
+
+  .gold-top-line {
+    position: relative;
+  }
+  .gold-top-line::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(240, 185, 11, 0.40) 50%, transparent 100%);
+  }
+
+  .gold-bottom-line {
+    position: relative;
+  }
+  .gold-bottom-line::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(240, 185, 11, 0.40) 50%, transparent 100%);
+  }
+
+  .gold-title-underline {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 12px;
+  }
+  .gold-title-underline::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #FCD535 0%, #F0B90B 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(240, 185, 11, 0.50);
+  }
+
+  .gold-title-underline-left {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 12px;
+  }
+  .gold-title-underline-left::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(90deg, #FCD535 0%, #F0B90B 100%);
+    border-radius: 2px;
+    box-shadow: 0 0 12px rgba(240, 185, 11, 0.50);
+  }
+
+  .card-royal {
+    background: linear-gradient(180deg, var(--bg-aurora-card-solid) 0%, var(--bg-aurora-secondary) 100%);
+    border: 1px solid var(--bg-aurora-border);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-royal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(240, 185, 11, 0.50) 50%, transparent 100%);
+  }
+
+  .card-royal-hover {
+    background: linear-gradient(180deg, var(--bg-aurora-card-solid) 0%, var(--bg-aurora-secondary) 100%);
+    border: 1px solid var(--bg-aurora-border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .card-royal-hover:hover {
+    border-color: rgba(240, 185, 11, 0.60);
+    box-shadow: 0 8px 32px rgba(240, 185, 11, 0.20), 0 0 0 1px rgba(240, 185, 11, 0.20);
+    transform: translateY(-2px);
+  }
+
+  .light-beam-top {
+    position: relative;
+  }
+  .light-beam-top::before {
+    content: '';
+    position: absolute;
+    top: -100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 800px;
+    height: 200px;
+    background: radial-gradient(ellipse, rgba(56, 189, 248, 0.20) 0%, rgba(124, 58, 237, 0.10) 40%, transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .starfield-bg {
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(240, 185, 11, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(56, 189, 248, 0.10) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(124, 58, 237, 0.06) 0%, transparent 60%);
+  }
+
+  .number-gold {
+    background: linear-gradient(135deg, #FCD535 0%, #F0B90B 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-emphasis {
+    color: #FFFFFF;
+  }
+}
+
+/* v7 极光 - 性能优化：减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .anim-aurora-flow,
+  .anim-aurora-drift,
+  .anim-aurora-rise,
+  .anim-gold-shine {
+    animation: none;
+  }
+}
+
+/* ============================================================
+ * Admin Layout 性能优化 - 防止菜单切换变形 + 加速渲染
+ * ============================================================ */
+
+/* ====== Sider 优化：GPU加速 + 防止折叠/展开时布局抖动 ====== */
+.admin-layout-sider {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  will-change: width;
+  contain: strict;
+}
+
+.ant-layout-sider {
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  overflow: hidden !important;
+  overflow-y: auto !important;
+}
+
+/* ====== Menu 子菜单展开/收起：核心防变形规则 ====== */
+/* 关键：子菜单展开时不推动其他菜单项，而是内部滚动 */
+.ant-menu-inline-collapsed {
+  width: 0 !important;
+}
+
+/* 子菜单容器：固定最大高度，超出滚动 */
+.ant-menu > .ant-menu-submenu > .ant-menu-sub {
+  overflow: hidden;
+  max-height: 400px;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.2s ease,
+              transform 0.2s ease;
+}
+
+/* 子菜单展开动画：从高度0平滑展开 */
+.ant-menu-submenu > .ant-menu-sub {
+  transform-origin: top center;
+}
+
+/* 菜单项hover和选中过渡：防止颜色突变导致的重绘 */
+.ant-menu-item {
+  transition: background-color 0.15s ease,
+              color 0.15s ease,
+              transform 0.1s ease !important;
+}
+
+.ant-menu-item:hover {
+  transform: translateX(2px);
+}
+
+/* ====== Content 区域：绝对稳定性防塌陷 ====== */
+.admin-content-wrapper {
+  min-height: calc(100vh - 112px);
+  position: relative;
+  contain: layout style paint;
+  will-change: auto;
+  /* 防止内容变化时影响外层布局 */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 路由切换时平滑过渡：淡入+微上移 */
+.admin-content-wrapper > * {
+  animation: adminFadeIn 0.18s ease-out forwards;
+  flex: 1;
+}
+
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ====== Header 稳定性：防止头部抖动 ====== */
+.admin-content-wrapper ~ .ant-layout-header {
+  contain: layout style;
+}
+
+/* ====== DataTable 表格渲染优化 ====== */
+.ant-table-wrapper {
+  contain: layout style paint;
+}
+
+/* DataCard 卡片批量渲染优化 */
+.data-card-item {
+  contain: layout style;
+}
+
+/* ====== Menu 整体优化：减少不必要的重绘 ====== */
+.ant-menu-dark {
+  contain: style paint;
+}

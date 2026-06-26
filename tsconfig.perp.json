@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/app/api/v1/perp/**/*.ts",
+    "src/lib/perp/**/*.ts",
+    "src/lib/logger.ts",
+    "src/lib/prisma.ts",
+    "src/repositories/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts"
+  ]
+}
