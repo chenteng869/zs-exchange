@@ -3,9 +3,12 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useTicker } from '@/hooks/useTicker';
+import { useTickersData } from '@/hooks/useMarketData';
 import { usePriceAnimation } from '@/hooks/usePriceAnimation';
 import { fadeIn } from '@/lib/animations';
+import { TOP20_PAIRS } from '@/lib/h5/top20-pairs';
+
+const TICKER_SYMBOLS = TOP20_PAIRS.map((p) => p.symbol.replace('/', ''));
 
 // ==================== 价格格式化 ====================
 function formatPrice(price: number): string {
@@ -113,7 +116,17 @@ function TickerItem({ symbol, baseAsset, quoteAsset, price, changePercent24h, in
 
 // ==================== 主组件 ====================
 export default function TickerTapeLive() {
-  const { tickers, isLoading } = useTicker({ interval: 1000 });
+  const { tickers: rawTickers, loading } = useTickersData(TICKER_SYMBOLS, 4000);
+
+  const tickers = useMemo(() => TOP20_PAIRS.map((p) => {
+    const apiSymbol = p.symbol.replace('/', '');
+    const t = rawTickers.get(apiSymbol);
+    const price = t ? parseFloat(t.lastPrice) : 0;
+    const changePercent24h = t ? parseFloat(t.changePercent24h) : 0;
+    return { symbol: apiSymbol, baseAsset: p.base, quoteAsset: p.quote, price, changePercent24h };
+  }).filter((t) => t.price > 0), [rawTickers]);
+
+  const isLoading = loading && rawTickers.size === 0;
 
   // 复制一份用于无缝滚动
   const scrollItems = useMemo(() => [...tickers, ...tickers], [tickers]);

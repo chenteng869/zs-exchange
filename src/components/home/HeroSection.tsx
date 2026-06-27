@@ -6,7 +6,7 @@ import { TrendingUp, BarChart3, Shield, Award, ArrowRight, Activity } from 'luci
 import { fadeInUp, staggerContainer, staggerItem } from '@/lib/animations';
 import Button from '@/components/ui/Button';
 import AnimatedCounter from '@/components/ui/AnimatedCounter';
-import { useTicker } from '@/hooks/useTicker';
+import { useTickerData } from '@/hooks/useMarketData';
 import { usePriceAnimation } from '@/hooks/usePriceAnimation';
 
 /**
@@ -53,19 +53,17 @@ const KEY_METRICS = [
 ];
 
 export default function HeroSection() {
-  const { getBySymbol, isConnected } = useTicker({
-    symbols: ['BTCUSDT'],
-    interval: 1000,
-  });
+  const { ticker: btcRaw, loading } = useTickerData('BTCUSDT', 3000);
 
-  const btcTicker = getBySymbol('BTCUSDT');
-  const btcPriceAnim = usePriceAnimation(btcTicker?.price ?? 67234.56, {
+  const btcPrice = btcRaw ? parseFloat(btcRaw.lastPrice) : 0;
+  const btcPriceAnim = usePriceAnimation(btcPrice || 67234.56, {
     duration: 500,
     decimals: 2,
   });
 
-  const priceChange = btcTicker?.changePercent24h ?? 2.34;
+  const priceChange = btcRaw ? parseFloat(btcRaw.changePercent24h) : 2.34;
   const isPositive = priceChange >= 0;
+  const isConnected = !loading && !!btcRaw;
   const volumeAnim = usePriceAnimation(12.8, { duration: 3000, decimals: 1 });
 
   return (

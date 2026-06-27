@@ -4,7 +4,6 @@
  * H5 理财资产页
  */
 import { PiggyBank, TrendingUp, Wallet, ChevronRight } from 'lucide-react';
-import { getAssets } from '@/lib/h5-mock';
 
 const FUND_PRODUCTS = [
   { id: 'F1', name: 'USDT 活期',  symbol: 'USDT', apy: '4.5%',  amount: '8,000.00',  days: '活期',     income: '12.34' },
