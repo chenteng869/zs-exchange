@@ -1,24 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Form, Input, InputNumber, Select, Statistic, Badge, Progress } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, CreditCardOutlined, SyncOutlined, CalculatorOutlined, AlertOutlined } from '@ant-design/icons';
 import SafeECharts from '@/components/admin/SafeECharts';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 const { Option } = Select;
-
-const mockMarginPairs = [
-  { id: '1', symbol: 'BTC/USDT', price: 67523.80, change: 2.35, leverage: '5x', dailyInterest: 0.05, volume: 15200 },
-  { id: '2', symbol: 'ETH/USDT', price: 3285.50, change: -1.23, leverage: '3x', dailyInterest: 0.04, volume: 8500 },
-  { id: '3', symbol: 'GXT/USDT', price: 0.8523, change: 3.56, leverage: '10x', dailyInterest: 0.08, volume: 2300 },
-  { id: '4', symbol: 'SOL/USDT', price: 178.90, change: 1.85, leverage: '5x', dailyInterest: 0.06, volume: 4500 },
-];
-
-const mockPositions = [
-  { id: '1', symbol: 'BTC/USDT', side: 'long', leverage: '5x', openPrice: 66000, currentPrice: 67523.80, quantity: 0.1, margin: 1320, pnl: 152.38, pnlPercent: 11.54, status: 'open', liquidationPrice: 52800 },
-  { id: '2', symbol: 'ETH/USDT', side: 'short', leverage: '3x', openPrice: 3400, currentPrice: 3285.50, quantity: 1, margin: 1133.33, pnl: 114.5, pnlPercent: 10.1, status: 'open', liquidationPrice: 4420 },
-];
 
 const mockLoans = [
   { id: '1', asset: 'USDT', borrowed: 10000, interestRate: 0.05, days: 5, interest: 2.08, status: 'active' },
@@ -39,6 +27,33 @@ export default function MarginTradingPage() {
   const [leverage, setLeverage] = useState(5);
   const [price, setPrice] = useState(67523.80);
   const [quantity, setQuantity] = useState(0.1);
+  const [marginPairs, setMarginPairs] = useState<any[]>([]);
+  const [positions, setPositions] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/cex/pairs', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items = (d?.data ?? []).map((p: any) => ({
+          id: p.id,
+          symbol: p.symbol,
+          price: 0,
+          change: 0,
+          leverage: '1x',
+          dailyInterest: parseFloat(p.takerFeeRate) * 100 || 0,
+          volume: 0,
+        }));
+        setMarginPairs(items);
+        if (items.length > 0) setSelectedPair(items[0].symbol);
+      })
+      .catch(() => {});
+
+    fetch('/api/admin/cex/positions?status=active&pageSize=50', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setPositions(d?.data?.items ?? []))
+      .catch(() => setPositions([]));
+  }, []);
+
 
   return (
     <AdminLayout>
@@ -58,7 +73,7 @@ export default function MarginTradingPage() {
           <Col xs={24} lg={8}>
             <Card title="杠杆交易对">
               <Table
-                dataSource={mockMarginPairs}
+                dataSource={marginPairs}
                 columns={[
                   { title: '交易对', dataIndex: 'symbol', key: 'symbol', render: (text) => <span className="font-semibold">{text}</span> },
                   { title: '价格', dataIndex: 'price', key: 'price', render: (val) => <span className="font-mono">${val.toLocaleString()}</span> },
@@ -81,9 +96,9 @@ export default function MarginTradingPage() {
             </Card>
 
             <Card title="我的杠杆持仓" size="small">
-              {mockPositions.length > 0 ? (
+              {positions.length > 0 ? (
                 <Table
-                  dataSource={mockPositions}
+                  dataSource={positions}
                   columns={[
                     { title: '交易对', dataIndex: 'symbol', key: 'symbol' },
                     { 

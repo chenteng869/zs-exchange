@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { DataCard } from '@/components/admin/DataCard';
 import { DataTable } from '@/components/admin/DataTable';
@@ -46,27 +46,26 @@ interface FuturesContract {
   pnl24h: number;
 }
 
-const mockFutures: FuturesContract[] = [
-  { id: 'FC-001', symbol: 'BTCUSDT-PERP', name: 'BTC永续合约', underlying: 'BTC', leverage: 125, positionSize: 12850.5, markPrice: 68420.35, indexPrice: 68418.20, fundingRate: 0.0085, openInterest: 2850000000, volume24h: 15600000000, liquidationPrice: 55230.00, direction: 'long', status: 'active', marginRatio: 85.3, pnl24h: 12.5 },
-  { id: 'FC-002', symbol: 'ETHUSDT-PERP', name: 'ETH永续合约', underlying: 'ETH', leverage: 100, positionSize: 45680.2, markPrice: 3650.80, indexPrice: 3649.15, fundingRate: -0.0023, openInterest: 980000000, volume24h: 5200000000, liquidationPrice: 2980.00, direction: 'short', status: 'active', marginRatio: 72.1, pnl24h: -3.2 },
-  { id: 'FC-003', symbol: 'SOLUSDT-PERP', name: 'SOL永续合约', underlying: 'SOL', leverage: 75, positionSize: 234500.8, markPrice: 148.65, indexPrice: 148.52, fundingRate: 0.0012, openInterest: 320000000, volume24h: 1800000000, liquidationPrice: 118.90, direction: 'long', status: 'active', marginRatio: 91.5, pnl24h: 8.7 },
-  { id: 'FC-004', symbol: 'BTCUSDT-240628', name: 'BTC交割合约(06/28)', underlying: 'BTC', leverage: 50, positionSize: 3200.0, markPrice: 68550.00, indexPrice: 68418.20, fundingRate: 0.0120, openInterest: 450000000, volume24h: 2800000000, liquidationPrice: 62000.00, direction: 'neutral', status: 'active', marginRatio: 88.9, pnl24h: 5.3 },
-  { id: 'FC-005', symbol: 'BNBUSDT-PERP', name: 'BNB永续合约', underlying: 'BNB', leverage: 50, positionSize: 89200.5, markPrice: 585.40, indexPrice: 584.95, fundingRate: -0.0008, openInterest: 180000000, volume24h: 650000000, liquidationPrice: 480.00, direction: 'long', status: 'active', marginRatio: 76.4, pnl24h: 2.1 },
-  { id: 'FC-006', symbol: 'XRPUSDT-PERP', name: 'XRP永续合约', underlying: 'XRP', leverage: 40, positionSize: 567800.0, markPrice: 0.5235, indexPrice: 0.5228, fundingRate: 0.0005, openInterest: 120000000, volume24h: 420000000, liquidationPrice: 0.4200, direction: 'neutral', status: 'suspended', marginRatio: 95.2, pnl24h: -1.5 },
-  { id: 'FC-007', symbol: 'ADAUSDT-PERP', name: 'ADA永续合约', underlying: 'ADA', leverage: 30, positionSize: 1234000.0, markPrice: 0.4620, indexPrice: 0.4615, fundingRate: 0.0003, openInterest: 85000000, volume24h: 310000000, liquidationPrice: 0.3800, direction: 'long', status: 'active', marginRatio: 82.7, pnl24h: 4.8 },
-  { id: 'FC-008', symbol: 'DOGEUSDT-PERP', name: 'DOGE永续合约', underlying: 'DOGE', leverage: 25, positionSize: 3456000.0, markPrice: 0.1658, indexPrice: 0.1655, fundingRate: -0.0015, openInterest: 65000000, volume24h: 280000000, liquidationPrice: 0.1350, direction: 'short', status: 'active', marginRatio: 78.3, pnl24h: -2.8 },
-  { id: 'FC-009', symbol: 'AVAXUSDT-PERP', name: 'AVAX永续合约', underlying: 'AVAX', leverage: 35, positionSize: 67800.0, markPrice: 38.520, indexPrice: 38.485, fundingRate: 0.0028, openInterest: 95000000, volume24h: 380000000, liquidationPrice: 31.200, direction: 'long', status: 'active', marginRatio: 84.6, pnl24h: 6.2 },
-  { id: 'FC-010', symbol: 'MATICUSDT-PERP', name: 'MATIC永续合约', underlying: 'MATIC', leverage: 25, positionSize: 890000.0, markPrice: 0.7230, indexPrice: 0.7218, fundingRate: 0.0001, openInterest: 72000000, volume24h: 195000000, liquidationPrice: 0.5900, direction: 'neutral', status: 'active', marginRatio: 93.1, pnl24h: 1.9 },
-];
-
 export default function FuturesPage() {
   const [selectedContract, setSelectedContract] = useState<FuturesContract | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [futures, setFutures] = useState<FuturesContract[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const totalPosition = mockFutures.reduce((sum, f) => sum + f.positionSize, 0);
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/cex/futures', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setFutures(d?.data ?? []))
+      .catch(() => setFutures([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+
+  const totalPosition = futures.reduce((sum, f) => sum + f.positionSize, 0);
   const totalMargin = 158500000;
-  const todayVolume = mockFutures.reduce((sum, f) => sum + f.volume24h, 0);
-  const liqWarning = mockFutures.filter(f => f.marginRatio < 85).length;
+  const todayVolume = futures.reduce((sum, f) => sum + f.volume24h, 0);
+  const liqWarning = futures.filter(f => f.marginRatio < 85).length;
   const feeIncome = 2450000;
 
   const getDirectionTag = (dir: string) => {
@@ -122,7 +121,8 @@ export default function FuturesPage() {
           <Col xs={24} sm={12} lg={4}><DataCard title="费率收入" value={`${(feeIncome / 1000).toFixed(0)}K`} suffix=" USDT" icon={<DollarOutlined />} color="#F59E0B" trend="up" trendValue="+5.8%" /></Col>
         </Row>
 
-        <DataTable columns={columns} dataSource={mockFutures} rowKey="id" title="合约产品列表" searchPlaceholder="搜索合约名称或标的..." actions={actions} pagination={{ pageSize: 10 }} showFilter filterOptions={[{ label: '全部状态', value: '' }, { label: '正常交易', value: 'active' }, { label: '已暂停', value: 'suspended' }, { label: '已结算', value: 'settled' }]} />
+        <DataTable columns={columns} dataSource={futures}
+            loading={loading} rowKey="id" title="合约产品列表" searchPlaceholder="搜索合约名称或标的..." actions={actions} pagination={{ pageSize: 10 }} showFilter filterOptions={[{ label: '全部状态', value: '' }, { label: '正常交易', value: 'active' }, { label: '已暂停', value: 'suspended' }, { label: '已结算', value: 'settled' }]} />
 
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
