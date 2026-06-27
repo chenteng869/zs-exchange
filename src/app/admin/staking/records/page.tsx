@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Form, Input, Select, DatePicker } from 'antd';
 import { EyeOutlined, SearchOutlined, HistoryOutlined } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -21,25 +21,17 @@ interface StakingRecord {
   rewards: string;
 }
 
-const mockRecords: StakingRecord[] = [
-  { id: '1', userId: 'usr-001', userAddress: '0x742d35Cc...22A8', poolName: 'GXT 质押池', token: 'GXT', amount: '5000', stakedAt: '2026-05-10 10:30:00', expiresAt: '2026-06-10 10:30:00', status: 'staking', rewards: '150 GXT' },
-  { id: '2', userId: 'usr-002', userAddress: '0x1a2b3c4d...r9s0t', poolName: 'ETH 质押池', token: 'ETH', amount: '5.5', stakedAt: '2026-05-08 14:15:00', expiresAt: '2026-08-08 14:15:00', status: 'staking', rewards: '0.1 ETH' },
-  { id: '3', userId: 'usr-003', userAddress: 'bc1qxy2kg...hx0wlh', poolName: 'BTC 质押池', token: 'BTC', amount: '2.5', stakedAt: '2026-04-15 09:00:00', expiresAt: '2026-10-15 09:00:00', status: 'staking', rewards: '0.05 BTC' },
-  { id: '4', userId: 'usr-004', userAddress: '0xAbC123De...012345', poolName: 'USDT 稳定池', token: 'USDT', amount: '50000', stakedAt: '2026-05-01 16:45:00', expiresAt: '-', status: 'staking', rewards: '500 USDT' },
-  { id: '5', userId: 'usr-005', userAddress: 'TQmKd12x...1f4a5', poolName: 'GXT 质押池', token: 'GXT', amount: '10000', stakedAt: '2026-03-15 11:20:00', expiresAt: '2026-04-15 11:20:00', status: 'unstaked', rewards: '300 GXT' },
-  { id: '6', userId: 'usr-006', userAddress: '0x789EfGh...IjKlMn', poolName: 'GXT 质押池', token: 'GXT', amount: '2000', stakedAt: '2026-05-12 08:00:00', expiresAt: '2026-06-12 08:00:00', status: 'staking', rewards: '60 GXT' },
-  { id: '7', userId: 'usr-007', userAddress: '0xPqRsTuV...WxYz12', poolName: 'ETH 质押池', token: 'ETH', amount: '10.2', stakedAt: '2026-04-20 13:30:00', expiresAt: '2026-07-20 13:30:00', status: 'staking', rewards: '0.25 ETH' },
-  { id: '8', userId: 'usr-008', userAddress: 'bc1abcde...fghijkl', poolName: 'BTC 质押池', token: 'BTC', amount: '1.0', stakedAt: '2026-05-05 10:45:00', expiresAt: '2026-11-05 10:45:00', status: 'staking', rewards: '0.02 BTC' },
-  { id: '9', userId: 'usr-009', userAddress: '0x3456789...0abcdef', poolName: 'USDT 稳定池', token: 'USDT', amount: '100000', stakedAt: '2026-04-25 09:20:00', expiresAt: '-', status: 'staking', rewards: '1200 USDT' },
-  { id: '10', userId: 'usr-010', userAddress: '0x778899A...aBbCcDd', poolName: 'GXT 质押池', token: 'GXT', amount: '15000', stakedAt: '2026-03-01 14:00:00', expiresAt: '2026-06-01 14:00:00', status: 'staking', rewards: '675 GXT' },
-  { id: '11', userId: 'usr-011', userAddress: '0x1122334...5566778', poolName: 'ETH 质押池', token: 'ETH', amount: '3.0', stakedAt: '2026-05-11 16:30:00', expiresAt: '2026-08-11 16:30:00', status: 'pending', rewards: '0 ETH' },
-  { id: '12', userId: 'usr-012', userAddress: 'bc1xxyyzz...112233', poolName: 'BTC 质押池', token: 'BTC', amount: '5.0', stakedAt: '2026-02-28 11:15:00', expiresAt: '2026-08-28 11:15:00', status: 'staking', rewards: '0.15 BTC' },
-  { id: '13', userId: 'usr-013', userAddress: '0x99AABBc...dEEFF11', poolName: 'USDT 稳定池', token: 'USDT', amount: '25000', stakedAt: '2026-05-08 15:40:00', expiresAt: '-', status: 'staking', rewards: '300 USDT' },
-  { id: '14', userId: 'usr-014', userAddress: '0xCCDDeeF...gGHHiiJ', poolName: 'GXT 质押池', token: 'GXT', amount: '8000', stakedAt: '2026-04-10 09:30:00', expiresAt: '2026-05-10 09:30:00', status: 'unstaked', rewards: '240 GXT' },
-];
-
 export default function StakingRecordsPage() {
+  const [records, setRecords] = useState<StakingRecord[]>([]);
+  const [loadingRecords, setLoadingRecords] = useState(true);
   const [selectedRecord, setSelectedRecord] = useState<StakingRecord | null>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/staking/records?pageSize=100').then(r => r.json()).then(d => {
+      if (d.data?.items) setRecords(d.data.items);
+      setLoadingRecords(false);
+    }).catch(() => setLoadingRecords(false));
+  }, []);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
   const showDetail = (record: StakingRecord) => {
@@ -126,7 +118,8 @@ export default function StakingRecordsPage() {
           </Row>
 
           <Table
-            dataSource={mockRecords}
+            dataSource={records}
+            loading={loadingRecords}
             columns={columns}
             pagination={{ pageSize: 10, showTotal: (total) => `共 ${total} 条记录` }}
             rowKey="id"

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Statistic, Select, Progress } from 'antd';
 import { DollarOutlined, SyncOutlined, RiseOutlined, FallOutlined, WalletOutlined } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -17,25 +17,26 @@ interface Asset {
   status: string;
 }
 
-const mockAssets: Asset[] = [
-  { id: '1', symbol: 'ETH', name: 'Ethereum', chain: 'Ethereum', balance: '125.5', valueUSD: '$878,500', change24h: 3.5, share: 35, status: 'active' },
-  { id: '2', symbol: 'BTC', name: 'Bitcoin', chain: 'Bitcoin', balance: '25.8', valueUSD: '$1,741,500', change24h: -1.2, share: 45, status: 'active' },
-  { id: '3', symbol: 'BNB', name: 'Binance Coin', chain: 'BSC', balance: '5,000', valueUSD: '$1,500,000', change24h: 5.8, share: 10, status: 'active' },
-  { id: '4', symbol: 'MATIC', name: 'Polygon', chain: 'Polygon', balance: '100,000', valueUSD: '$85,000', change24h: 2.1, share: 5, status: 'active' },
-  { id: '5', symbol: 'USDT', name: 'Tether', chain: 'Ethereum', balance: '500,000', valueUSD: '$500,000', change24h: 0.01, share: 5, status: 'active' },
-];
-
 export default function AssetMonitoringPage() {
   const [selectedChain, setSelectedChain] = useState('all');
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [loadingAssets, setLoadingAssets] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/admin/wallet/assets?pageSize=100').then(r => r.json()).then(d => {
+      if (d.data?.items) setAssets(d.data.items);
+      setLoadingAssets(false);
+    }).catch(() => setLoadingAssets(false));
+  }, []);
 
   const columns = [
     { title: '币种', dataIndex: 'symbol', key: 'symbol', render: (text: string, record: Asset) => <span className="font-semibold">{text} <span className="text-gray-500 font-normal">({record.name})</span></span> },
     { title: '公链', dataIndex: 'chain', key: 'chain' },
     { title: '余额', dataIndex: 'balance', key: 'balance', render: (text: string, record: Asset) => `${text} ${record.symbol}` },
     { title: '价值 (USD)', dataIndex: 'valueUSD', key: 'valueUSD', render: (text: string) => <span className="font-semibold">{text}</span> },
-    { 
-      title: '24h 涨跌', 
-      dataIndex: 'change24h', 
+    {
+      title: '24h 涨跌',
+      dataIndex: 'change24h',
       key: 'change24h',
       render: (val: number) => (
         <span className={val >= 0 ? 'text-green-600' : 'text-red-600'}>
@@ -44,9 +45,9 @@ export default function AssetMonitoringPage() {
         </span>
       )
     },
-    { 
-      title: '占比', 
-      dataIndex: 'share', 
+    {
+      title: '占比',
+      dataIndex: 'share',
       key: 'share',
       render: (val: number) => (
         <div className="flex items-center gap-2">
@@ -55,9 +56,9 @@ export default function AssetMonitoringPage() {
         </div>
       )
     },
-    { 
-      title: '状态', 
-      dataIndex: 'status', 
+    {
+      title: '状态',
+      dataIndex: 'status',
       key: 'status',
       render: (status: string) => (
         <Tag color={status === 'active' ? 'green' : 'red'}>
@@ -67,8 +68,10 @@ export default function AssetMonitoringPage() {
     },
   ];
 
-  const totalValue = '4,705,000';
-  const totalChange = 1.2;
+  const filteredAssets = selectedChain === 'all' ? assets : assets.filter(a => a.chain === selectedChain);
+  const chains = [...new Set(assets.map(a => a.chain))];
+  const totalValue = assets.reduce((s, a) => s + parseFloat(a.valueUSD.replace(/[$,]/g, '') || '0'), 0).toLocaleString();
+  const totalChange = 0;
 
   return (
     <AdminLayout>
@@ -79,17 +82,14 @@ export default function AssetMonitoringPage() {
             <h1 className="text-2xl font-bold m-0">资产监控</h1>
           </div>
           <Space>
-            <Select 
-              placeholder="筛选公链" 
-              style={{ width: 150 }} 
+            <Select
+              placeholder="筛选公链"
+              style={{ width: 150 }}
               value={selectedChain}
               onChange={setSelectedChain}
             >
               <Select.Option value="all">全部</Select.Option>
-              <Select.Option value="Ethereum">Ethereum</Select.Option>
-              <Select.Option value="Bitcoin">Bitcoin</Select.Option>
-              <Select.Option value="BSC">BSC</Select.Option>
-              <Select.Option value="Polygon">Polygon</Select.Option>
+              {chains.map(c => <Select.Option key={c} value={c}>{c}</Select.Option>)}
             </Select>
             <Button icon={<SyncOutlined />}>刷新数据</Button>
           </Space>
@@ -98,9 +98,9 @@ export default function AssetMonitoringPage() {
         <Row gutter={16}>
           <Col span={6}>
             <Card>
-              <Statistic 
-                title="总资产 (USD)" 
-                value={totalValue} 
+              <Statistic
+                title="总资产 (USD)"
+                value={totalValue}
                 prefix={<DollarOutlined />}
                 valueStyle={{ color: '#3f8600' }}
               />
@@ -108,9 +108,9 @@ export default function AssetMonitoringPage() {
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic 
-                title="24h 变化" 
-                value={totalChange} 
+              <Statistic
+                title="24h 变化"
+                value={totalChange}
                 suffix="%"
                 prefix={totalChange >= 0 ? <RiseOutlined /> : <FallOutlined />}
                 valueStyle={{ color: totalChange >= 0 ? '#3f8600' : '#B91C1C' }}
@@ -119,18 +119,18 @@ export default function AssetMonitoringPage() {
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic 
-                title="币种数量" 
-                value={mockAssets.length}
+              <Statistic
+                title="币种数量"
+                value={assets.length}
                 valueStyle={{ color: '#1677FF' }}
               />
             </Card>
           </Col>
           <Col span={6}>
             <Card>
-              <Statistic 
-                title="公链数量" 
-                value={4}
+              <Statistic
+                title="公链数量"
+                value={chains.length}
                 valueStyle={{ color: '#7C3AED' }}
               />
             </Card>
@@ -139,8 +139,9 @@ export default function AssetMonitoringPage() {
 
         <Card>
           <Table
-            dataSource={mockAssets}
+            dataSource={filteredAssets}
             columns={columns}
+            loading={loadingAssets}
             pagination={{ pageSize: 10 }}
             rowKey="id"
           />

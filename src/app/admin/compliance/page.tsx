@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Row,
   Col,
@@ -28,106 +28,17 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockAlertData = [
-  {
-    id: 'ALT-2024-001',
-    type: 'AML可疑交易',
-    level: 'critical',
-    entity: '0x8f3a...9c2d',
-    time: '2024-06-23 09:23:15',
-    status: 'pending',
-  },
-  {
-    id: 'ALT-2024-002',
-    type: 'KYC身份异常',
-    level: 'high',
-    entity: 'user_78234',
-    time: '2024-06-23 08:45:32',
-    status: 'reviewing',
-  },
-  {
-    id: 'ALT-2024-003',
-    type: '制裁名单匹配',
-    level: 'critical',
-    entity: '0x2b1e...4f8a',
-    time: '2024-06-23 08:12:08',
-    status: 'pending',
-  },
-  {
-    id: 'ALT-2024-004',
-    type: '异常交易模式',
-    level: 'medium',
-    entity: '0x5d7c...1e3b',
-    time: '2024-06-23 07:56:44',
-    status: 'resolved',
-  },
-  {
-    id: 'ALT-2024-005',
-    type: '高频交易预警',
-    level: 'high',
-    entity: 'user_45621',
-    time: '2024-06-23 07:33:21',
-    status: 'reviewing',
-  },
-  {
-    id: 'ALT-2024-006',
-    type: '资金来源不明',
-    level: 'high',
-    entity: '0x9a4f...7c2e',
-    time: '2024-06-23 06:58:17',
-    status: 'pending',
-  },
-  {
-    id: 'ALT-2024-007',
-    type: 'AML可疑交易',
-    level: 'medium',
-    entity: '0x3c8d...5a1f',
-    time: '2024-06-23 06:22:39',
-    status: 'resolved',
-  },
-  {
-    id: 'ALT-2024-008',
-    type: '跨境资金异常',
-    level: 'critical',
-    entity: '0x7e2b...9d4c',
-    time: '2024-06-23 05:47:53',
-    status: 'pending',
-  },
-  {
-    id: 'ALT-2024-009',
-    type: '账户行为异常',
-    level: 'low',
-    entity: 'user_89342',
-    time: '2024-06-23 05:14:28',
-    status: 'resolved',
-  },
-  {
-    id: 'ALT-2024-010',
-    type: '洗钱风险评分升高',
-    level: 'high',
-    entity: '0x1f6a...3b8e',
-    time: '2024-06-23 04:38:11',
-    status: 'reviewing',
-  },
-  {
-    id: 'ALT-2024-011',
-    type: 'PEP人物关联',
-    level: 'medium',
-    entity: 'user_12876',
-    time: '2024-06-23 04:05:46',
-    status: 'pending',
-  },
-  {
-    id: 'ALT-2024-012',
-    type: '交易金额超限',
-    level: 'high',
-    entity: '0x6d9c...2f5a',
-    time: '2024-06-23 03:29:33',
-    status: 'resolved',
-  },
-];
-
 export default function ComplianceDashboardPage() {
+  const [alertData, setAlertData] = useState<any[]>([]);
+  const [loadingAlerts, setLoadingAlerts] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/admin/compliance/alerts?pageSize=100').then(r => r.json()).then(d => {
+      if (d.data?.items) setAlertData(d.data.items);
+      setLoadingAlerts(false);
+    }).catch(() => setLoadingAlerts(false));
+  }, []);
+
   const getLevelColor = (level: string) => {
     const colorMap: Record<string, string> = {
       critical: '#DC2626',
@@ -237,8 +148,8 @@ export default function ComplianceDashboardPage() {
     },
   ];
 
-  const criticalCount = mockAlertData.filter((item) => item.level === 'critical').length;
-  const highCount = mockAlertData.filter((item) => item.level === 'high').length;
+  const criticalCount = alertData.filter((item: any) => item.level === 'critical').length;
+  const highCount = alertData.filter((item: any) => item.level === 'high').length;
 
   return (
     <AdminLayout>
@@ -358,7 +269,8 @@ export default function ComplianceDashboardPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockAlertData}
+            dataSource={alertData}
+            loading={loadingAlerts}
             title="实时预警监控"
             rowKey="id"
             actions={actions}

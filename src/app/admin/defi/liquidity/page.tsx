@@ -14,81 +14,6 @@ import {
 import SafeECharts from '@/components/admin/SafeECharts';
 import AdminLayout from '@/components/admin/AdminLayout';
 
-const mockLiquidityPools = [
-  {
-    id: '1',
-    name: 'GXT-USDT',
-    token0: 'GXT',
-    token1: 'USDT',
-    fee: 0.3,
-    tvl: 5800000,
-    volume24h: 1250000,
-    apr: 18.5,
-    status: 'active',
-    contractAddress: '0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1',
-    price: 0.85,
-    priceChange: 2.5,
-    liquidity: { token0: 4500000, token1: 1300000 },
-    transactions: 2350,
-    lastUpdate: '2024-05-10 08:45:32',
-    alerts: [],
-  },
-  {
-    id: '2',
-    name: 'ETH-USDT',
-    token0: 'ETH',
-    token1: 'USDT',
-    fee: 0.3,
-    tvl: 8200000,
-    volume24h: 3500000,
-    apr: 12.8,
-    status: 'active',
-    contractAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
-    price: 3200,
-    priceChange: -1.2,
-    liquidity: { token0: 2500, token1: 5700000 },
-    transactions: 5820,
-    lastUpdate: '2024-05-10 08:45:28',
-    alerts: ['高交易量波动'],
-  },
-  {
-    id: '3',
-    name: 'BNB-USDT',
-    token0: 'BNB',
-    token1: 'USDT',
-    fee: 0.1,
-    tvl: 4500000,
-    volume24h: 850000,
-    apr: 8.2,
-    status: 'warning',
-    contractAddress: '0x1111111111111111111111111111111111111111',
-    price: 680,
-    priceChange: 0.8,
-    liquidity: { token0: 5200, token1: 1100000 },
-    transactions: 1280,
-    lastUpdate: '2024-05-10 08:44:15',
-    alerts: ['TVL下降超过20%', '流动性不足警告'],
-  },
-  {
-    id: '4',
-    name: 'GXT-ETH',
-    token0: 'GXT',
-    token1: 'ETH',
-    fee: 0.5,
-    tvl: 1200000,
-    volume24h: 180000,
-    apr: 25.6,
-    status: 'active',
-    contractAddress: '0x2222222222222222222222222222222222222222',
-    price: 0.000265,
-    priceChange: 5.8,
-    liquidity: { token0: 3200000, token1: 850 },
-    transactions: 456,
-    lastUpdate: '2024-05-10 08:45:35',
-    alerts: [],
-  },
-];
-
 const tvlTrendOption = {
   tooltip: { trigger: 'axis' },
   legend: { data: ['GXT-USDT', 'ETH-USDT', 'BNB-USDT'] },
@@ -123,16 +48,17 @@ const volumeDistributionOption = {
   }],
 };
 
-const flowHistory = [
-  { id: '1', type: 'add', pool: 'GXT-USDT', amount: 50000, token: 'USDT', time: '2024-05-10 08:45:32', txHash: '0xaaa...bbb' },
-  { id: '2', type: 'remove', pool: 'ETH-USDT', amount: 2.5, token: 'ETH', time: '2024-05-10 08:45:28', txHash: '0xccc...ddd' },
-  { id: '3', type: 'add', pool: 'BNB-USDT', amount: 10000, token: 'USDT', time: '2024-05-10 08:45:15', txHash: '0xeee...fff' },
-  { id: '4', type: 'swap', pool: 'GXT-USDT', from: 'GXT', to: 'USDT', amount: 1000, time: '2024-05-10 08:45:08', txHash: '0xggg...hhh' },
-  { id: '5', type: 'add', pool: 'GXT-ETH', amount: 50000, token: 'GXT', time: '2024-05-10 08:44:55', txHash: '0xiii...jjj' },
-];
-
 export default function LiquidityPage() {
+  const [liquidityPools, setLiquidityPools] = useState<any[]>([]);
+  const [loadingPools, setLoadingPools] = useState(true);
   const [selectedPool, setSelectedPool] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/defi/liquidity').then(r => r.json()).then(d => {
+      if (Array.isArray(d.data)) setLiquidityPools(d.data);
+      setLoadingPools(false);
+    }).catch(() => setLoadingPools(false));
+  }, []);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [filterVisible, setFilterVisible] = useState(false);
@@ -178,10 +104,10 @@ export default function LiquidityPage() {
     },
   ];
 
-  const totalTVL = mockLiquidityPools.reduce((sum, pool) => sum + pool.tvl, 0);
-  const totalVolume = mockLiquidityPools.reduce((sum, pool) => sum + pool.volume24h, 0);
-  const avgAPR = (mockLiquidityPools.reduce((sum, pool) => sum + pool.apr, 0) / mockLiquidityPools.length).toFixed(1);
-  const warningCount = mockLiquidityPools.filter(p => p.status === 'warning').length;
+  const totalTVL = liquidityPools.reduce((sum: number, pool: any) => sum + pool.tvl, 0);
+  const totalVolume = liquidityPools.reduce((sum: number, pool: any) => sum + pool.volume24h, 0);
+  const avgAPR = liquidityPools.length > 0 ? (liquidityPools.reduce((sum: number, pool: any) => sum + pool.apr, 0) / liquidityPools.length).toFixed(1) : '0';
+  const warningCount = liquidityPools.filter((p: any) => p.status === 'warning').length;
 
   const menu = (
     <Menu>
@@ -239,12 +165,12 @@ export default function LiquidityPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic title="平均APR" value={Number(avgAPR)} suffix="%" valueStyle={{ color: '#3f8600' }} />
-              <div className="text-gray-400 text-sm mt-1">最高 {Math.max(...mockLiquidityPools.map(p => p.apr))}%</div>
+              <div className="text-gray-400 text-sm mt-1">最高 {liquidityPools.length > 0 ? Math.max(...liquidityPools.map((p: any) => p.apr)) : 0}%</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card>
-              <Statistic title="流动性池" value={mockLiquidityPools.length} suffix={`/ ${warningCount} 警告`} />
+              <Statistic title="流动性池" value={liquidityPools.length} suffix={`/ ${warningCount} 警告`} />
               <div className="text-gray-400 text-sm mt-1">全部正常运行</div>
             </Card>
           </Col>
@@ -265,7 +191,8 @@ export default function LiquidityPage() {
 
         <Card title="流动性池监控">
           <Table
-            dataSource={mockLiquidityPools}
+            dataSource={liquidityPools}
+            loading={loadingPools}
             columns={columns}
             pagination={{ showSizeChanger: true, showQuickJumper: true, showTotal: (total) => `共 ${total} 个流动性池` }}
             rowKey="id"
@@ -275,7 +202,7 @@ export default function LiquidityPage() {
 
         <Card title="资金流动追踪">
           <Table
-            dataSource={flowHistory}
+            dataSource={[]}
             columns={[
               { title: '类型', dataIndex: 'type', key: 'type', render: (type: string) => {
                 const typeMap = { add: { color: 'green', text: '添加流动性' }, remove: { color: 'red', text: '移除流动性' }, swap: { color: 'blue', text: '兑换' } };

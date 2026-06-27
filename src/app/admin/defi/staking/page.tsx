@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card, Row, Col, Statistic, Table, Tag, Button, Space, Progress, Modal,
   Form, Input, InputNumber, Select, Badge, Drawer, Descriptions, DatePicker,
@@ -11,68 +11,6 @@ import {
 } from '@ant-design/icons';
 import SafeECharts from '@/components/admin/SafeECharts';
 import AdminLayout from '@/components/admin/AdminLayout';
-
-const mockStakingPools = [
-  {
-    id: '1',
-    name: 'GXT 质押池',
-    token: 'GXT',
-    tokenAddress: '0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1',
-    apr: 18.5,
-    minStake: 100,
-    maxStake: 100000,
-    lockPeriod: 30,
-    totalStaked: 2580000,
-    activeUsers: 3250,
-    status: 'active',
-    createdAt: '2024-01-15',
-    updatedAt: '2024-05-10',
-    configHistory: [
-      { version: 'v1.2.0', date: '2024-05-10', changes: '调整APR至18.5%' },
-      { version: 'v1.1.0', date: '2024-03-01', changes: '增加质押上限至10万' },
-      { version: 'v1.0.0', date: '2024-01-15', changes: '初始配置' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'ETH 质押池',
-    token: 'ETH',
-    tokenAddress: '0xabcdef1234567890abcdef1234567890abcdef12',
-    apr: 12.8,
-    minStake: 0.1,
-    maxStake: 1000,
-    lockPeriod: 90,
-    totalStaked: 1850,
-    activeUsers: 1820,
-    status: 'active',
-    createdAt: '2024-02-01',
-    updatedAt: '2024-05-08',
-    configHistory: [
-      { version: 'v1.1.0', date: '2024-05-08', changes: '延长锁定期至90天' },
-      { version: 'v1.0.0', date: '2024-02-01', changes: '初始配置' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'USDT 稳定币质押',
-    token: 'USDT',
-    tokenAddress: '0xdac17f958d2ee523a2206206994597c13d831ec7',
-    apr: 8.5,
-    minStake: 1000,
-    maxStake: 500000,
-    lockPeriod: 0,
-    totalStaked: 8500000,
-    activeUsers: 5680,
-    status: 'paused',
-    createdAt: '2024-01-20',
-    updatedAt: '2024-05-05',
-    configHistory: [
-      { version: 'v1.2.0', date: '2024-05-05', changes: '暂停质押功能' },
-      { version: 'v1.1.0', date: '2024-04-01', changes: '调整APR至8.5%' },
-      { version: 'v1.0.0', date: '2024-01-20', changes: '初始配置' },
-    ],
-  },
-];
 
 const stakeTrendOption = {
   tooltip: { trigger: 'axis' },
@@ -87,15 +25,26 @@ const stakeTrendOption = {
   ],
 };
 
-const stakingRecords = [
-  { id: 'tx-001', user: '0xaaa...bbb', amount: 5000, token: 'GXT', stakeTime: '2024-05-10 08:30:25', lockPeriod: 30, status: 'staking' },
-  { id: 'tx-002', user: '0xccc...ddd', amount: 2.5, token: 'ETH', stakeTime: '2024-05-10 08:25:18', lockPeriod: 90, status: 'staking' },
-  { id: 'tx-003', user: '0xeee...fff', amount: 10000, token: 'USDT', stakeTime: '2024-05-10 08:20:45', lockPeriod: 0, status: 'unstaked' },
-  { id: 'tx-004', user: '0xggg...hhh', amount: 1000, token: 'GXT', stakeTime: '2024-05-10 08:15:32', lockPeriod: 30, status: 'staking' },
-];
-
 export default function StakingPage() {
+  const [stakingPools, setStakingPools] = useState<any[]>([]);
+  const [stakingRecords, setStakingRecords] = useState<any[]>([]);
+  const [loadingPools, setLoadingPools] = useState(true);
+  const [loadingRecords, setLoadingRecords] = useState(true);
   const [selectedPool, setSelectedPool] = useState<any>(null);
+
+  useEffect(() => {
+    fetch('/api/admin/defi/staking').then(r => r.json()).then(d => {
+      if (Array.isArray(d.data)) setStakingPools(d.data);
+      setLoadingPools(false);
+    }).catch(() => setLoadingPools(false));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/admin/staking/records?pageSize=50').then(r => r.json()).then(d => {
+      if (d.data?.items) setStakingRecords(d.data.items);
+      setLoadingRecords(false);
+    }).catch(() => setLoadingRecords(false));
+  }, []);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [configDrawerVisible, setConfigDrawerVisible] = useState(false);
   const [versionHistoryVisible, setVersionHistoryVisible] = useState(false);
@@ -124,9 +73,9 @@ export default function StakingPage() {
     },
   ];
 
-  const totalStaked = mockStakingPools.reduce((sum, pool) => sum + pool.totalStaked, 0);
-  const totalUsers = mockStakingPools.reduce((sum, pool) => sum + pool.activeUsers, 0);
-  const avgAPR = (mockStakingPools.reduce((sum, pool) => sum + pool.apr, 0) / mockStakingPools.length).toFixed(1);
+  const totalStaked = stakingPools.reduce((sum: number, pool: any) => sum + pool.totalStaked, 0);
+  const totalUsers = stakingPools.reduce((sum: number, pool: any) => sum + pool.activeUsers, 0);
+  const avgAPR = stakingPools.length > 0 ? (stakingPools.reduce((sum: number, pool: any) => sum + pool.apr, 0) / stakingPools.length).toFixed(1) : '0';
 
   const toggleRow = (record: any) => {
     const key = record.id.toString();
@@ -151,12 +100,12 @@ export default function StakingPage() {
           <Col xs={24} sm={12} md={6}>
             <Card>
               <Statistic title="平均APR" value={Number(avgAPR)} suffix="%" valueStyle={{ color: '#3f8600' }} />
-              <div className="text-gray-400 text-sm mt-1">最高 {Math.max(...mockStakingPools.map(p => p.apr))}%</div>
+              <div className="text-gray-400 text-sm mt-1">最高 {stakingPools.length > 0 ? Math.max(...stakingPools.map((p: any) => p.apr)) : 0}%</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card>
-              <Statistic title="活跃质押池" value={mockStakingPools.filter(p => p.status === 'active').length} suffix={`/ ${mockStakingPools.length}`} />
+              <Statistic title="活跃质押池" value={stakingPools.filter((p: any) => p.status === 'active').length} suffix={`/ ${stakingPools.length}`} />
               <div className="text-gray-400 text-sm mt-1">运行中</div>
             </Card>
           </Col>
@@ -174,7 +123,8 @@ export default function StakingPage() {
 
         <Card title="质押池列表">
           <Table
-            dataSource={mockStakingPools}
+            dataSource={stakingPools}
+            loading={loadingPools}
             columns={columns}
             expandable={{
               expandedRowKeys,
@@ -212,6 +162,7 @@ export default function StakingPage() {
         <Card title="最新质押记录">
           <Table
             dataSource={stakingRecords}
+              loading={loadingRecords}
             columns={[
               { title: '交易ID', dataIndex: 'id', key: 'id', render: (text: string) => <span className="font-mono text-sm">{text}</span> },
               { title: '用户地址', dataIndex: 'user', key: 'user', render: (text: string) => <span className="font-mono text-sm">{text}</span> },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, Input, InputNumber, Select, Switch, Badge } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined, ArrowUpOutlined, ArrowDownOutlined, SettingOutlined } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -26,7 +26,40 @@ const mockTokens = [
 ];
 
 export default function DexPairsPage() {
+  const [pairs, setPairs] = useState<any[]>([]);
+  const [tokens, setTokens] = useState<any[]>([]);
+  const [loadingPairs, setLoadingPairs] = useState(true);
+  const [loadingTokens, setLoadingTokens] = useState(true);
   const [isModalVisible, setIsModalVisible] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/cex/pairs').then(r => r.json()).then(d => {
+      if (d.data) {
+        const mapped = d.data.map((p: any) => ({
+          id: p.id,
+          name: p.symbol,
+          tokenA: p.base,
+          tokenB: p.quote,
+          price: 0,
+          change24h: 0,
+          volume24h: 0,
+          liquidity: 0,
+          feeRate: p.takerFeeRate * 100,
+          enabled: p.status === 'online',
+          popular: false,
+        }));
+        setPairs(mapped);
+      }
+      setLoadingPairs(false);
+    }).catch(() => setLoadingPairs(false));
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/admin/wallet/currencies').then(r => r.json()).then(d => {
+      if (Array.isArray(d.data)) setTokens(d.data);
+      setLoadingTokens(false);
+    }).catch(() => setLoadingTokens(false));
+  }, []);
   const [editingPair, setEditingPair] = useState(null);
   const [form] = Form.useForm();
 
@@ -124,9 +157,9 @@ export default function DexPairsPage() {
     });
   };
 
-  const totalLiquidity = mockPairs.filter(p => p.enabled).reduce((sum, p) => sum + p.liquidity, 0);
-  const totalVolume = mockPairs.reduce((sum, p) => sum + p.volume24h, 0);
-  const activePairs = mockPairs.filter(p => p.enabled).length;
+  const totalLiquidity = pairs.filter(p => p.enabled).reduce((sum: number, p: any) => sum + p.liquidity, 0);
+  const totalVolume = pairs.reduce((sum: number, p: any) => sum + p.volume24h, 0);
+  const activePairs = pairs.filter((p: any) => p.enabled).length;
 
   return (
     <AdminLayout>
@@ -165,14 +198,14 @@ export default function DexPairsPage() {
             <Card>
               <div className="text-gray-500 text-sm">活跃交易对</div>
               <div className="text-2xl font-bold text-blue-600">{activePairs}</div>
-              <div className="text-gray-400 text-sm mt-1">总计: {mockPairs.length}</div>
+              <div className="text-gray-400 text-sm mt-1">总计: {pairs.length}</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card>
               <div className="text-gray-500 text-sm">代币数</div>
-              <div className="text-2xl font-bold text-orange-600">{mockTokens.length}</div>
-              <div className="text-gray-400 text-sm mt-1">已上线: {mockTokens.filter(t => t.active).length}</div>
+              <div className="text-2xl font-bold text-orange-600">{tokens.length}</div>
+              <div className="text-gray-400 text-sm mt-1">已上线: {tokens.filter((t: any) => t.active).length}</div>
             </Card>
           </Col>
         </Row>
@@ -180,7 +213,8 @@ export default function DexPairsPage() {
         {/* 交易对列表 */}
         <Card title="交易对列表">
           <Table
-            dataSource={mockPairs}
+            dataSource={pairs}
+            loading={loadingPairs}
             columns={pairColumns}
             pagination={{ pageSize: 10 }}
             rowKey="id"
@@ -190,7 +224,8 @@ export default function DexPairsPage() {
         {/* 代币列表 */}
         <Card title="代币列表">
           <Table
-            dataSource={mockTokens}
+            dataSource={tokens}
+            loading={loadingTokens}
             columns={tokenColumns}
             pagination={{ pageSize: 10 }}
             rowKey="id"
@@ -210,7 +245,7 @@ export default function DexPairsPage() {
               <Col span={12}>
                 <Form.Item label="代币A" name="tokenA" rules={[{ required: true, message: '请选择代币A' }]}>
                   <Select placeholder="选择代币A">
-                    {mockTokens.map((t) => (
+                    {tokens.map((t: any) => (
                       <Option key={t.id} value={t.symbol}>{t.symbol}</Option>
                     ))}
                   </Select>
@@ -219,7 +254,7 @@ export default function DexPairsPage() {
               <Col span={12}>
                 <Form.Item label="代币B" name="tokenB" rules={[{ required: true, message: '请选择代币B' }]}>
                   <Select placeholder="选择代币B">
-                    {mockTokens.map((t) => (
+                    {tokens.map((t: any) => (
                       <Option key={t.id} value={t.symbol}>{t.symbol}</Option>
                     ))}
                   </Select>
