@@ -1,20 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Form, Input, InputNumber, Select, Statistic, Tabs, Badge } from 'antd';
 import { ArrowUpOutlined, ArrowDownOutlined, ShoppingCartOutlined, HistoryOutlined, SyncOutlined, SettingOutlined } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
 
 const { Option } = Select;
-
-// 模拟交易对数据
-const mockTradingPairs = [
-  { id: '1', symbol: 'GXT/USDT', base: 'GXT', quote: 'USDT', price: 0.8523, change: 2.56, volume24h: 1250000, high24h: 0.8850, low24h: 0.8230 },
-  { id: '2', symbol: 'ETH/USDT', base: 'ETH', quote: 'USDT', price: 3285.50, change: -1.23, volume24h: 8500000, high24h: 3350.00, low24h: 3250.00 },
-  { id: '3', symbol: 'BTC/USDT', base: 'BTC', quote: 'USDT', price: 67523.80, change: 0.85, volume24h: 15200000, high24h: 68000.00, low24h: 67000.00 },
-  { id: '4', symbol: 'BNB/USDT', base: 'BNB', quote: 'USDT', price: 612.35, change: -0.45, volume24h: 2300000, high24h: 625.00, low24h: 608.00 },
-  { id: '5', symbol: 'SOL/USDT', base: 'SOL', quote: 'USDT', price: 178.90, change: 3.21, volume24h: 4500000, high24h: 182.50, low24h: 175.00 },
-];
 
 // 模拟订单簿数据
 const mockOrderBook = {
@@ -49,6 +40,33 @@ export default function SpotTradingPage() {
   const [side, setSide] = useState('buy');
   const [price, setPrice] = useState(0.8523);
   const [amount, setAmount] = useState(100);
+  const [tradingPairs, setTradingPairs] = useState<any[]>([]);
+  const [loadingPairs, setLoadingPairs] = useState(false);
+
+  useEffect(() => {
+    setLoadingPairs(true);
+    fetch('/api/admin/cex/pairs', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items: any[] = d?.data ?? [];
+        setTradingPairs(items.map((p) => ({
+          id: p.id,
+          symbol: `${p.base}/${p.quote}`,
+          base: p.base,
+          quote: p.quote,
+          price: 0,
+          change: 0,
+          volume24h: 0,
+          high24h: 0,
+          low24h: 0,
+          totalOrders: p.totalOrders,
+          totalTrades: p.totalTrades,
+          status: p.status,
+        })));
+      })
+      .catch(() => setTradingPairs([]))
+      .finally(() => setLoadingPairs(false));
+  }, []);
 
   const columns = [
     { 
@@ -186,7 +204,8 @@ export default function SpotTradingPage() {
 
             <Card title="交易对列表">
               <Table
-                dataSource={mockTradingPairs}
+                dataSource={tradingPairs}
+                loading={loadingPairs}
                 columns={columns}
                 pagination={{ pageSize: 10 }}
                 rowKey="id"
