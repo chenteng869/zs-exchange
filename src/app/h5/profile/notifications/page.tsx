@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Bell,
   Check,
@@ -9,15 +9,51 @@ import {
   TrendingUp,
   Gift,
   Shield,
-  Activity,
-  Trash2,
 } from 'lucide-react';
-import { getNotifications, NotificationItem } from '@/lib/h5-mock';
+
+interface NotificationItem {
+  id: string;
+  type: 'system' | 'trade' | 'activity';
+  title: string;
+  content: string;
+  read: boolean;
+  time: string;
+}
+
+function fromApi(n: any): NotificationItem {
+  const ts = n.createdAt ? new Date(n.createdAt) : new Date();
+  const diff = Date.now() - ts.getTime();
+  const mins = Math.floor(diff / 60000);
+  const hrs = Math.floor(mins / 60);
+  const days = Math.floor(hrs / 24);
+  const time = days > 0 ? `${days}天前` : hrs > 0 ? `${hrs}小时前` : mins > 1 ? `${mins}分钟前` : '刚刚';
+
+  return {
+    id: n.id,
+    type: (['system', 'trade', 'activity'].includes(n.type) ? n.type : 'system') as NotificationItem['type'],
+    title: n.title ?? '通知',
+    content: n.content ?? n.body ?? '',
+    read: !!n.read,
+    time,
+  };
+}
 
 export default function H5ProfileNotificationsPage() {
-  const all = getNotifications();
-  const [items, setItems] = useState<NotificationItem[]>(all);
+  const [items, setItems] = useState<NotificationItem[]>([]);
   const [tab, setTab] = useState<'all' | 'unread' | 'system' | 'trade' | 'activity'>('all');
+
+  useEffect(() => {
+    let alive = true;
+    fetch('/api/v1/user/notifications?page=1&limit=50')
+      .then((r) => r.json())
+      .then((d) => {
+        if (!alive) return;
+        const list: any[] = d?.data?.items ?? d?.data?.data ?? [];
+        setItems(list.map(fromApi));
+      })
+      .catch(() => { if (alive) setItems([]); });
+    return () => { alive = false; };
+  }, []);
 
   const filtered = items.filter((it) => {
     if (tab === 'all') return true;
@@ -25,14 +61,22 @@ export default function H5ProfileNotificationsPage() {
     return it.type === tab;
   });
 
-  const markAllRead = () => {
+  const markAllRead = async () => {
     setItems((arr) => arr.map((it) => ({ ...it, read: true })));
+    await fetch('/api/v1/user/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'mark-all-read' }),
+    }).catch(() => {});
   };
 
-  const clearAll = () => setItems([]);
-
-  const toggleRead = (id: string) => {
+  const toggleRead = async (id: string) => {
     setItems((arr) => arr.map((it) => (it.id === id ? { ...it, read: !it.read } : it)));
+    await fetch('/api/v1/user/notifications', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'mark-read', id }),
+    }).catch(() => {});
   };
 
   const unreadCount = items.filter((it) => !it.read).length;
@@ -79,12 +123,6 @@ export default function H5ProfileNotificationsPage() {
           style={actionBtnStyle('#38BDF8')}
         >
           <CheckCheck size={12} /> 全部已读
-        </button>
-        <button
-          onClick={clearAll}
-          style={actionBtnStyle('#F472B6')}
-        >
-          <Trash2 size={12} /> 清空
         </button>
       </div>
 
