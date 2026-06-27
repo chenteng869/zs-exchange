@@ -3,17 +3,49 @@
 /**
  * H5 合约资产页
  */
+import { useEffect, useMemo, useState } from 'react';
 import { TrendingUp, TrendingDown, Activity, AlertCircle } from 'lucide-react';
+import { perpApi, type PerpPosition, type PerpAccount } from '@/lib/api/perp';
 
-const FUTURES_POSITIONS = [
-  { id: 'P1', pair: 'BTC/USDT',  side: 'long',  leverage: 20, size: '2,500.00', entry: '67,500.00', mark: '67,842.50', pnl: '+85.50',  pnlPct: '+1.27%', margin: '125.00' },
-  { id: 'P2', pair: 'ETH/USDT',  side: 'short', leverage: 10, size: '1,500.00', entry: '3,520.00', mark: '3,512.80',  pnl: '+3.20',   pnlPct: '+0.32%', margin: '150.00' },
-  { id: 'P3', pair: 'SOL/USDT',  side: 'long',  leverage: 5,  size: '500.00',   entry: '180.00',   mark: '182.45',    pnl: '-12.50',  pnlPct: '-2.50%', margin: '100.00' },
-];
+function h5Symbol(symbol: string) {
+  if (symbol.endsWith('USDT')) return `${symbol.slice(0, -4)}/USDT`;
+  return symbol;
+}
+
+function fmtNum(v: string | number, decimals = 2) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return '--';
+  return n.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
 
 export default function H5FuturesPage() {
-  const totalPnl = FUTURES_POSITIONS.reduce((s, p) => s + parseFloat(p.pnl.replace(/[+%]/g, '').replace('-', '-') || '0'), 0);
-  const totalMargin = FUTURES_POSITIONS.reduce((s, p) => s + parseFloat(p.margin), 0);
+  const [positions, setPositions] = useState<PerpPosition[]>([]);
+  const [account, setAccount] = useState<PerpAccount | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+
+    Promise.all([perpApi.getPositions(), perpApi.getAccount()])
+      .then(([pos, acct]) => {
+        if (!alive) return;
+        setPositions(pos.positions ?? []);
+        setAccount(acct);
+      })
+      .catch(() => {
+        if (!alive) return;
+      });
+
+    return () => { alive = false; };
+  }, []);
+
+  const totalPnl = useMemo(
+    () => positions.reduce((s, p) => s + Number(p.unrealizedPnl || 0), 0),
+    [positions],
+  );
+  const totalMargin = useMemo(
+    () => account ? Number(account.walletBalance || 0) : positions.reduce((s, p) => s + Number(p.margin || 0), 0),
+    [positions, account],
+  );
 
   return (
     <div style={{ padding: '12px' }}>
@@ -79,12 +111,23 @@ export default function H5FuturesPage() {
           }}
         />
         <span style={{ fontSize: 15, fontWeight: 700, color: '#F8FAFC' }}>当前持仓</span>
-        <span style={{ fontSize: 11, color: '#7B89B8', marginLeft: 4 }}>{FUTURES_POSITIONS.length} 笔</span>
+        <span style={{ fontSize: 11, color: '#7B89B8', marginLeft: 4 }}>{positions.length} 笔</span>
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {FUTURES_POSITIONS.map((p) => {
-          const isProfit = p.pnl.startsWith('+');
+        {positions.length === 0 && (
+          <div style={{ padding: 24, textAlign: 'center', color: '#7B89B8', fontSize: 12 }}>
+            暂无持仓
+          </div>
+        )}
+        {positions.map((p) => {
+          const pnl = Number(p.unrealizedPnl || 0);
+          const pnlPct = Number(p.unrealizedPnlPercent || 0);
+          const isProfit = pnl >= 0;
+          const pair = h5Symbol(p.symbol);
+          const posQty = Number(p.positionQty || 0);
+          const entryPrice = Number(p.entryPrice || 0);
+          const size = posQty * entryPrice;
           return (
             <div
               key={p.id}
@@ -106,7 +149,7 @@ export default function H5FuturesPage() {
                   >
                     {p.side === 'long' ? '做多' : '做空'} {p.leverage}x
                   </span>
-                  <span style={{ fontSize: 13, color: '#F8FAFC', fontWeight: 600 }}>{p.pair}</span>
+                  <span style={{ fontSize: 13, color: '#F8FAFC', fontWeight: 600 }}>{pair}</span>
                 </div>
                 <div
                   style={{
@@ -114,14 +157,14 @@ export default function H5FuturesPage() {
                     color: isProfit ? '#34D399' : '#F472B6',
                   }}
                 >
-                  {p.pnl} <span style={{ fontSize: 11, fontWeight: 500 }}>{p.pnlPct}</span>
+                  {isProfit ? '+' : ''}{fmtNum(pnl)} <span style={{ fontSize: 11, fontWeight: 500 }}>{isProfit ? '+' : ''}{pnlPct.toFixed(2)}%</span>
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                <Cell label="持仓价值" value={p.size} />
-                <Cell label="开仓价"   value={p.entry} />
-                <Cell label="标记价"   value={p.mark} />
+                <Cell label="持仓价值" value={fmtNum(size)} />
+                <Cell label="开仓价"   value={fmtNum(p.entryPrice)} />
+                <Cell label="标记价"   value={fmtNum(p.markPrice)} />
               </div>
             </div>
           );

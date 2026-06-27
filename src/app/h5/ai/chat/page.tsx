@@ -13,14 +13,6 @@ const SEED: Msg[] = [
   { role: 'ai', text: '你可以直接输入问题，或点击下方快捷问题开始 ✨' },
 ];
 
-function fakeAIResponse(q: string): string {
-  if (q.includes('BTC')) return '当前 BTC 报价 $68,420，24h +2.3%。\nAI 趋势研判：短线震荡偏多，注意 67,800 支撑。\n建议关注：突破 69,000 可轻仓做多，止损 67,500。';
-  if (q.includes('热门')) return '今日热门 TOP 3：\n1. SOL  +8.4%  突破压力位\n2. PEPE +12.1% MEME 轮动\n3. TON  +5.2% 消息面催化';
-  if (q.includes('合约')) return '开通合约步骤：\n1. 完成 KYC 二级认证\n2. 划转 USDT 至合约账户\n3. 进入"交易 → 永续合约"\n\n目前合约手续费 Maker 0.02% / Taker 0.05%，VIP 等级越高越优惠。';
-  if (q.includes('OTC')) return 'OTC 单笔限额：\n• 基础用户  ¥100 - ¥50,000\n• 高级 KYC  ¥100 - ¥500,000\n• 商家用户  无上限\n\n大额请联系商家走担保交易。';
-  return '已收到你的问题：「' + q + '」\n我正在调度最合适的 AI 模型为你解答，请稍候 ⏳';
-}
-
 export default function H5AIChatPage() {
   const [msgs, setMsgs] = useState<Msg[]>(SEED);
   const [input, setInput] = useState('');
@@ -29,15 +21,26 @@ export default function H5AIChatPage() {
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, thinking]);
 
-  const send = (text: string) => {
+  const send = async (text: string) => {
     if (!text.trim() || thinking) return;
-    setMsgs((m) => [...m, { role: 'user', text }]);
+    const userMsg: Msg = { role: 'user', text };
+    setMsgs((m) => [...m, userMsg]);
     setInput('');
     setThinking(true);
-    setTimeout(() => {
-      setMsgs((m) => [...m, { role: 'ai', text: fakeAIResponse(text) }]);
+    try {
+      const res = await fetch('/api/v1/ai/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, history: msgs.slice(-6) }),
+      });
+      const data = await res.json();
+      const reply = data?.data?.reply || '抱歉，AI 暂时无法回复，请稍后再试。';
+      setMsgs((m) => [...m, { role: 'ai', text: reply }]);
+    } catch {
+      setMsgs((m) => [...m, { role: 'ai', text: '网络异常，请检查连接后重试。' }]);
+    } finally {
       setThinking(false);
-    }, 900);
+    }
   };
 
   return (
