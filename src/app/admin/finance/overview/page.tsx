@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -26,100 +26,31 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockRecentFlow = [
-  {
-    id: 'FLW-001',
-    type: '收入',
-    amount: 45678.5,
-    currency: 'USDT',
-    date: '2024-06-23 14:32',
-    source: '现货交易手续费',
-    status: 'confirmed',
-  },
-  {
-    id: 'FLW-002',
-    type: '支出',
-    amount: -12345.0,
-    currency: 'USDT',
-    date: '2024-06-23 13:15',
-    source: 'AWS服务器费用',
-    status: 'processing',
-  },
-  {
-    id: 'FLW-003',
-    type: '收入',
-    amount: 28900.25,
-    currency: 'ETH',
-    date: '2024-06-23 12:08',
-    source: '合约交易手续费',
-    status: 'confirmed',
-  },
-  {
-    id: 'FLW-004',
-    type: '收入',
-    amount: 15670.8,
-    currency: 'USDT',
-    date: '2024-06-23 11:45',
-    source: '提现手续费',
-    status: 'confirmed',
-  },
-  {
-    id: 'FLW-005',
-    type: '支出',
-    amount: -8923.5,
-    currency: 'USDT',
-    date: '2024-06-23 10:22',
-    source: 'CDN流量费用',
-    status: 'pending',
-  },
-  {
-    id: 'FLW-006',
-    type: '收入',
-    amount: 34210.0,
-    currency: 'BNB',
-    date: '2024-06-23 09:56',
-    source: '杠杆借贷利息',
-    status: 'confirmed',
-  },
-  {
-    id: 'FLW-007',
-    type: '收入',
-    amount: 9876.75,
-    currency: 'USDT',
-    date: '2024-06-23 08:33',
-    source: 'VIP订阅费',
-    status: 'confirmed',
-  },
-  {
-    id: 'FLW-008',
-    type: '支出',
-    amount: -23456.0,
-    currency: 'BTC',
-    date: '2024-06-23 07:18',
-    source: '安全审计服务',
-    status: 'processing',
-  },
-  {
-    id: 'FLW-009',
-    type: '收入',
-    amount: 51234.5,
-    currency: 'USDT',
-    date: '2024-06-22 16:42',
-    source: 'NFT交易佣金',
-    status: 'confirmed',
-  },
-  {
-    id: 'FLW-010',
-    type: '支出',
-    amount: -6789.25,
-    currency: 'USDT',
-    date: '2024-06-22 15:27',
-    source: '客服系统维护',
-    status: 'confirmed',
-  },
-];
-
 export default function FinanceOverviewDetailPage() {
+  const [recentFlow, setRecentFlow] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/finance/fees?pageSize=50', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items = (d?.data?.items ?? []).map((r: any) => ({
+          id: r.id.slice(0, 12),
+          type: r.type,
+          amount: r.amount,
+          currency: r.currency,
+          date: r.createdAt?.slice(0, 16).replace('T', ' ') ?? r.date,
+          source: r.category,
+          status: r.status,
+        }));
+        setRecentFlow(items);
+      })
+      .catch(() => setRecentFlow([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+
   const getTrendTag = (isUp: boolean) => {
     return isUp ? (
       <Tag color="success" icon={<RiseOutlined />}>上升</Tag>
@@ -342,7 +273,8 @@ export default function FinanceOverviewDetailPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockRecentFlow}
+            dataSource={recentFlow}
+            loading={loading}
             title="近期资金流水"
             rowKey="id"
             actions={actions}

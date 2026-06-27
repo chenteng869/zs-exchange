@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -26,118 +26,20 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockFinanceData = [
-  {
-    id: 'FIN-2024-001',
-    type: '收入',
-    amount: 125000.0,
-    currency: 'USDT',
-    date: '2024-06-23',
-    category: '交易手续费',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-002',
-    type: '支出',
-    amount: -45600.5,
-    currency: 'USDT',
-    date: '2024-06-22',
-    category: '运营成本',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-003',
-    type: '收入',
-    amount: 89200.75,
-    currency: 'USDT',
-    date: '2024-06-22',
-    category: '提现手续费',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-004',
-    type: '支出',
-    amount: -23400.0,
-    currency: 'BTC',
-    date: '2024-06-21',
-    category: '服务器费用',
-    status: 'pending',
-  },
-  {
-    id: 'FIN-2024-005',
-    type: '收入',
-    amount: 67800.25,
-    currency: 'ETH',
-    date: '2024-06-21',
-    category: '杠杆利息',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-006',
-    type: '支出',
-    amount: -125000.0,
-    currency: 'USDT',
-    date: '2024-06-20',
-    category: '市场推广',
-    status: 'processing',
-  },
-  {
-    id: 'FIN-2024-007',
-    type: '收入',
-    amount: 38900.5,
-    currency: 'USDT',
-    date: '2024-06-20',
-    category: '订阅服务费',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-008',
-    type: '收入',
-    amount: 256000.0,
-    currency: 'USDT',
-    date: '2024-06-19',
-    category: '交易手续费',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-009',
-    type: '支出',
-    amount: -19200.0,
-    currency: 'USDT',
-    date: '2024-06-19',
-    category: '合规审计',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-010',
-    type: '收入',
-    amount: 76400.75,
-    currency: 'BNB',
-    date: '2024-06-18',
-    category: 'DEX流动性奖励',
-    status: 'completed',
-  },
-  {
-    id: 'FIN-2024-011',
-    type: '支出',
-    amount: -52300.0,
-    currency: 'USDT',
-    date: '2024-06-18',
-    category: '人员薪资',
-    status: 'pending',
-  },
-  {
-    id: 'FIN-2024-012',
-    type: '收入',
-    amount: 145000.25,
-    currency: 'USDT',
-    date: '2024-06-17',
-    category: 'NFT交易佣金',
-    status: 'completed',
-  },
-];
-
 export default function FinanceOverviewPage() {
+  const [financeData, setFinanceData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/finance/fees?pageSize=100', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setFinanceData(d?.data?.items ?? []))
+      .catch(() => setFinanceData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+
   const getTypeTag = (type: string) => {
     if (type === '收入') return <Tag color="success">{type}</Tag>;
     return <Tag color="error">{type}</Tag>;
@@ -244,12 +146,12 @@ export default function FinanceOverviewPage() {
     },
   ];
 
-  const totalIncome = mockFinanceData
+  const totalIncome = financeData
     .filter((item) => item.type === '收入')
     .reduce((sum, item) => sum + item.amount, 0);
   const totalExpense = Math.abs(
-    mockFinanceData
-      .filter((item) => item.type === '支出')
+    financeData
+    .filter((item) => item.type === '支出')
       .reduce((sum, item) => sum + item.amount, 0)
   );
   const netProfit = totalIncome - totalExpense;
@@ -350,7 +252,8 @@ export default function FinanceOverviewPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockFinanceData}
+            dataSource={financeData}
+            loading={loading}
             title="近期财务流水"
             rowKey="id"
             actions={actions}
