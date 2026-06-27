@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { Row, Col, Card, Table, Tag, Button, Input, Select, Space, message, DatePicker, Badge, Statistic, Tooltip } from 'antd';
 import {
   FileSearchOutlined,
@@ -34,22 +33,6 @@ interface AuditLogEntry {
   timestamp: string;
   userAgent?: string;
 }
-
-// 模拟审计日志数据
-const mockAuditLogs: AuditLogEntry[] = [
-  { id: 'LOG-20240608-001', operator: 'admin', operatorRole: '超级管理员', ipAddress: '192.168.1.100', action: '用户封禁', module: '用户管理', detail: '封禁用户 suspicious_user_007 (原因: 多次异常交易)', result: 'success', timestamp: '2024-06-08 14:35:22', userAgent: 'Chrome/125.0' },
-  { id: 'LOG-20240608-002', operator: 'zhang_wei', operatorRole: '安全管理员', ipAddress: '192.168.1.105', action: '防火墙规则修改', module: '防火墙管理', detail: '更新规则 FW-003: 将动作从 deny 改为 reject', result: 'success', timestamp: '2024-06-08 14:28:15', userAgent: 'Firefox/126.0' },
-  { id: 'LOG-20240608-003', operator: 'li_ming', operatorRole: '安全分析师', ipAddress: '192.168.1.110', action: '查看漏洞报告', module: '漏洞扫描', detail: '下载扫描任务 STK-001 的完整报告 (PDF)', result: 'success', timestamp: '2024-06-08 14:15:43', userAgent: 'Safari/17.4' },
-  { id: 'LOG-20240608-004', operator: 'wang_fang', operatorRole: '应急响应专员', ipAddress: '10.0.0.55', action: '处理安全事件', module: '入侵检测', detail: '确认并处理入侵事件 INC-20240608-003 (DDoS攻击)', result: 'success', timestamp: '2024-06-08 13:58:30', userAgent: 'Edge/124.0' },
-  { id: 'LOG-20240608-005', operator: 'unknown_user', operatorRole: '-', ipAddress: '203.0.113.50', action: '登录失败', module: '认证系统', detail: '管理员登录失败 - 密码错误 (尝试次数: 15)', result: 'failed', timestamp: '2024-06-08 13:45:18', userAgent: 'Python-requests/2.31' },
-  { id: 'LOG-20240608-006', operator: 'zhao_jun', operatorRole: '合规审计员', ipAddress: '172.16.0.88', action: '导出审计日志', module: '审计管理', detail: '导出 2024-06-01 至 2024-06-07 的操作日志 (CSV格式)', result: 'success', timestamp: '2024-06-08 13:30:05', userAgent: 'Chrome/125.0' },
-  { id: 'LOG-20240608-007', operator: 'chen_hui', operatorRole: '运维工程师', ipAddress: '192.168.1.120', action: '密钥轮换', module: '加密管理', detail: '执行数据库加密密钥定期轮换 (密钥ID: key-db-202406)', result: 'success', timestamp: '2024-06-08 13:15:22', userAgent: 'curl/8.5' },
-  { id: 'LOG-20240608-008', operator: 'zhang_wei', operatorRole: '安全管理员', ipAddress: '192.168.1.105', action: '策略配置变更', module: '安全策略', detail: '更新WAF防护策略 v2.3 → v2.4 (新增SQL注入规则集)', result: 'warning', timestamp: '2024-06-08 12:58:47', userAgent: 'Firefox/126.0' },
-  { id: 'LOG-20240608-009', operator: 'li_ming', operatorRole: '安全分析师', ipAddress: '192.168.1.110', action: '威胁情报查询', module: '威胁情报', detail: '查询IOC指标: IP 185.220.101.50, Hash abc123def456', result: 'success', timestamp: '2024-06-08 12:42:33', userAgent: 'Chrome/125.0' },
-  { id: 'LOG-20240608-010', operator: 'sun_lei', operatorRole: '安全管理员(停用)', ipAddress: '10.0.0.99', action: '访问被拒绝', module: 'RBAC权限', detail: '尝试访问防火墙管理模块 - 权限不足', result: 'failed', timestamp: '2024-06-08 12:28:19', userAgent: 'Chrome/124.0' },
-  { id: 'LOG-20240608-011', operator: 'admin', operatorRole: '超级管理员', ipAddress: '192.168.1.100', action: '角色权限变更', module: 'RBAC管理', detail: '为用户 sun_lei 移除"安全管理员"角色', result: 'success', timestamp: '2024-06-08 12:15:55', userAgent: 'Edge/124.0' },
-  { id: 'LOG-20240608-012', operator: 'wang_fang', operatorRole: '应急响应专员', ipAddress: '10.0.0.55', action: '应急预案启动', module: '应急响应', detail: '启动应急预案 P-003 (DDoS攻击应急响应流程)', result: 'success', timestamp: '2024-06-08 11:58:40', userAgent: 'Firefox/126.0' },
-];
 
 // 操作类型分布图
 const actionTypeOption = {
@@ -92,17 +75,40 @@ export default function SecurityAuditPage() {
   const [moduleFilter, setModuleFilter] = useState<string>('');
   const [resultFilter, setResultFilter] = useState<string>('');
   const [dateRange, setDateRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data: stats, isLoading } = useQuery({
-    queryKey: ['audit-stats'],
-    queryFn: async () => {
-      await new Promise(r => setTimeout(r, 400));
-      return { totalLogs: 15840, todayLogs: 234, successRate: 96.8, failedCount: 75 };
-    },
-  });
+  useEffect(() => {
+    setIsLoading(true);
+    fetch('/api/admin/audit-logs?pageSize=100', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items: AuditLogEntry[] = (d?.data?.items ?? []).map((l: any) => ({
+          id: l.id,
+          operator: l.operatorName ?? l.operatorId,
+          operatorRole: l.operatorRole ?? '-',
+          ipAddress: l.ipAddress ?? '-',
+          action: l.action,
+          module: l.module,
+          detail: l.details ?? '',
+          result: (l.status as AuditLogEntry['result']) ?? 'success',
+          timestamp: l.createdAt?.slice(0, 19).replace('T', ' ') ?? '',
+        }));
+        setAuditLogs(items);
+      })
+      .catch(() => setAuditLogs([]))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  const stats = {
+    totalLogs: auditLogs.length,
+    todayLogs: auditLogs.filter(l => l.timestamp.startsWith(new Date().toISOString().slice(0, 10))).length,
+    successRate: auditLogs.length > 0 ? parseFloat(((auditLogs.filter(l => l.result === 'success').length / auditLogs.length) * 100).toFixed(1)) : 0,
+    failedCount: auditLogs.filter(l => l.result === 'failed').length,
+  };
 
   // 筛选日志
-  const filteredLogs = mockAuditLogs.filter(log => {
+  const filteredLogs = auditLogs.filter(log => {
     const matchSearch = !searchText ||
       log.operator.toLowerCase().includes(searchText.toLowerCase()) ||
       log.action.includes(searchText) ||

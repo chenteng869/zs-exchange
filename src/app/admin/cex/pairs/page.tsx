@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { DataCard } from '@/components/admin/DataCard';
 import { DataTable } from '@/components/admin/DataTable';
@@ -45,28 +45,51 @@ interface TradingPair {
   description: string;
 }
 
-const mockPairs: TradingPair[] = [
-  { id: 'TP-001', symbol: 'BTCUSDT', baseAsset: 'BTC', quoteAsset: 'USDT', status: 'online', volume24h: 2850000000, minTradeAmount: 10, pricePrecision: 2, quantityPrecision: 6, makerFee: 0.001, takerFee: 0.001, marketMakerCount: 45, lastTradeTime: '2024-06-08 14:59:58', listedAt: '2019-01-01', description: '比特币/泰达币 主力交易对' },
-  { id: 'TP-002', symbol: 'ETHUSDT', baseAsset: 'ETH', quoteAsset: 'USDT', status: 'online', volume24h: 1520000000, minTradeAmount: 10, pricePrecision: 2, quantityPrecision: 5, makerFee: 0.001, takerFee: 0.001, marketMakerCount: 32, lastTradeTime: '2024-06-08 14:59:57', listedAt: '2019-01-01', description: '以太坊/泰达币 第二大交易对' },
-  { id: 'TP-003', symbol: 'SOLUSDT', baseAsset: 'SOL', quoteAsset: 'USDT', status: 'online', volume24h: 680000000, minTradeAmount: 5, pricePrecision: 3, quantityPrecision: 2, makerFee: 0.001, takerFee: 0.0015, marketMakerCount: 18, lastTradeTime: '2024-06-08 14:59:56', listedAt: '2021-04-15', description: 'Solana/泰达币 高性能公链代币' },
-  { id: 'TP-004', symbol: 'BNBUSDT', baseAsset: 'BNB', quoteAsset: 'USDT', status: 'online', volume24h: 380000000, minTradeAmount: 5, pricePrecision: 3, quantityPrecision: 3, makerFee: 0.001, takerFee: 0.001, marketMakerCount: 22, lastTradeTime: '2024-06-08 14:59:55', listedAt: '2019-09-01', description: '币安币/泰达币 交易所平台币' },
-  { id: 'TP-005', symbol: 'XRPUSDT', baseAsset: 'XRP', quoteAsset: 'USDT', status: 'maintenance', volume24h: 220000000, minTradeAmount: 10, pricePrecision: 4, quantityPrecision: 1, makerFee: 0.001, takerFee: 0.002, marketMakerCount: 12, lastTradeTime: '2024-06-08 12:30:00', listedAt: '2019-06-01', description: '瑞波币/泰达币 支付网络代币 · 维护中' },
-  { id: 'TP-006', symbol: 'ADAUSDT', baseAsset: 'ADA', quoteAsset: 'USDT', status: 'online', volume24h: 185000000, minTradeAmount: 5, pricePrecision: 5, quantityPrecision: 1, makerFee: 0.001, takerFee: 0.0015, marketMakerCount: 15, lastTradeTime: '2024-06-08 14:59:54', listedAt: '2020-03-01', description: '卡尔达诺/泰达币 第三代区块链' },
-  { id: 'TP-007', symbol: 'DOGEUSDT', baseAsset: 'DOGE', quoteAsset: 'USDT', status: 'online', volume24h: 310000000, minTradeAmount: 5, pricePrecision: 5, quantityPrecision: 0, makerFee: 0.001, takerFee: 0.001, marketMakerCount: 20, lastTradeTime: '2024-06-08 14:59:53', listedAt: '2020-07-01', description: '狗狗币/泰达币 社区驱动meme币' },
-  { id: 'TP-008', symbol: 'AVAXUSDT', baseAsset: 'AVAX', quoteAsset: 'USDT', status: 'online', volume24h: 145000000, minTradeAmount: 5, pricePrecision: 3, quantityPrecision: 2, makerFee: 0.001, takerFee: 0.0015, marketMakerCount: 10, lastTradeTime: '2024-06-08 14:59:52', listedAt: '2021-09-01', description: '雪崩协议/泰达币 高吞吐量智能合约平台' },
-  { id: 'TP-009', symbol: 'LINKUSDT', baseAsset: 'LINK', quoteAsset: 'USDT', status: 'delisted', volume24h: 0, minTradeAmount: 10, pricePrecision: 4, quantityPrecision: 2, makerFee: 0.001, takerFee: 0.001, marketMakerCount: 0, lastTradeTime: '2024-05-31 23:59:59', listedAt: '2020-01-15', description: 'Chainlink/泰达币 · 已下架' },
-  { id: 'TP-010', symbol: 'MATICUSDT', baseAsset: 'MATIC', quoteAsset: 'USDT', status: 'online', volume24h: 98000000, minTradeAmount: 5, pricePrecision: 4, quantityPrecision: 1, makerFee: 0.001, takerFee: 0.0015, marketMakerCount: 8, lastTradeTime: '2024-06-08 14:59:51', listedAt: '2021-04-01', description: 'Polygon/泰达币 Layer2扩容方案' },
-];
 
 export default function PairsPage() {
   const [selectedPair, setSelectedPair] = useState<TradingPair | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [pairs, setPairs] = useState<TradingPair[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const onlineCount = mockPairs.filter(p => p.status === 'online').length;
-  const pendingReview = 2;
-  const todayVolume = mockPairs.reduce((sum, p) => sum + p.volume24h, 0);
-  const avgMinTrade = Math.min(...mockPairs.map(p => p.minTradeAmount));
-  const totalMM = mockPairs.reduce((sum, p) => sum + p.marketMakerCount, 0);
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/cex/pairs', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const statusMap: Record<string, TradingPair['status']> = {
+          active: 'online', online: 'online',
+          suspended: 'maintenance', maintenance: 'maintenance',
+          inactive: 'delisted', delisted: 'delisted',
+        };
+        const items: TradingPair[] = (d?.data ?? []).map((p: any) => ({
+          id: p.id,
+          symbol: p.symbol,
+          baseAsset: p.base,
+          quoteAsset: p.quote,
+          status: statusMap[p.status] ?? 'online',
+          volume24h: 0,
+          minTradeAmount: parseFloat(p.minOrderAmount) || 0,
+          pricePrecision: p.quotePrecision ?? 2,
+          quantityPrecision: p.basePrecision ?? 6,
+          makerFee: parseFloat(p.makerFeeRate) || 0,
+          takerFee: parseFloat(p.takerFeeRate) || 0,
+          marketMakerCount: 0,
+          lastTradeTime: '-',
+          listedAt: p.createdAt?.slice(0, 10) ?? '-',
+          description: `${p.base}/${p.quote} 交易对`,
+        }));
+        setPairs(items);
+      })
+      .catch(() => setPairs([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const onlineCount = pairs.filter(p => p.status === 'online').length;
+  const pendingReview = 0;
+  const todayVolume = pairs.reduce((sum, p) => sum + p.volume24h, 0);
+  const avgMinTrade = pairs.length > 0 ? Math.min(...pairs.map(p => p.minTradeAmount)) : 0;
+  const totalMM = pairs.reduce((sum, p) => sum + p.marketMakerCount, 0);
 
   const getStatusBadge = (status: string) => {
     const map: Record<string, { status: string; text: string }> = {
@@ -110,13 +133,13 @@ export default function PairsPage() {
           <Col xs={24} sm={12} lg={4}><DataCard title="做市商总数" value={totalMM} suffix="家" icon={<TeamOutlined />} color="#EC4899" trend="up" trendValue="+3" /></Col>
         </Row>
 
-        <DataTable columns={columns} dataSource={mockPairs} rowKey="id" title="交易对配置列表" searchPlaceholder="搜索交易对名称..." actions={actions} pagination={{ pageSize: 10 }} showFilter filterOptions={[{ label: '全部状态', value: '' }, { label: '上线', value: 'online' }, { label: '维护中', value: 'maintenance' }, { label: '已下架', value: 'delisted' }]} />
+        <DataTable columns={columns} dataSource={pairs} loading={loading} rowKey="id" title="交易对配置列表" searchPlaceholder="搜索交易对名称..." actions={actions} pagination={{ pageSize: 10 }} showFilter filterOptions={[{ label: '全部状态', value: '' }, { label: '上线', value: 'online' }, { label: '维护中', value: 'maintenance' }, { label: '已下架', value: 'delisted' }]} />
 
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
             <Card title={<span><ThunderboltOutlined style={{ color: '#1677FF' }} /> 交易对状态统计</span>} className="shadow-sm">
               <div className="space-y-3">
-                {[{ l: '正常上线', c: '#16A34A', n: mockPairs.filter(p => p.status === 'online').length }, { l: '维护中', c: '#F59E0B', n: mockPairs.filter(p => p.status === 'maintenance').length }, { l: '已下架', c: '#9CA3AF', n: mockPairs.filter(p => p.status === 'delisted').length }].map(item => (<div key={item.l}><div className="flex justify-between mb-1"><span>{item.l}</span><span style={{ color: item.c }} className="font-semibold">{item.n} 对</span></div><Progress percent={(item.n / mockPairs.length) * 100} strokeColor={item.c} showInfo={false} /></div>))}
+                {[{ l: '正常上线', c: '#16A34A', n: pairs.filter(p => p.status === 'online').length }, { l: '维护中', c: '#F59E0B', n: pairs.filter(p => p.status === 'maintenance').length }, { l: '已下架', c: '#9CA3AF', n: pairs.filter(p => p.status === 'delisted').length }].map(item => (<div key={item.l}><div className="flex justify-between mb-1"><span>{item.l}</span><span style={{ color: item.c }} className="font-semibold">{item.n} 对</span></div><Progress percent={pairs.length > 0 ? (item.n / pairs.length) * 100 : 0} strokeColor={item.c} showInfo={false} /></div>))}
               </div>
             </Card>
           </Col>
