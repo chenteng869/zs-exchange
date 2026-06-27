@@ -22,6 +22,7 @@ export interface MarketTicker {
   openInterest: string;
   maxLeverage: number;
   updatedAt: number;
+  error?: string;
 }
 
 export interface OrderBook {

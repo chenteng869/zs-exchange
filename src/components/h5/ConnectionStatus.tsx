@@ -8,8 +8,9 @@
  *  - 多种位置/大小可选
  */
 
-import { Wifi, WifiOff, Loader2 } from 'lucide-react';
-import type { ConnStatus } from '@/lib/market/useBinanceStream';
+import { WifiOff, Loader2 } from 'lucide-react';
+
+export type ConnStatus = 'connecting' | 'online' | 'offline';
 
 export interface ConnectionStatusProps {
   status: ConnStatus;

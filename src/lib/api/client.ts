@@ -25,7 +25,7 @@ export async function apiFetch<T = any>(
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err?.message || err?.error || `HTTP ${res.status}`);
+    throw new Error(err?.message || err?.error?.message || err?.error || `HTTP ${res.status}`);
   }
   const json = await res.json();
   // 统一响应格式: { success, data, ... }
@@ -36,3 +36,9 @@ export const apiGet = <T = any>(path: string) => apiFetch<T>(path);
 
 export const apiPost = <T = any>(path: string, body: unknown) =>
   apiFetch<T>(path, { method: 'POST', body: JSON.stringify(body) });
+
+export const apiDelete = <T = any>(path: string, body?: unknown) =>
+  apiFetch<T>(path, {
+    method: 'DELETE',
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });

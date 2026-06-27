@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState, type CSSProperties, type ElementType, type ReactNode } from 'react';
 import {
   User,
   Camera,
@@ -13,21 +13,51 @@ import {
   Globe,
   ShieldCheck,
 } from 'lucide-react';
-import { getUserProfile } from '@/lib/h5-mock';
+import { userApi, type ApiUserProfile } from '@/lib/api/user';
 
 export default function H5ProfileEditPage() {
-  const u = getUserProfile();
-  const [nickname, setNickname] = useState(u.nickname);
+  const [profile, setProfile] = useState<ApiUserProfile | null>(null);
+  const [nickname, setNickname] = useState('ZS User');
   const [bio, setBio] = useState('专注现货与合约交易，长期价值投资。');
-  const [email, setEmail] = useState(u.email);
-  const [phone, setPhone] = useState(u.phone);
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
-  const [country, setCountry] = useState('中国');
+  const [country, setCountry] = useState('CN');
   const [saved, setSaved] = useState(false);
 
-  const onSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  useEffect(() => {
+    let alive = true;
+
+    userApi.getProfile()
+      .then((nextProfile) => {
+        if (!alive) return;
+        setProfile(nextProfile);
+        setNickname(nextProfile.username || 'ZS User');
+        setEmail(nextProfile.email || '');
+        setPhone(nextProfile.phone || '');
+        setCountry(nextProfile.countryCode || 'CN');
+      })
+      .catch(() => {
+        if (!alive) return;
+        setProfile(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const onSave = async () => {
+    try {
+      await userApi.updateProfile({
+        phone,
+        countryCode: country,
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setSaved(false);
+    }
   };
 
   return (
@@ -68,7 +98,7 @@ export default function H5ProfileEditPage() {
               boxShadow: '0 4px 12px rgba(56, 189, 248, 0.40)',
             }}
           >
-            {nickname.charAt(0) || 'T'}
+            {nickname.charAt(0) || 'Z'}
           </div>
           <div
             style={{
@@ -118,7 +148,7 @@ export default function H5ProfileEditPage() {
           />
         </Field>
         <Field icon={AtSign} label="UID" disabled>
-          <span style={{ ...inputStyle, color: '#7B89B8' }}>{u.uid}</span>
+          <span style={{ ...inputStyle, color: '#7B89B8' }}>{profile?.id || '--'}</span>
         </Field>
         <Field icon={Mail} label="邮箱">
           <input value={email} onChange={(e) => setEmail(e.target.value)} style={inputStyle} />
@@ -211,10 +241,10 @@ export default function H5ProfileEditPage() {
       <LinkRow
         icon={ShieldCheck}
         iconColor="#34D399"
-        title="实名认证 (KYC2)"
+        title={`实名认证 (KYC${profile?.kycLevel ?? 0})`}
         subtitle="已认证，可提升提币额度"
-        badge="已认证"
-        badgeColor="#34D399"
+        badge={profile?.kycLevel ? '已认证' : '未认证'}
+        badgeColor={profile?.kycLevel ? '#34D399' : '#FCD535'}
       />
 
       {/* 保存按钮 */}
@@ -248,7 +278,7 @@ export default function H5ProfileEditPage() {
   );
 }
 
-const inputStyle: React.CSSProperties = {
+const inputStyle: CSSProperties = {
   flex: 1,
   background: 'transparent',
   border: 'none',
@@ -266,9 +296,9 @@ function Field({
   last,
   disabled,
 }: {
-  icon: React.ElementType;
+  icon: ElementType;
   label: string;
-  children: React.ReactNode;
+  children: ReactNode;
   last?: boolean;
   disabled?: boolean;
 }) {
@@ -298,7 +328,7 @@ function LinkRow({
   badge,
   badgeColor,
 }: {
-  icon: React.ElementType;
+  icon: ElementType;
   iconColor: string;
   title: string;
   subtitle?: string;

@@ -1,18 +1,13 @@
 'use client';
 
 /**
- * H5 交易页 v3 — 真实 Binance K 线
- *  - URL 参数 ?symbol=BTC/USDT 选择交易对（从 Markets / TickerStrip 跳入）
- *  - 真实 OHLC K 线（REST 拉历史 + WS 推实时）
- *  - 6 个周期切换（1m/5m/15m/1H/4H/1D）
- *  - MA5/10/20/60 切换
- *  - 决策 A：断线时显示"重连中"，禁止下单
+ * H5 交易页 v3 — 后端 API 轮询（国内可用，不依赖 Binance WS）
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { TrendingUp, TrendingDown, ChevronDown, Copy, Crown, BarChart3, Activity, Maximize2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, TrendingUp, TrendingDown, ChevronDown, Copy, Crown, BarChart3, Activity, Loader2, Maximize2 } from 'lucide-react';
 import {
   type Candle,
   type PeriodKey,
@@ -21,15 +16,16 @@ import {
   fmtPrice,
   fmtTimeByPeriod,
 } from '@/lib/shared';
-import { useKlineStream, useTicker, fetchKlines } from '@/lib/market/useBinanceStream';
-import type { Kline, KlineInterval } from '@/lib/market/kline';
+import type { KlineInterval } from '@/lib/market/kline';
 import { PAIR_MAP, TOP20_PAIRS } from '@/lib/h5/top20-pairs';
 import { ConnectionStatus } from './ConnectionStatus';
+import { spotApi } from '@/lib/api/spot';
+import { useTickerData, useKlineData } from '@/hooks/useMarketData';
 
 // =============================================================================
-// PeriodKey ↔ KlineInterval 映射
+// PeriodKey ↔ API interval 映射
 // =============================================================================
-const PERIOD_TO_KLINE: Record<PeriodKey, KlineInterval> = {
+const PERIOD_TO_INTERVAL: Record<PeriodKey, string> = {
   '1m':  '1m',
   '5m':  '5m',
   '15m': '15m',
@@ -37,42 +33,6 @@ const PERIOD_TO_KLINE: Record<PeriodKey, KlineInterval> = {
   '4H':  '4h',
   '1D':  '1d',
 };
-
-// =============================================================================
-// K 线合并：REST 历史 + WS 实时
-// =============================================================================
-
-/** Binance Kline → shared Candle（统一内部表示） */
-function klineToCandle(k: Kline): Candle {
-  return {
-    time:  k.openTime,
-    open:  parseFloat(k.open),
-    high:  parseFloat(k.high),
-    low:   parseFloat(k.low),
-    close: parseFloat(k.close),
-    volume: parseFloat(k.volume),
-  };
-}
-
-/** 把 WS 推来的单根 kline 合并到历史 K 线数组：
- *  - openTime 相同 → 替换（更新最后一根未收盘）
- *  - openTime 是新的一根 → append
- *  - openTime 早于最后一根 → 忽略
- */
-function mergeKline(history: Candle[], k: Kline): Candle[] {
-  const c = klineToCandle(k);
-  if (history.length === 0) return [c];
-  const last = history[history.length - 1];
-  if (c.time === last.time) {
-    const next = history.slice();
-    next[next.length - 1] = c;
-    return next;
-  }
-  if (c.time > last.time) {
-    return [...history, c];
-  }
-  return history;  // 过期数据，丢弃
-}
 
 // =============================================================================
 // 主组件
@@ -88,48 +48,35 @@ export default function H5Trade() {
   const [orderType, setOrderType] = useState<'limit' | 'market'>('limit');
   const [price, setPrice] = useState('');
   const [amount, setAmount] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState('');
+  const [orderMessage, setOrderMessage] = useState('');
   const [period, setPeriod] = useState<PeriodKey>('15m');
   const [showMA, setShowMA] = useState({ ma5: true, ma10: true, ma20: true, ma60: false });
 
-  // === K 线历史（REST 拉）===
-  const [history, setHistory] = useState<Candle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // H5 symbol 'BTC/USDT' → API symbol 'BTCUSDT'
+  const apiSymbol = symbol.replace('/', '');
+  const limit = PERIODS.find((p) => p.key === period)?.count ?? 100;
 
-  useEffect(() => {
-    let dead = false;
-    setLoading(true);
-    setLoadError(null);
-    const limit = PERIODS.find((p) => p.key === period)!.count;
-    fetchKlines(symbol, PERIOD_TO_KLINE[period], limit)
-      .then((klines) => {
-        if (dead) return;
-        setHistory(klines.map(klineToCandle));
-        setLoading(false);
-      })
-      .catch((err) => {
-        if (dead) return;
-        setLoadError(err?.message || 'K 线加载失败');
-        setLoading(false);
-      });
-    return () => { dead = true; };
-  }, [symbol, period]);
+  // === 后端 API 轮询（替代 Binance WS）===
+  const { ticker, loading: tickerLoading } = useTickerData(apiSymbol, 3000);
+  const { klines, loading } = useKlineData(apiSymbol, PERIOD_TO_INTERVAL[period], limit, 10000);
 
-  // === K 线实时（WS 推）===
-  const { lastKline, status: klineStatus } = useKlineStream(symbol, PERIOD_TO_KLINE[period]);
+  // KlineBar → Candle
+  const history: Candle[] = useMemo(() => klines.map((k) => ({
+    time:   k.openTime,
+    open:   parseFloat(k.open),
+    high:   parseFloat(k.high),
+    low:    parseFloat(k.low),
+    close:  parseFloat(k.close),
+    volume: parseFloat(k.volume),
+  })), [klines]);
 
-  // 合并实时 K 线
-  useEffect(() => {
-    if (!lastKline) return;
-    setHistory((prev) => mergeKline(prev, lastKline));
-  }, [lastKline]);
-
-  // === 实时 ticker（顶部价格）===
-  const { ticker, status: tickerStatus } = useTicker(symbol);
+  const loadError = null;
 
   // 头部价
   const lastPrice = ticker ? parseFloat(ticker.lastPrice) : 0;
-  const last24hChange = ticker ? parseFloat(ticker.change24h) : 0;
+  const last24hChange = ticker ? parseFloat(ticker.changePercent24h) : 0;
   const high24h = ticker ? parseFloat(ticker.high24h) : 0;
   const low24h = ticker ? parseFloat(ticker.low24h) : 0;
   const trendUp = last24hChange >= 0;
@@ -148,10 +95,55 @@ export default function H5Trade() {
   const ma20 = useMemo(() => showMA.ma20 ? ma(candles, 20) : [], [candles, showMA.ma20]);
   const ma60 = useMemo(() => showMA.ma60 ? ma(candles, 60) : [], [candles, showMA.ma60]);
 
-  // 综合状态
-  const status = klineStatus === 'offline' || tickerStatus === 'offline' ? 'offline' : klineStatus;
+  // 综合状态（兼容 ConnectionStatus 组件）
+  const status = tickerLoading ? 'connecting' : ticker ? 'online' : 'offline';
   const offline = status === 'offline';
   const base = symbol.split('/')[0];
+
+  const submitSpotOrder = async () => {
+    setOrderError('');
+    setOrderMessage('');
+
+    if (offline) {
+      setOrderError('行情连接断开，暂不允许提交订单');
+      return;
+    }
+
+    if (orderType === 'market') {
+      setOrderError('后端当前未开放市价单，请先使用限价单');
+      return;
+    }
+
+    const amountNum = Number(amount);
+    const priceNum = Number(price);
+
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      setOrderError('请输入有效数量');
+      return;
+    }
+
+    if (!Number.isFinite(priceNum) || priceNum <= 0) {
+      setOrderError('请输入有效限价');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const order = await spotApi.placeOrder({
+        symbol,
+        side,
+        type: orderType,
+        quantity: amount,
+        price,
+      });
+      setOrderMessage(`订单已提交：${order.status}${order.matched ? '，已撮合成交' : ''}`);
+      setAmount('');
+    } catch (e: any) {
+      setOrderError(e?.message || '订单提交失败');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div style={{ padding: '12px' }}>
@@ -206,6 +198,49 @@ export default function H5Trade() {
         <span style={{ marginLeft: 'auto', fontSize: 9, padding: '2px 6px', borderRadius: 4, background: 'rgba(240,185,11,0.30)', color: '#F0B90B', fontWeight: 800 }}>+38.6%</span>
         <Copy size={11} color="#F0B90B" />
       </Link>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, marginBottom: 10 }}>
+        <Link
+          href="/h5/trade/orders"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            padding: '8px 10px',
+            borderRadius: 10,
+            border: '1px solid rgba(56,189,248,0.24)',
+            background: 'rgba(56,189,248,0.10)',
+            color: '#38BDF8',
+            fontSize: 11,
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}
+        >
+          <Activity size={13} />
+          当前委托
+        </Link>
+        <Link
+          href="/h5/trade/history"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
+            padding: '8px 10px',
+            borderRadius: 10,
+            border: '1px solid rgba(240,185,11,0.24)',
+            background: 'rgba(240,185,11,0.10)',
+            color: '#FCD535',
+            fontSize: 11,
+            fontWeight: 700,
+            textDecoration: 'none',
+          }}
+        >
+          <BarChart3 size={13} />
+          历史订单
+        </Link>
+      </div>
 
       {/* 价格大数字卡 */}
       <div
@@ -432,24 +467,60 @@ export default function H5Trade() {
           ))}
         </div>
 
+        {orderError && (
+          <TradeNotice color="#FCD535" icon={<AlertCircle size={14} color="#FCD535" />}>
+            {orderError}
+          </TradeNotice>
+        )}
+
+        {orderMessage && (
+          <TradeNotice color="#34D399" icon={<CheckCircle2 size={14} color="#34D399" />}>
+            {orderMessage}
+          </TradeNotice>
+        )}
+
         <button
-          disabled={offline}
+          onClick={submitSpotOrder}
+          disabled={offline || submitting}
           style={{
             width: '100%', padding: '12px 0', borderRadius: 12, border: 'none',
             background: side === 'buy'
               ? 'linear-gradient(135deg, #34D399 0%, #10B981 100%)'
               : 'linear-gradient(135deg, #F472B6 0%, #EF4444 100%)',
             color: '#fff', fontSize: 15, fontWeight: 700,
-            cursor: offline ? 'not-allowed' : 'pointer',
+            cursor: offline || submitting ? 'not-allowed' : 'pointer',
             boxShadow: side === 'buy' ? '0 4px 16px rgba(52, 211, 153, 0.30)' : '0 4px 16px rgba(244, 114, 182, 0.30)',
-            opacity: offline ? 0.5 : 1,
+            opacity: offline || submitting ? 0.5 : 1,
           }}
         >
-          {offline ? '连接已断开，请稍候' : `${side === 'buy' ? '买入' : '卖出'} ${base}`}
+          {submitting ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><Loader2 size={14} className="animate-spin" />提交中</span> : offline ? '连接已断开，请稍候' : `${side === 'buy' ? '买入' : '卖出'} ${base}`}
         </button>
       </div>
 
       <div style={{ height: 20 }} />
+    </div>
+  );
+}
+
+function TradeNotice({ children, icon, color }: { children: React.ReactNode; icon: React.ReactNode; color: string }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: 8,
+        padding: '8px 10px',
+        borderRadius: 10,
+        border: `1px solid ${color === '#34D399' ? 'rgba(52, 211, 153, 0.26)' : 'rgba(240, 185, 11, 0.24)'}`,
+        background: color === '#34D399' ? 'rgba(52, 211, 153, 0.10)' : 'rgba(240, 185, 11, 0.10)',
+        color,
+        fontSize: 11,
+        lineHeight: 1.5,
+        marginBottom: 10,
+      }}
+    >
+      <span style={{ flexShrink: 0, marginTop: 1 }}>{icon}</span>
+      <span>{children}</span>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   ChevronDown,
   Clock,
@@ -26,52 +26,27 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button } from '@/components/ui';
 import { Input } from '@/components/ui';
-import {
-  generateOrderBook,
-  generateTrades,
-} from '@/lib/orderbook-mock';
+import { useTickerData, useKlineData, useOrderBook, useRecentTrades } from '@/hooks/useMarketData';
+import { spotApi } from '@/lib/api/spot';
 
 // ==================== Mock可借入资产列表 ====================
 const BORROWABLE_ASSETS = [
   { asset: 'USDT', rate: '0.015%', available: '5,000,000', icon: '$' },
-  { asset: 'BTC', rate: '0.025%', available: '1,200', icon: '\u20BF' },
-  { asset: 'ETH', rate: '0.020%', available: '18,500', icon: '\u039E' },
+  { asset: 'BTC', rate: '0.025%', available: '1,200', icon: '₿' },
+  { asset: 'ETH', rate: '0.020%', available: '18,500', icon: 'Ξ' },
 ];
-
-// ==================== 使用模拟数据生成器 ====================
-const BASE_PRICE = 67234.56;
-const MOCK_ORDER_BOOK = generateOrderBook(BASE_PRICE, 20);
-
-// ==================== Mock价格走势数据 ====================
-const generateChartData = () => {
-  const data = [];
-  let basePrice = 67000;
-  for (let i = 0; i < 50; i++) {
-    basePrice += (Math.random() - 0.48) * 300;
-    data.push({
-      time: `${i}:00`,
-      price: parseFloat(basePrice.toFixed(2)),
-      volume: Math.floor(Math.random() * 1000000),
-    });
-  }
-  return data;
-};
-
-const CHART_DATA = generateChartData();
-
-// ==================== 模拟最近成交记录 (20条) ====================
-const MOCK_RECENT_TRADES = generateTrades(20, BASE_PRICE);
 
 // ==================== 时间周期选项 ====================
 const TIME_PERIODS = ['1m', '5m', '15m', '1H', '4H', '1D'];
+const INTERVAL_MAP: Record<string, string> = { '1m': '1m', '5m': '5m', '15m': '15m', '1H': '1h', '4H': '4h', '1D': '1d' };
 
 // ==================== 杠杆选项 ====================
 const LEVERAGE_OPTIONS = [2, 3, 5, 10];
 
 export default function MarginTradePage() {
   // ==================== 状态管理 ====================
-  const [selectedPair] = useState('BTC/USDT');
-  const [currentPrice] = useState(BASE_PRICE);
+  const [selectedPair] = useState('BTCUSDT');
+  const displayPair = 'BTC/USDT';
   const [orderSide, setOrderSide] = useState<'buy' | 'sell'>('buy');
   const [orderType, setOrderType] = useState<'limit' | 'market'>('limit');
   const [price, setPrice] = useState('');
@@ -83,6 +58,20 @@ export default function MarginTradePage() {
   const [borrowAsset, setBorrowAsset] = useState('USDT');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showRepayment, setShowRepayment] = useState(false);
+
+  // ==================== 真实数据 ====================
+  const { ticker } = useTickerData(selectedPair, 3000);
+  const { klines } = useKlineData(selectedPair, INTERVAL_MAP[timePeriod], 50, 10000);
+  const MOCK_ORDER_BOOK = useOrderBook(selectedPair, 2000);
+  const MOCK_RECENT_TRADES = useRecentTrades(selectedPair, 20, 3000);
+
+  const currentPrice = ticker ? parseFloat(ticker.lastPrice) : 0;
+  const priceUp = ticker ? parseFloat(ticker.changePercent24h) >= 0 : true;
+  const CHART_DATA = klines.map((k) => ({ time: k.time, price: parseFloat(k.close), volume: parseFloat(k.volume) }));
+
+  useEffect(() => {
+    if (ticker && !price) setPrice(parseFloat(ticker.lastPrice).toFixed(2));
+  }, [ticker?.lastPrice]);
 
   // ==================== 计算预估总价、保证金与强平价 ====================
   const { estimatedTotal, marginRequired, liquidationPrice } = useMemo(() => {
@@ -117,9 +106,22 @@ export default function MarginTradePage() {
   };
 
   // ==================== 下单提交 ====================
-  const handleSubmitOrder = () => {
+  const handleSubmitOrder = async () => {
+    if (!amount || parseFloat(amount) <= 0) return;
     setIsSubmitting(true);
-    setTimeout(() => setIsSubmitting(false), 1500);
+    try {
+      await spotApi.placeOrder({
+        symbol: selectedPair,
+        side: orderSide,
+        type: orderType,
+        quantity: amount,
+        price: orderType === 'limit' ? price : undefined,
+      });
+    } catch {
+      // error silently logged
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // ==================== 风险率计算 ====================
@@ -176,7 +178,7 @@ export default function MarginTradePage() {
             {/* 左侧：交易对选择器 */}
             <div className="flex items-center gap-3">
               <button className="flex items-center gap-2 px-3 py-1.5 bg-deep-900 rounded border border-white/10 hover:border-white/20 transition-colors">
-                <span className="font-semibold text-text-primary text-sm tabular-nums">{selectedPair}</span>
+                <span className="font-semibold text-text-primary text-sm tabular-nums">{displayPair}</span>
                 <ChevronDown size={14} className="text-text-muted" />
                 <span className="ml-1.5 text-[10px] px-1.5 py-0.5 bg-brand-500/15 text-brand-500 rounded font-medium">
                   杠杆
@@ -184,8 +186,8 @@ export default function MarginTradePage() {
               </button>
               <div className="hidden sm:flex items-center gap-2 text-xs">
                 <span className="text-text-muted">当前价</span>
-                <span className={`font-mono font-semibold tabular-nums ${currentPrice >= 67000 ? 'text-emerald-500' : 'text-red-500'}`}>
-                  ${currentPrice.toLocaleString()}
+                <span className={`font-mono font-semibold tabular-nums ${priceUp ? 'text-emerald-500' : 'text-red-500'}`}>
+                  ${currentPrice ? currentPrice.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'}
                 </span>
               </div>
             </div>
@@ -377,8 +379,8 @@ export default function MarginTradePage() {
 
                 {/* 当前价横条 */}
                 <div className="px-3 py-1.5 bg-deep-900/80 border-y border-white/5">
-                  <div className={`text-center font-bold font-mono text-sm tabular-nums ${currentPrice >= 67000 ? 'text-emerald-500' : 'text-red-500'}`}>
-                    ${currentPrice.toLocaleString()}
+                  <div className={`text-center font-bold font-mono text-sm tabular-nums ${priceUp ? 'text-emerald-500' : 'text-red-500'}`}>
+                    ${currentPrice ? currentPrice.toLocaleString('en-US', { maximumFractionDigits: 2 }) : '—'}
                   </div>
                 </div>
 

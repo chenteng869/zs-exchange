@@ -3,7 +3,7 @@
 /**
  * H5 我的页 v2 — 按截图风格重做
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -24,17 +24,88 @@ import {
   UserPlus,
   Gift,
 } from 'lucide-react';
-import { getUserProfile, getReferralData } from '@/lib/h5-mock';
 import { useApkDownload } from '@/hooks/useApkDownload';
 import { useAuthStore } from '@/stores/authStore';
 
+interface ApiProfile {
+  id: string;
+  username: string;
+  email?: string | null;
+  phone?: string | null;
+  status: string;
+  kycLevel: number;
+  vipLevel: number;
+  feeDiscount?: string | number | null;
+  referralCode?: string | null;
+}
+
+function getStoredToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+}
+
+function getStoredUser() {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('h5_user') || sessionStorage.getItem('h5_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function H5Profile() {
   const router = useRouter();
-  const { isAuthenticated, logout } = useAuthStore();
-  const user = getUserProfile();
-  const referral = getReferralData();
+  const { isAuthenticated: storeAuthenticated, logout } = useAuthStore();
+  const [profile, setProfile] = useState<ApiProfile | null>(null);
   const { info: apkInfo, download: downloadApk, platform } = useApkDownload({ source: 'h5' });
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const token = getStoredToken();
+    if (!token) {
+      setProfile(null);
+      return;
+    }
+
+    let alive = true;
+    fetch('/api/v1/user/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(async (res) => {
+        const json = await res.json();
+        if (!res.ok || json.success === false) {
+          throw new Error(json.error?.message || 'profile load failed');
+        }
+        return json.data as ApiProfile;
+      })
+      .then((data) => {
+        if (alive) setProfile(data);
+      })
+      .catch(() => {
+        if (alive) setProfile(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const storedUser = useMemo(() => getStoredUser(), []);
+  const isAuthenticated = storeAuthenticated || Boolean(profile || getStoredToken());
+  const user = {
+    uid: profile?.id || storedUser?.id || '--',
+    nickname: profile?.username || storedUser?.username || 'ZS User',
+    vipLevel: `VIP${profile?.vipLevel ?? storedUser?.vipLevel ?? 0}`,
+    kycLevel: profile?.kycLevel ?? storedUser?.kycLevel ?? 0,
+  };
+  const referral = {
+    code: profile?.referralCode || '--',
+    commissionRate: profile?.feeDiscount ? `${profile.feeDiscount}` : '0%',
+    totalInvites: 0,
+    activeInvites: 0,
+    totalCommission: '0.00',
+  };
 
   const handleApkDownload = async () => {
     if (platform === 'ios') {
@@ -53,6 +124,9 @@ export default function H5Profile() {
 
   const handleLogout = () => {
     logout();
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('h5_user');
     window.location.reload();
   };
 
