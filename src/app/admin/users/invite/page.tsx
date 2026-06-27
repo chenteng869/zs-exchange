@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, Input, InputNumber, Select, Badge, Statistic, Tree, Tabs, Descriptions } from 'antd';
 import { UserAddOutlined, TeamOutlined, GiftOutlined, EyeOutlined, SearchOutlined, LinkOutlined } from '@ant-design/icons';
 import SafeECharts from '@/components/admin/SafeECharts';
@@ -8,79 +8,6 @@ import AdminLayout from '@/components/admin/AdminLayout';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
-
-const mockInviteData = [
-  { 
-    id: '1', 
-    user: '0x1234...5678', 
-    username: '张三', 
-    level: 'LV3',
-    inviteCode: 'ZHANGSAN123',
-    directInvites: 15,
-    indirectInvites: 45,
-    totalInvites: 60,
-    totalRewards: 12500,
-    pendingRewards: 850,
-    registerDate: '2024-01-15',
-    status: 'active'
-  },
-  { 
-    id: '2', 
-    user: '0x5678...9abc', 
-    username: '李四', 
-    level: 'LV2',
-    inviteCode: 'LISI456',
-    directInvites: 8,
-    indirectInvites: 22,
-    totalInvites: 30,
-    totalRewards: 5600,
-    pendingRewards: 320,
-    registerDate: '2024-02-20',
-    status: 'active'
-  },
-  { 
-    id: '3', 
-    user: '0x9abc...def0', 
-    username: '王五', 
-    level: 'LV4',
-    inviteCode: 'WANG789',
-    directInvites: 25,
-    indirectInvites: 88,
-    totalInvites: 113,
-    totalRewards: 28500,
-    pendingRewards: 1500,
-    registerDate: '2023-11-10',
-    status: 'active'
-  },
-  { 
-    id: '4', 
-    user: '0xdef0...1234', 
-    username: '赵六', 
-    level: 'LV1',
-    inviteCode: 'ZHAO012',
-    directInvites: 2,
-    indirectInvites: 3,
-    totalInvites: 5,
-    totalRewards: 800,
-    pendingRewards: 0,
-    registerDate: '2024-04-01',
-    status: 'active'
-  },
-  { 
-    id: '5', 
-    user: '0x2345...6789', 
-    username: '钱七', 
-    level: 'LV3',
-    inviteCode: 'QIAN345',
-    directInvites: 12,
-    indirectInvites: 35,
-    totalInvites: 47,
-    totalRewards: 9800,
-    pendingRewards: 450,
-    registerDate: '2023-12-25',
-    status: 'active'
-  },
-];
 
 const mockRewardRecords = [
   { id: '1', user: '0x1234...5678', username: '张三', amount: 150, type: 'direct_invite', invitee: '0xaaa...bbb', status: 'settled', createTime: '2024-05-13 10:30:00', settleTime: '2024-05-13 10:35:00' },
@@ -149,11 +76,24 @@ export default function InvitePage() {
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('users');
+  const [inviteData, setInviteData] = useState<any[]>([]);
+  const [loadingInvites, setLoadingInvites] = useState(false);
 
-  const totalInvites = mockInviteData.reduce((sum, u) => sum + u.totalInvites, 0);
-  const totalRewards = mockInviteData.reduce((sum, u) => sum + u.totalRewards, 0);
-  const pendingRewards = mockInviteData.reduce((sum, u) => sum + u.pendingRewards, 0);
-  const activeInviters = mockInviteData.filter(u => u.status === 'active').length;
+  useEffect(() => {
+    setLoadingInvites(true);
+    fetch('/api/admin/users/invites?pageSize=100', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setInviteData(d?.data?.items ?? []))
+      .catch(() => setInviteData([]))
+      .finally(() => setLoadingInvites(false));
+  }, []);
+
+  
+
+  const totalInvites = inviteData.reduce((sum, u) => sum + u.totalInvites, 0);
+  const totalRewards = inviteData.reduce((sum, u) => sum + u.totalRewards, 0);
+  const pendingRewards = inviteData.reduce((sum, u) => sum + u.pendingRewards, 0);
+  const activeInviters = inviteData.filter(u => u.status === 'active').length;
 
   const userColumns = [
     { title: '用户地址', dataIndex: 'user', key: 'user', render: (text: string) => <span className="font-mono">{text}</span> },
@@ -289,7 +229,8 @@ export default function InvitePage() {
 
           {activeTab === 'users' && (
             <Table
-              dataSource={mockInviteData}
+              dataSource={inviteData}
+              loading={loadingInvites}
               columns={userColumns}
               pagination={{ pageSize: 10 }}
               rowKey="id"

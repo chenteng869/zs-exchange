@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { DataCard } from '@/components/admin/DataCard';
 import { DataTable } from '@/components/admin/DataTable';
@@ -45,28 +45,44 @@ interface MarketData {
   lastUpdate: string;
 }
 
-const mockMarkets: MarketData[] = [
-  { id: 'MK-001', symbol: 'BTCUSDT', name: 'Bitcoin', currentPrice: 68420.35, priceChange24h: 1250.80, priceChangePercent24h: 1.86, high24h: 69200.00, low24h: 67150.30, volume24h: 2850000000, marketCap: 1342000000000, volatilityIndex: 42.5, depthAvg: 8500000, activeUsers: 12580, lastUpdate: '2024-06-08 14:59:58' },
-  { id: 'MK-002', symbol: 'ETHUSDT', name: 'Ethereum', currentPrice: 3650.80, priceChange24h: -85.20, priceChangePercent24h: -2.28, high24h: 3768.90, low24h: 3612.40, volume24h: 1520000000, marketCap: 439000000000, volatilityIndex: 58.3, depthAvg: 3200000, activeUsers: 8920, lastUpdate: '2024-06-08 14:59:57' },
-  { id: 'MK-003', symbol: 'SOLUSDT', name: 'Solana', currentPrice: 148.65, priceChange24h: 12.35, priceChangePercent24h: 9.06, high24h: 152.80, low24h: 135.60, volume24h: 680000000, marketCap: 65500000000, volatilityIndex: 78.2, depthAvg: 1800000, activeUsers: 5640, lastUpdate: '2024-06-08 14:59:56' },
-  { id: 'MK-004', symbol: 'BNBUSDT', name: 'BNB', currentPrice: 585.40, priceChange24h: -8.15, priceChangePercent24h: -1.38, high24h: 598.70, low24h: 578.20, volume24h: 380000000, marketCap: 87200000000, volatilityIndex: 35.6, depthAvg: 1200000, activeUsers: 4280, lastUpdate: '2024-06-08 14:59:55' },
-  { id: 'MK-005', symbol: 'XRPUSDT', name: 'Ripple', currentPrice: 0.5235, priceChange24h: 0.0180, priceChangePercent24h: 3.57, high24h: 0.5320, low24h: 0.5020, volume24h: 220000000, marketCap: 28500000000, volatilityIndex: 45.8, depthAvg: 650000, activeUsers: 3150, lastUpdate: '2024-06-08 14:59:54' },
-  { id: 'MK-006', symbol: 'ADAUSDT', name: 'Cardano', currentPrice: 0.4620, priceChange24h: -0.0120, priceChangePercent24h: -2.53, high24h: 0.4780, low24h: 0.4550, volume24h: 185000000, marketCap: 16300000000, volatilityIndex: 52.1, depthAvg: 420000, activeUsers: 2780, lastUpdate: '2024-06-08 14:59:53' },
-  { id: 'MK-007', symbol: 'DOGEUSDT', name: 'Dogecoin', currentPrice: 0.1658, priceChange24h: 0.0085, priceChangePercent24h: 5.41, high24h: 0.1702, low24h: 0.1560, volume24h: 310000000, marketCap: 23700000000, volatilityIndex: 68.5, depthAvg: 520000, activeUsers: 6890, lastUpdate: '2024-06-08 14:59:52' },
-  { id: 'MK-008', symbol: 'AVAXUSDT', name: 'Avalanche', currentPrice: 38.52, priceChange24h: 2.35, priceChangePercent24h: 6.49, high24h: 39.80, low24h: 36.10, volume24h: 145000000, marketCap: 14500000000, volatilityIndex: 62.3, depthAvg: 380000, activeUsers: 1950, lastUpdate: '2024-06-08 14:59:51' },
-  { id: 'MK-009', symbol: 'MATICUSDT', name: 'Polygon', currentPrice: 0.7230, priceChange24h: -0.0250, priceChangePercent24h: -3.34, high24h: 0.7520, low24h: 0.7100, volume24h: 98000000, marketCap: 7200000000, volatilityIndex: 48.7, depthAvg: 280000, activeUsers: 1620, lastUpdate: '2024-06-08 14:59:50' },
-  { id: 'MK-010', symbol: 'DOTUSDT', name: 'Polkadot', currentPrice: 7.25, priceChange24h: 0.32, priceChangePercent24h: 4.62, high24h: 7.48, low24h: 6.92, volume24h: 112000000, marketCap: 9800000000, volatilityIndex: 55.4, depthAvg: 350000, activeUsers: 2180, lastUpdate: '2024-06-08 14:59:49' },
-];
-
 export default function MarketPage() {
   const [selectedMarket, setSelectedMarket] = useState<MarketData | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [markets, setMarkets] = useState<MarketData[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const totalPairs = mockMarkets.length;
-  const totalVolume24h = mockMarkets.reduce((sum, m) => sum + m.volume24h, 0);
-  const avgVolatility = (mockMarkets.reduce((sum, m) => sum + m.volatilityIndex, 0) / mockMarkets.length).toFixed(1);
-  const totalActiveUsers = mockMarkets.reduce((sum, m) => sum + m.activeUsers, 0);
-  const avgDepth = (mockMarkets.reduce((sum, m) => sum + m.depthAvg, 0) / mockMarkets.length / 1000000).toFixed(1);
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/cex/pairs', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items: MarketData[] = (d?.data ?? []).map((p: any) => ({
+          id: p.id,
+          symbol: p.symbol,
+          name: p.base,
+          currentPrice: 0,
+          priceChange24h: 0,
+          priceChangePercent24h: 0,
+          high24h: 0,
+          low24h: 0,
+          volume24h: 0,
+          marketCap: 0,
+          volatilityIndex: 0,
+          depthAvg: 0,
+          activeUsers: 0,
+          lastUpdate: '-',
+        }));
+        setMarkets(items);
+      })
+      .catch(() => setMarkets([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const totalPairs = markets.length;
+  const totalVolume24h = markets.reduce((sum, m) => sum + m.volume24h, 0);
+  const avgVolatility = markets.length > 0 ? (markets.reduce((sum, m) => sum + m.volatilityIndex, 0) / markets.length).toFixed(1) : '0';
+  const totalActiveUsers = markets.reduce((sum, m) => sum + m.activeUsers, 0);
+  const avgDepth = markets.length > 0 ? (markets.reduce((sum, m) => sum + m.depthAvg, 0) / markets.length / 1000000).toFixed(1) : '0';
 
   const handleView = (record: MarketData) => { setSelectedMarket(record); setDetailModalVisible(true); };
 
@@ -103,12 +119,13 @@ export default function MarketPage() {
           <Col xs={24} sm={12} lg={4}><DataCard title="深度均值" value={`${avgDepth}M`} suffix="" icon={<DollarOutlined />} color="#EC4899" trend="down" trendValue="-3.1" /></Col>
         </Row>
 
-        <DataTable columns={columns} dataSource={mockMarkets} rowKey="id" title="行情监控列表" searchPlaceholder="搜索交易对或币种名称..." actions={actions} pagination={{ pageSize: 10 }} />
+        <DataTable columns={columns} dataSource={markets}
+            loading={loading} rowKey="id" title="行情监控列表" searchPlaceholder="搜索交易对或币种名称..." actions={actions} pagination={{ pageSize: 10 }} />
 
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={12}>
             <Card title={<span><RiseOutlined style={{ color: '#16A34A' }} /> 涨幅TOP5</span>} className="shadow-sm">
-              <List size="small" dataSource={[...mockMarkets].sort((a, b) => b.priceChangePercent24h - a.priceChangePercent24h).slice(0, 5)} renderItem={item => (
+              <List size="small" dataSource={[...markets].sort((a, b) => b.priceChangePercent24h - a.priceChangePercent24h).slice(0, 5)} renderItem={item => (
                 <List.Item>
                   <div className="flex justify-between w-full"><span className="font-medium">{item.symbol}</span><span className="font-bold text-green-600">+{item.priceChangePercent24h.toFixed(2)}%</span></div>
                 </List.Item>
@@ -117,7 +134,7 @@ export default function MarketPage() {
           </Col>
           <Col xs={24} lg={12}>
             <Card title={<span><FallOutlined style={{ color: '#DC2626' }} /> 跌幅TOP5</span>} className="shadow-sm">
-              <List size="small" dataSource={[...mockMarkets].sort((a, b) => a.priceChangePercent24h - b.priceChangePercent24h).slice(0, 5)} renderItem={item => (
+              <List size="small" dataSource={[...markets].sort((a, b) => a.priceChangePercent24h - b.priceChangePercent24h).slice(0, 5)} renderItem={item => (
                 <List.Item>
                   <div className="flex justify-between w-full"><span className="font-medium">{item.symbol}</span><span className="font-bold text-red-600">{item.priceChangePercent24h.toFixed(2)}%</span></div>
                 </List.Item>

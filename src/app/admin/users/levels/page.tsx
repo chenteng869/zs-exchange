@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, Input, InputNumber, Select, Badge, Statistic, Progress, Switch } from 'antd';
 import { TrophyOutlined, PlusOutlined, EditOutlined, UserOutlined, ArrowUpOutlined, SettingOutlined } from '@ant-design/icons';
 import SafeECharts from '@/components/admin/SafeECharts';
@@ -17,13 +17,6 @@ const mockLevels = [
   { id: '6', name: '皇冠会员', level: 'LV6', minPoints: 100000, maxPoints: null, discount: 25, feeRate: 0.08, benefits: ['LV5权益', '专属经理', '董事会列席', '定制权益'], userCount: 12, status: 'active', icon: '👑', color: '#ffd700' },
 ];
 
-const mockUserLevels = [
-  { id: '1', user: '0x1234...5678', username: '张三', level: 'LV3', points: 8500, nextLevel: 'LV4', pointsToNext: 11500, registerDate: '2024-01-15', lastActive: '2024-05-13', status: 'active' },
-  { id: '2', user: '0x5678...9abc', username: '李四', level: 'LV2', points: 2300, nextLevel: 'LV3', pointsToNext: 2700, registerDate: '2024-02-20', lastActive: '2024-05-12', status: 'active' },
-  { id: '3', user: '0x9abc...def0', username: '王五', level: 'LV5', points: 62000, nextLevel: 'LV6', pointsToNext: 38000, registerDate: '2023-11-10', lastActive: '2024-05-13', status: 'active' },
-  { id: '4', user: '0xdef0...1234', username: '赵六', level: 'LV1', points: 450, nextLevel: 'LV2', pointsToNext: 550, registerDate: '2024-04-01', lastActive: '2024-05-10', status: 'active' },
-  { id: '5', user: '0x2345...6789', username: '钱七', level: 'LV4', points: 35000, nextLevel: 'LV5', pointsToNext: 15000, registerDate: '2023-12-25', lastActive: '2024-05-13', status: 'active' },
-];
 
 const levelDistributionOption = {
   tooltip: { trigger: 'item' },
@@ -66,6 +59,31 @@ export default function UserLevelsPage() {
   const [editingLevel, setEditingLevel] = useState<any>(null);
   const [form] = Form.useForm();
   const [activeTab, setActiveTab] = useState('config');
+  const [userLevels, setUserLevels] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+
+  useEffect(() => {
+    setLoadingUsers(true);
+    fetch('/api/admin/users?pageSize=100', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items = (d?.data?.items ?? []).map((u: any) => ({
+          id: u.id,
+          user: u.walletAddress || u.id.slice(0, 8) + '...' + u.id.slice(-4),
+          username: u.username,
+                    level: `LV${Math.max(1, u.userLevel || 1)}`,
+          points: 0,
+                    nextLevel: `LV${Math.min(6, Math.max(1, u.userLevel || 1) + 1)}`,
+          pointsToNext: 0,
+          registerDate: u.createdAt?.slice(0, 10) ?? '-',
+          lastActive: u.updatedAt?.slice(0, 10) ?? '-',
+          status: u.isActive ? 'active' : 'inactive',
+        }));
+        setUserLevels(items);
+      })
+      .catch(() => setUserLevels([]))
+      .finally(() => setLoadingUsers(false));
+  }, []);
 
   const totalUsers = mockLevels.reduce((sum, l) => sum + l.userCount, 0);
   const avgLevel = 'LV2';
@@ -265,7 +283,8 @@ export default function UserLevelsPage() {
             />
           ) : (
             <Table
-              dataSource={mockUserLevels}
+              dataSource={userLevels}
+            loading={loadingUsers}
               columns={userColumns}
               pagination={{ pageSize: 10 }}
               rowKey="id"
