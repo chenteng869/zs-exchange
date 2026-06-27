@@ -113,57 +113,57 @@ const parseExpiryFromJWT = (token: string): number | null => {
 };
 
 /**
- * 默认 mock 登录（在无后端时使用；接入后端后由真实接口替换）
- * 业务方实现时直接 await authApi.login() 即可
+ * 真实 admin 登录（调用 /api/admin/auth/login）
  */
-const mockAuthenticate = async (
+const realAdminAuthenticate = async (
   credentials: LoginCredentials
 ): Promise<{ user: User; token: AuthToken; requiresTwoFA: boolean }> => {
-  // 模拟 API 调用
-  await new Promise((r) => setTimeout(r, 300));
+  const res = await fetch('/api/admin/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: credentials.username || credentials.email,
+      password: credentials.password,
+    }),
+  });
 
-  if (!credentials.email && !credentials.phone && !credentials.username) {
-    throw new AuthError('AUTH_NO_CREDENTIALS', '请输入账号');
-  }
-  if (!credentials.password) {
-    throw new AuthError('AUTH_NO_PASSWORD', '请输入密码');
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new AuthError('AUTH_FAILED', data.error?.message || '登录失败，请检查账号密码');
   }
 
-  // 模拟账号
+  const data = await res.json();
+  const { accessToken, refreshToken, tokenType, expiresIn, user: apiUser } = data.data;
   const now = new Date().toISOString();
+
   const user: User = {
-    id: 'usr_demo_001',
-    uid: 'ZS100001',
-    email: credentials.email ?? 'demo@zs.exchange',
-    phone: credentials.phone,
-    username: credentials.username ?? 'demo',
-    nickname: '演示用户',
-    kycLevel: 1,
+    id: apiUser.id,
+    uid: apiUser.id.slice(0, 8),
+    email: apiUser.email,
+    username: apiUser.username,
+    nickname: apiUser.username,
+    kycLevel: 3,
     kycStatus: 'approved',
-    userLevel: 1,
+    userLevel: 5,
     vip: false,
-    role: 'user',
+    role: 'admin',
     status: 'active',
-    twoFAEnabled: true, // 默认开启 2FA 演示
+    twoFAEnabled: false,
     emailVerified: true,
-    phoneVerified: true,
+    phoneVerified: false,
     registeredAt: now,
     lastLoginAt: now,
   };
 
   const token: AuthToken = {
-    accessToken: `mock.${Date.now()}.${Math.random().toString(36).slice(2)}`,
-    refreshToken: `refresh.${Date.now()}.${Math.random().toString(36).slice(2)}`,
-    tokenType: 'Bearer',
-    expiresIn: 3600,
-    scope: ['user'],
+    accessToken,
+    refreshToken,
+    tokenType: tokenType || 'Bearer',
+    expiresIn: expiresIn || 900,
+    scope: ['admin'],
   };
 
-  return {
-    user,
-    token,
-    requiresTwoFA: user.twoFAEnabled,
-  };
+  return { user, token, requiresTwoFA: false };
 };
 
 // ============================================================================
@@ -192,7 +192,7 @@ export const useAuthStore = create<AuthState>()(
       login: async (credentials) => {
         set({ isAuthenticating: true, lastError: null });
         try {
-          const { user, token, requiresTwoFA } = await mockAuthenticate(credentials);
+          const { user, token, requiresTwoFA } = await realAdminAuthenticate(credentials);
 
           // 写入 tokenManager
           tokenManager.setTokens(token.accessToken, token.refreshToken);
