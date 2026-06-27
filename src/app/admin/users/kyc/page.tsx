@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, Input, Select, Badge, Statistic, Tabs, Image } from 'antd';
 import { IdcardOutlined, CheckCircleOutlined, CloseCircleOutlined, EyeOutlined, ClockCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import SafeECharts from '@/components/admin/SafeECharts';
@@ -8,14 +8,6 @@ import AdminLayout from '@/components/admin/AdminLayout';
 
 const { Option } = Select;
 const { TabPane } = Tabs;
-
-const mockKYCRequests = [
-  { id: '1', user: '0x1234...5678', username: '张三', level: 'LV2', status: 'pending', submitTime: '2024-05-13 10:30:00', type: 'individual', idType: '身份证', idNumber: '1101011990********', realName: '张三', phone: '138****8888', email: 'zhangsan***@gmail.com', country: '中国' },
-  { id: '2', user: '0x5678...9abc', username: '李四', level: 'LV1', status: 'approved', submitTime: '2024-05-12 14:20:00', approveTime: '2024-05-12 16:45:00', type: 'individual', idType: '护照', idNumber: 'E1234567', realName: '李四', phone: '139****6666', email: 'lisi***@outlook.com', country: '中国', approvedBy: 'admin1' },
-  { id: '3', user: '0x9abc...def0', username: '王五', level: 'LV1', status: 'rejected', submitTime: '2024-05-11 08:15:00', rejectTime: '2024-05-11 10:20:00', type: 'individual', idType: '驾照', idNumber: '1100001990********', realName: '王五', phone: '137****5555', email: 'wangwu***@163.com', country: '中国', rejectReason: '身份证照片模糊不清', rejectedBy: 'admin2' },
-  { id: '4', user: '0xdef0...1234', username: '赵六', level: 'LV3', status: 'pending', submitTime: '2024-05-10 16:45:00', type: 'corporate', idType: '营业执照', idNumber: '911100********', realName: '北京科技有限公司', phone: '010-12345678', email: 'contact***@tech.com', country: '中国' },
-  { id: '5', user: '0x2345...6789', username: '钱七', level: 'LV1', status: 'approved', submitTime: '2024-05-09 09:00:00', approveTime: '2024-05-09 11:30:00', type: 'individual', idType: '身份证', idNumber: '3101011985********', realName: '钱七', phone: '136****4444', email: 'qianqi***@qq.com', country: '中国', approvedBy: 'admin1' },
-];
 
 const kycTrendOption = {
   tooltip: { trigger: 'axis' },
@@ -40,35 +32,46 @@ export default function KYCAdminPage() {
   const [isViewModalVisible, setIsViewModalVisible] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('all');
+  const [kycRequests, setKycRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const pendingCount = mockKYCRequests.filter(r => r.status === 'pending').length;
-  const approvedCount = mockKYCRequests.filter(r => r.status === 'approved').length;
-  const rejectedCount = mockKYCRequests.filter(r => r.status === 'rejected').length;
-  const totalCount = mockKYCRequests.length;
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/kyc?pageSize=50', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setKycRequests(d?.data?.items ?? []))
+      .catch(() => setKycRequests([]))
+      .finally(() => setLoading(false));
+  }, []);
 
-  const filteredRequests = activeTab === 'all' 
-    ? mockKYCRequests 
-    : mockKYCRequests.filter(r => r.status === activeTab);
+  const pendingCount = kycRequests.filter(r => r.status === 'pending').length;
+  const approvedCount = kycRequests.filter(r => r.status === 'approved').length;
+  const rejectedCount = kycRequests.filter(r => r.status === 'rejected').length;
+  const totalCount = kycRequests.length;
+
+  const filteredRequests = activeTab === 'all'
+    ? kycRequests
+    : kycRequests.filter(r => r.status === activeTab);
 
   const columns = [
-    { title: '申请ID', dataIndex: 'id', key: 'id', width: 80 },
-    { title: '用户地址', dataIndex: 'user', key: 'user', render: (text: string) => <span className="font-mono text-gray-700">{text}</span> },
-    { title: '用户名', dataIndex: 'username', key: 'username' },
-    { title: '认证类型', dataIndex: 'type', key: 'type', render: (type: string) => <Tag color={type === 'individual' ? 'blue' : 'purple'}>{type === 'individual' ? '个人' : '企业'}</Tag> },
-    { 
-      title: '状态', 
-      dataIndex: 'status', 
-      key: 'status', 
+    { title: '申请ID', dataIndex: 'id', key: 'id', width: 80, render: (v: string) => v.slice(0, 8) + '...' },
+    { title: '用户ID', dataIndex: 'userId', key: 'userId', render: (text: string) => <span className="font-mono text-gray-700">{text.slice(0, 12)}...</span> },
+    { title: '姓名', dataIndex: 'name', key: 'name' },
+    { title: '证件类型', dataIndex: 'idType', key: 'idType', render: (t: string) => <Tag color="blue">{t}</Tag> },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
       render: (status: string) => {
         const config = statusConfig[status as keyof typeof statusConfig];
         const color = config?.color as 'success' | 'warning' | 'error' | 'default' | 'processing';
         return <Badge status={color} text={config?.label} />;
       },
     },
-    { title: '提交时间', dataIndex: 'submitTime', key: 'submitTime' },
-    { 
-      title: '操作', 
-      key: 'action', 
+    { title: '提交时间', dataIndex: 'createdAt', key: 'createdAt', render: (v: string) => v?.slice(0, 19).replace('T', ' ') },
+    {
+      title: '操作',
+      key: 'action',
       render: (_: any, record: any) => (
         <Space size="small">
           <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => handleView(record)}>查看</Button>
@@ -91,24 +94,39 @@ export default function KYCAdminPage() {
   const handleApprove = (record: any) => {
     Modal.confirm({
       title: '确认通过KYC申请',
-      content: `确认通过用户 ${record.username} 的KYC申请？`,
-      onOk() {
+      content: `确认通过用户 ${record.name} 的KYC申请？`,
+      onOk: async () => {
+        await fetch('/api/admin/kyc', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: record.id, action: 'approve' }),
+        });
+        setKycRequests((prev) => prev.map((r) => r.id === record.id ? { ...r, status: 'approved' } : r));
         Modal.success({ title: '操作成功', content: 'KYC申请已通过！' });
       },
     });
   };
 
   const handleReject = (record: any) => {
+    let rejectReason = '';
     Modal.confirm({
       title: '拒绝KYC申请',
       content: (
         <Form layout="vertical">
           <Form.Item label="拒绝原因" name="reason" rules={[{ required: true, message: '请输入拒绝原因' }]}>
-            <Input.TextArea rows={3} placeholder="请输入拒绝原因..." />
+            <Input.TextArea rows={3} placeholder="请输入拒绝原因..." onChange={(e) => { rejectReason = e.target.value; }} />
           </Form.Item>
         </Form>
       ),
-      onOk() {
+      onOk: async () => {
+        await fetch('/api/admin/kyc', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: record.id, action: 'reject', reviewNotes: rejectReason }),
+        });
+        setKycRequests((prev) => prev.map((r) => r.id === record.id ? { ...r, status: 'rejected' } : r));
         Modal.success({ title: '操作成功', content: 'KYC申请已拒绝！' });
       },
     });
@@ -171,6 +189,7 @@ export default function KYCAdminPage() {
           </Tabs>
           <Table
             dataSource={filteredRequests}
+            loading={loading}
             columns={columns}
             pagination={{ pageSize: 10 }}
             rowKey="id"
