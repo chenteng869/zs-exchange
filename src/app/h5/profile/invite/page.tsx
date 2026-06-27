@@ -1,10 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState, type ElementType } from 'react';
 import {
   Gift,
   Copy,
-  Share2,
   Users,
   TrendingUp,
   DollarSign,
@@ -14,14 +13,54 @@ import {
   QrCode,
   Check,
 } from 'lucide-react';
-import { getReferralData } from '@/lib/h5-mock';
+import { userApi, type ApiUserProfile } from '@/lib/api/user';
+
+interface ReferralView {
+  code: string;
+  totalInvites: number;
+  activeInvites: number;
+  totalCommission: string;
+  todayCommission: string;
+  commissionRate: string;
+}
+
+function toReferralView(profile: ApiUserProfile | null): ReferralView {
+  return {
+    code: profile?.referralCode || '--',
+    totalInvites: 0,
+    activeInvites: 0,
+    totalCommission: '0.00',
+    todayCommission: '0.00',
+    commissionRate: profile?.feeDiscount ? `${Number(profile.feeDiscount) * 100}%` : '30%',
+  };
+}
 
 export default function H5ProfileInvitePage() {
-  const r = getReferralData();
+  const [profile, setProfile] = useState<ApiUserProfile | null>(null);
   const [copied, setCopied] = useState(false);
+  const r = useMemo(() => toReferralView(profile), [profile]);
   const inviteUrl = `https://zse.exchange/register?ref=${r.code}`;
 
+  useEffect(() => {
+    let alive = true;
+
+    userApi.getProfile()
+      .then((nextProfile) => {
+        if (alive) setProfile(nextProfile);
+      })
+      .catch(() => {
+        if (alive) setProfile(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const copyCode = () => {
+    if (typeof navigator !== 'undefined' && r.code !== '--') {
+      navigator.clipboard?.writeText(r.code).catch(() => undefined);
+    }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -73,11 +112,11 @@ export default function H5ProfileInvitePage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
             <Gift size={22} color="#FCD535" />
             <span style={{ fontSize: 18, fontWeight: 800, color: '#F8FAFC' }}>
-              邀请好友 享 {r.commissionRate} 返佣
+              邀请好友享 {r.commissionRate} 返佣
             </span>
           </div>
           <div style={{ fontSize: 12, color: '#B4C0E0', marginBottom: 14, lineHeight: 1.6 }}>
-            好友注册即得奖励，您可永久获得其交易手续费的 30% 返佣，上不封顶
+            好友注册后绑定您的邀请码，返佣数据以用户 API 与后续 referral API 结算为准。
           </div>
 
           <div
@@ -139,7 +178,7 @@ export default function H5ProfileInvitePage() {
       >
         <StatCard icon={Users} color="#38BDF8" value={r.totalInvites} label="累计邀请" />
         <StatCard icon={TrendingUp} color="#34D399" value={r.activeInvites} label="活跃用户" />
-        <StatCard icon={DollarSign} color="#FCD535" value={`¥${r.totalCommission}`} label="累计返佣" highlight />
+        <StatCard icon={DollarSign} color="#FCD535" value={`≈${r.totalCommission}`} label="累计返佣" highlight />
       </div>
 
       {/* 今日返佣 */}
@@ -180,7 +219,7 @@ export default function H5ProfileInvitePage() {
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            + ¥{r.todayCommission}
+            + ≈{r.todayCommission}
           </div>
         </div>
         <div
@@ -193,7 +232,7 @@ export default function H5ProfileInvitePage() {
             fontWeight: 700,
           }}
         >
-          +12.5%
+          API
         </div>
       </div>
 
@@ -219,10 +258,10 @@ export default function H5ProfileInvitePage() {
           }}
         >
           {[
-            { icon: LinkIcon,      label: '复制链接', color: '#38BDF8' },
-            { icon: QrCode,        label: '邀请海报', color: '#F0B90B' },
+            { icon: LinkIcon, label: '复制链接', color: '#38BDF8' },
+            { icon: QrCode, label: '邀请海报', color: '#F0B90B' },
             { icon: MessageCircle, label: '微信好友', color: '#34D399' },
-            { icon: Mail,          label: '邮件邀请', color: '#A78BFA' },
+            { icon: Mail, label: '邮件邀请', color: '#A78BFA' },
           ].map((it) => {
             const Icon = it.icon;
             return (
@@ -294,11 +333,11 @@ export default function H5ProfileInvitePage() {
           <span style={{ fontSize: 13, fontWeight: 700, color: '#F8FAFC' }}>返佣规则</span>
         </div>
         {[
-          '1. 好友通过您的专属链接/邀请码注册即建立邀请关系',
-          '2. 好友完成首笔交易后，双方各得 10 USDT 新人奖励',
-          '3. 您可永久获得其交易手续费的 30% 返佣',
-          '4. 返佣每日 00:00 自动结算至现货账户',
-          '5. 邀请人数/返佣金额无上限，结算明细可查',
+          '1. 好友通过您的专属链接/邀请码注册后建立邀请关系',
+          '2. 好友完成首笔交易后，奖励与返佣进入后端 referral 结算',
+          '3. 您可获得其交易手续费返佣，具体比例以账户等级为准',
+          '4. 返佣结算以真实 API 数据为准',
+          '5. 邀请人数与返佣金额不在前端伪造',
         ].map((rule) => (
           <div
             key={rule}
@@ -326,7 +365,7 @@ function StatCard({
   label,
   highlight,
 }: {
-  icon: React.ElementType;
+  icon: ElementType;
   color: string;
   value: string | number;
   label: string;

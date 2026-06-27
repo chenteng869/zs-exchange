@@ -1,4 +1,4 @@
-﻿﻿import { Variants, Transition } from 'framer-motion';
+﻿﻿﻿﻿import { Variants, Transition } from 'framer-motion';
 
 // Custom bezier tuple type
 type Bezier = [number, number, number, number];

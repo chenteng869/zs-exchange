@@ -5,7 +5,6 @@
  */
 import { useState } from 'react';
 import { Users, ShieldCheck, Clock, Check } from 'lucide-react';
-import { getQuotePairs } from '@/lib/h5-mock';
 
 const P2P_ADS = [
   { id: '1', trader: 'OTC_Trader_01',  rating: '99.5%', orders: 1234, side: 'sell', price: '7.18',  available: '50,000',  pay: ['银行卡', '支付宝'],  time: '5分钟' },

@@ -25,7 +25,7 @@ import {
   decTruncate,
 } from '@/lib/matching/decimal';
 import { PerpEngine, PerpError } from './perp-engine';
-import type { Position, Order, Side, MarginMode, OrderType } from './types';
+import type { FundingPayment, Position, Order, Side, MarginMode, OrderType } from './types';
 
 import {
   contractRepo,
@@ -62,6 +62,12 @@ export class PerpEnginePersistence extends PerpEngine {
     }
   }
 
+  private persistLater(label: string, task: Promise<unknown>): void {
+    task.catch((err) => {
+      console.error(`[PerpEnginePersistence] ${label} failed:`, err);
+    });
+  }
+
   // ============================================================
   // 数据库加载
   // ============================================================
@@ -78,13 +84,20 @@ export class PerpEnginePersistence extends PerpEngine {
         symbol: c.symbol,
         baseAsset: c.baseAsset,
         quoteAsset: c.quoteAsset,
+        tickSize: `1e-${c.pricePrecision}`,
+        stepSize: `1e-${c.qtyPrecision}`,
         maxLeverage: c.maxLeverage,
         minQty: c.minOrderQty.toString(),
-        initialMarginRate: c.initialMarginRate.toString(),
-        maintenanceMarginRate: c.maintenanceMarginRate.toString(),
-        makerFeeRate: c.makerFeeRate.toString(),
-        takerFeeRate: c.takerFeeRate.toString(),
-        fundingIntervalMin: c.fundingIntervalMinutes,
+        maxQty: c.maxOrderQty.toString(),
+        minNotional: '0',
+        defaultLeverage: Math.min(20, c.maxLeverage),
+        initialMarginRate: Number(c.initialMarginRate.toString()),
+        maintenanceMarginRate: Number(c.maintenanceMarginRate.toString()),
+        makerFee: Number(c.makerFeeRate.toString()),
+        takerFee: Number(c.takerFeeRate.toString()),
+        fundingIntervalHours: Math.max(1, Math.floor(c.fundingIntervalMinutes / 60)),
+        fundingCap: Number(c.fundingCap.toString()),
+        isActive: c.status === 'active',
       });
     }
 
@@ -95,11 +108,11 @@ export class PerpEnginePersistence extends PerpEngine {
   // 账户操作（持久化版本）
   // ============================================================
 
-  async transferIn(userId: string, asset: string, amount: string): Promise<void> {
+  transferIn(userId: string, asset: string, amount: string): void {
     super.transferIn(userId, asset, amount);
 
     if (this.persistEnabled) {
-      await prisma.$transaction(async (tx) => {
+      this.persistLater('transferIn', prisma.$transaction(async (tx) => {
         const account = await accountRepo.getOrCreate(userId, asset, 'cross');
         const updated = await accountRepo.adjustBalance(
           account.id,
@@ -119,15 +132,16 @@ export class PerpEnginePersistence extends PerpEngine {
           'Transfer in to perp account',
           tx as any
         );
-      });
+      }));
     }
   }
 
-  async transferOut(userId: string, asset: string, amount: string): Promise<void> {
-    super.transferOut(userId, asset, amount);
+  transferOut(userId: string, asset: string, amount: string): boolean {
+    const ok = super.transferOut(userId, asset, amount);
+    if (!ok) return false;
 
     if (this.persistEnabled) {
-      await prisma.$transaction(async (tx) => {
+      this.persistLater('transferOut', prisma.$transaction(async (tx) => {
         const account = await accountRepo.findByUserAssetType(userId, asset, 'cross');
         if (!account) throw new PerpError('ACCOUNT_NOT_FOUND', 'Account not found');
 
@@ -149,15 +163,17 @@ export class PerpEnginePersistence extends PerpEngine {
           'Transfer out from perp account',
           tx as any
         );
-      });
+      }));
     }
+
+    return true;
   }
 
   // ============================================================
   // 仓位操作（持久化版本）
   // ============================================================
 
-  async openPosition(params: {
+  openPosition(params: {
     userId: string;
     symbol: string;
     side: Side;
@@ -167,31 +183,28 @@ export class PerpEnginePersistence extends PerpEngine {
     marginMode: MarginMode;
     orderType?: OrderType;
     reduceOnly?: boolean;
-  }): Promise<Position> {
+  }): Position {
     const position = super.openPosition(params);
 
     if (this.persistEnabled) {
-      await this.persistPosition(position, params.userId);
+      this.persistLater('persistPosition', this.persistPosition(position, params.userId));
     }
 
     return position;
   }
 
-  async closePosition(params: {
-    userId: string;
-    symbol: string;
-    side: Side;
-    quantity?: string;
-    price?: string;
-    marginMode?: MarginMode;
-  }): Promise<Position> {
-    const position = super.closePosition(params);
+  closePosition(
+    positionId: string,
+    price: string,
+    qty?: string
+  ): { pnl: string; fee: string; position: Position } {
+    const result = super.closePosition(positionId, price, qty);
 
     if (this.persistEnabled) {
-      await this.persistPosition(position, params.userId);
+      this.persistLater('persistClosedPosition', this.persistPosition(result.position, result.position.userId));
     }
 
-    return position;
+    return result;
   }
 
   private async persistPosition(position: Position, userId: string): Promise<void> {
@@ -209,35 +222,35 @@ export class PerpEnginePersistence extends PerpEngine {
 
     if (existing) {
       await positionRepo.update(existing.id, {
-        positionQty: new Prisma.Decimal(position.quantity),
+        positionQty: new Prisma.Decimal(position.size),
         entryPrice: new Prisma.Decimal(position.entryPrice),
         markPrice: new Prisma.Decimal(position.markPrice),
         liquidationPrice: new Prisma.Decimal(position.liquidationPrice),
         leverage: position.leverage,
-        isolatedMargin: new Prisma.Decimal(position.isolatedMargin || 0),
+        isolatedMargin: new Prisma.Decimal(position.marginMode === 'isolated' ? position.margin : 0),
         positionMargin: new Prisma.Decimal(position.margin),
         unrealizedPnl: new Prisma.Decimal(position.unrealizedPnl),
-        realizedPnl: new Prisma.Decimal(position.realizedPnl),
+        realizedPnl: new Prisma.Decimal(0),
         status: position.status === 'open' ? 'active' : 'closed',
         closeTime: position.status === 'closed' ? new Date() : null,
       });
     } else {
       await positionRepo.create({
         userId,
-        accountId: account.id,
-        contractId: contract.id,
+        account: { connect: { id: account.id } },
+        contract: { connect: { id: contract.id } },
         symbol: position.symbol,
         side: position.side,
-        positionQty: new Prisma.Decimal(position.quantity),
+        positionQty: new Prisma.Decimal(position.size),
         entryPrice: new Prisma.Decimal(position.entryPrice),
         markPrice: new Prisma.Decimal(position.markPrice),
         liquidationPrice: new Prisma.Decimal(position.liquidationPrice),
         leverage: position.leverage,
         marginMode: position.marginMode,
-        isolatedMargin: new Prisma.Decimal(position.isolatedMargin || 0),
+        isolatedMargin: new Prisma.Decimal(position.marginMode === 'isolated' ? position.margin : 0),
         positionMargin: new Prisma.Decimal(position.margin),
         unrealizedPnl: new Prisma.Decimal(position.unrealizedPnl),
-        realizedPnl: new Prisma.Decimal(position.realizedPnl),
+        realizedPnl: new Prisma.Decimal(0),
         status: position.status === 'open' ? 'active' : 'closed',
       });
     }
@@ -247,7 +260,7 @@ export class PerpEnginePersistence extends PerpEngine {
   // 订单操作（持久化版本）
   // ============================================================
 
-  async placeOrder(params: {
+  placeOrder(params: {
     userId: string;
     symbol: string;
     side: Side;
@@ -261,11 +274,14 @@ export class PerpEnginePersistence extends PerpEngine {
     timeInForce?: string;
     triggerPrice?: string;
     clientOrderId?: string;
-  }): Promise<Order> {
-    const order = super.placeOrder(params);
+  }): Order {
+    const order = super.placeOrder({
+      ...params,
+      stopPrice: params.triggerPrice,
+    });
 
     if (this.persistEnabled) {
-      await this.persistOrder(order, params.userId);
+      this.persistLater('persistOrder', this.persistOrder(order, params.userId));
     }
 
     return order;
@@ -288,8 +304,8 @@ export class PerpEnginePersistence extends PerpEngine {
       await orderRepo.create({
         orderNo: order.id,
         userId,
-        accountId: account.id,
-        contractId: contract.id,
+        account: { connect: { id: account.id } },
+        contract: { connect: { id: contract.id } },
         symbol: order.symbol,
         side: order.side,
         positionSide: order.side === 'long' ? 'long' : 'short',
@@ -301,6 +317,8 @@ export class PerpEnginePersistence extends PerpEngine {
         reduceOnly: order.reduceOnly || false,
         postOnly: false,
         timeInForce: 'GTC',
+        stopPrice: order.stopPrice ? new Prisma.Decimal(order.stopPrice) : new Prisma.Decimal(0),
+        triggerPrice: order.stopPrice ? new Prisma.Decimal(order.stopPrice) : new Prisma.Decimal(0),
         status: order.status,
         clientOrderId: order.clientOrderId,
         source: 'engine',
@@ -312,16 +330,15 @@ export class PerpEnginePersistence extends PerpEngine {
   // 资金费结算（持久化版本）
   // ============================================================
 
-  async settleFunding(symbol: string): Promise<void> {
-    super.settleFunding(symbol);
+  settleFunding(symbol: string, now: number = Date.now()): FundingPayment[] {
+    const payments = super.settleFunding(symbol, now);
 
     if (this.persistEnabled) {
       // 资金费率记录
-      const contract = await contractRepo.findBySymbol(symbol);
-      if (!contract) return;
-
-      // 标记价格同步等后续完善
+      this.persistLater('settleFunding', contractRepo.findBySymbol(symbol));
     }
+
+    return payments;
   }
 
   // ============================================================

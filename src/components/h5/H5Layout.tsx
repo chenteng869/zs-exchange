@@ -13,6 +13,7 @@
 import { ReactNode, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import {
   Home,
   BarChart3,
@@ -24,8 +25,15 @@ import {
   QrCode,
   Bell,
 } from 'lucide-react';
-import { WalletButton } from './WalletButton';
 import H5DownloadBanner from './H5DownloadBanner';
+
+const WalletButtonWithProvider = dynamic(
+  () => import('./WalletButtonWithProvider').then((mod) => mod.WalletButtonWithProvider),
+  {
+    ssr: false,
+    loading: () => <WalletButtonFallback />,
+  },
+);
 
 interface TabConfig {
   key: string;
@@ -42,6 +50,30 @@ const TABS: TabConfig[] = [
   { key: 'assets',   label: '资产', icon: Wallet,         href: '/h5/assets' },
   { key: 'profile',  label: '我的', icon: User,           href: '/h5/profile' },
 ];
+
+function WalletButtonFallback() {
+  return (
+    <button
+      aria-label="连接钱包"
+      disabled
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        padding: '7px 12px',
+        borderRadius: 10,
+        border: '1px solid rgba(240, 185, 11, 0.18)',
+        background: 'rgba(240,185,11,0.08)',
+        color: '#B4C0E0',
+        fontSize: 12,
+        fontWeight: 700,
+      }}
+    >
+      <Wallet size={13} />
+      钱包
+    </button>
+  );
+}
 
 export default function H5Layout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -149,7 +181,7 @@ export default function H5Layout({ children }: { children: ReactNode }) {
           </div>
 
           {/* 钱包按钮 */}
-          <WalletButton />
+          <WalletButtonWithProvider />
 
           {/* 通知 */}
           <button

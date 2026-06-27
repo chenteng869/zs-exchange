@@ -1,17 +1,155 @@
 'use client';
 
 /**
- * H5 行情详情页（带 K线 + 深度 + 成交）
+ * H5 行情详情页（K线 + 深度 + 成交）
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronDown, Star, Share2, Bell, TrendingUp, TrendingDown } from 'lucide-react';
-import { getQuotePairs, getKline } from '@/lib/h5-mock';
+import { marketApi, fmtChange, fmtPrice, fmtVolume, type MarketTicker, type OrderBook } from '@/lib/api/market';
+import { PAIR_MAP, TOP20_PAIRS, type H5Pair } from '@/lib/h5/top20-pairs';
+
+type RawKline = Array<number | string>;
+
+interface DetailPair extends H5Pair {
+  price: string;
+  change: string;
+  up: boolean;
+  high: string;
+  low: string;
+  volume: string;
+}
+
+interface KlineBar {
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+function toApiSymbol(symbol: string) {
+  return symbol.replace('/', '');
+}
+
+function normalizeSymbol(symbol: string | null) {
+  if (!symbol) return 'BTC/USDT';
+  if (symbol.includes('/')) return symbol.toUpperCase();
+  if (symbol.toUpperCase().endsWith('USDT')) return `${symbol.slice(0, -4).toUpperCase()}/USDT`;
+  return symbol.toUpperCase();
+}
+
+function fallbackPair(symbol: string): H5Pair {
+  const [base = 'BTC', quote = 'USDT'] = symbol.split('/');
+  return {
+    symbol,
+    base,
+    quote,
+    name: base,
+    hot: false,
+    emoji: base.slice(0, 1),
+    color: '#38BDF8',
+  };
+}
+
+function toDetailPair(pair: H5Pair, ticker: MarketTicker | null): DetailPair {
+  const lastPrice = Number.parseFloat(String(ticker?.lastPrice ?? '0'));
+  const changeSource = ticker?.changePercent24h ?? ticker?.change24h ?? '0';
+  const changeValue = Number.parseFloat(String(changeSource));
+  const changed = fmtChange(Number.isFinite(changeValue) ? changeValue : 0);
+  const quoteVolume = Number.parseFloat(String(ticker?.quoteVolume24h || 0));
+  const baseVolume = Number.parseFloat(String(ticker?.volume24h || 0));
+  const volumeValue = quoteVolume || baseVolume * (Number.isFinite(lastPrice) ? lastPrice : 0);
+
+  if (!ticker || ticker.error || !Number.isFinite(lastPrice) || lastPrice <= 0) {
+    return {
+      ...pair,
+      price: '--',
+      change: '--',
+      up: true,
+      high: '--',
+      low: '--',
+      volume: '--',
+    };
+  }
+
+  return {
+    ...pair,
+    price: fmtPrice(ticker.lastPrice),
+    change: changed.text,
+    up: changed.up,
+    high: fmtPrice(ticker.high24h || ticker.lastPrice),
+    low: fmtPrice(ticker.low24h || ticker.lastPrice),
+    volume: fmtVolume(volumeValue),
+  };
+}
+
+function intervalForApi(tf: string) {
+  if (tf === '1H') return '1h';
+  if (tf === '4H') return '4h';
+  if (tf === '1D') return '1d';
+  if (tf === '1W') return '1w';
+  return tf;
+}
+
+function parseKline(row: RawKline): KlineBar | null {
+  const open = Number(row[1]);
+  const high = Number(row[2]);
+  const low = Number(row[3]);
+  const close = Number(row[4]);
+
+  if (![open, high, low, close].every(Number.isFinite)) return null;
+  return { open, high, low, close };
+}
+
+function scaleBarHeight(bar: KlineBar, bars: KlineBar[]) {
+  const min = Math.min(...bars.map((item) => item.low));
+  const max = Math.max(...bars.map((item) => item.high));
+  const range = Math.max(max - min, max * 0.001, 1);
+  const ownRange = Math.max(bar.high - bar.low, range * 0.08);
+  return Math.max(20, Math.min(150, (ownRange / range) * 150));
+}
 
 export default function H5MarketDetailPage() {
+  const searchParams = useSearchParams();
   const [tf, setTf] = useState('1H');
-  const pair = getQuotePairs()[0];
-  const kline = getKline('BTC/USDT');
+  const [ticker, setTicker] = useState<MarketTicker | null>(null);
+  const [kline, setKline] = useState<KlineBar[]>([]);
+  const [orderBook, setOrderBook] = useState<OrderBook | null>(null);
+
+  const symbol = normalizeSymbol(searchParams.get('symbol'));
+  const apiSymbol = toApiSymbol(symbol);
+  const pairMeta = PAIR_MAP[symbol] ?? TOP20_PAIRS.find((pair) => pair.symbol === symbol) ?? fallbackPair(symbol);
+  const pair = useMemo(() => toDetailPair(pairMeta, ticker), [pairMeta, ticker]);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadDetail() {
+      const [nextTicker, nextKlines, nextOrderBook] = await Promise.all([
+        marketApi.getTicker(apiSymbol).catch(() => null),
+        marketApi.getKlines(apiSymbol, intervalForApi(tf), 60).catch(() => []),
+        marketApi.getOrderBook(apiSymbol, 20).catch(() => null),
+      ]);
+
+      if (!alive) return;
+      setTicker(nextTicker);
+      setKline((nextKlines as RawKline[]).map(parseKline).filter((bar): bar is KlineBar => Boolean(bar)));
+      setOrderBook(nextOrderBook);
+    }
+
+    loadDetail();
+
+    return () => {
+      alive = false;
+    };
+  }, [apiSymbol, tf]);
+
+  const depthRows = useMemo(() => {
+    const asks = (orderBook?.asks ?? []).slice(0, 3).map(([price, amount]) => ({ p: fmtPrice(price), a: String(amount), side: 'sell' }));
+    const bids = (orderBook?.bids ?? []).slice(0, 2).map(([price, amount]) => ({ p: fmtPrice(price), a: String(amount), side: 'buy' }));
+    return [...asks, ...bids];
+  }, [orderBook]);
 
   return (
     <div style={{ padding: '12px' }}>
@@ -103,7 +241,7 @@ export default function H5MarketDetailPage() {
             <Cell label="24h 最高" value={pair.high} color="#34D399" />
             <Cell label="24h 最低" value={pair.low} color="#F472B6" />
             <Cell label="24h 成交" value={pair.volume} />
-            <Cell label="流通市值" value="¥1.32T" />
+            <Cell label="流通市值" value="--" />
           </div>
         </div>
       </div>
@@ -118,8 +256,8 @@ export default function H5MarketDetailPage() {
               onClick={() => setTf(t)}
               style={{
                 padding: '4px 10px', borderRadius: 8, flexShrink: 0,
-                background: tf === t ? 'rgba(56, 189, 248, 0.20)' : 'transparent',
-                color: tf === t ? '#38BDF8' : '#7B89B8',
+                background: active ? 'rgba(56, 189, 248, 0.20)' : 'transparent',
+                color: active ? '#38BDF8' : '#7B89B8',
                 border: 'none', fontSize: 11, fontWeight: 600, cursor: 'pointer',
               }}
             >
@@ -142,7 +280,7 @@ export default function H5MarketDetailPage() {
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 160 }}>
           {kline.slice(-20).map((k, i) => {
             const isUp = k.close >= k.open;
-            const h = ((k.high - k.low) / 1000) * 2 + 20;
+            const h = scaleBarHeight(k, kline);
             return (
               <div
                 key={i}
@@ -239,7 +377,7 @@ export default function H5MarketDetailPage() {
         })}
       </div>
 
-      {/* 模拟盘口数据 */}
+      {/* API 盘口数据 */}
       <div
         style={{
           background: 'linear-gradient(180deg, rgba(26, 36, 86, 0.55) 0%, rgba(21, 34, 74, 0.70) 100%)',
@@ -247,13 +385,7 @@ export default function H5MarketDetailPage() {
           borderRadius: 16, overflow: 'hidden',
         }}
       >
-        {[
-          { p: '67,860',  a: '0.85', side: 'sell' },
-          { p: '67,855',  a: '1.20', side: 'sell' },
-          { p: '67,850',  a: '2.30', side: 'sell' },
-          { p: '67,845',  a: '0.50', side: 'buy' },
-          { p: '67,842',  a: '1.50', side: 'buy' },
-        ].map((row, i) => (
+        {depthRows.map((row, i) => (
           <div
             key={i}
             style={{

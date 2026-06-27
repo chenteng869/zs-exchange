@@ -3,28 +3,79 @@
 /**
  * H5 OTC 大宗交易页
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Handshake, ShieldCheck, Clock, DollarSign, ChevronRight } from 'lucide-react';
-import { getQuotePairs } from '@/lib/h5-mock';
+import { marketApi, fmtPrice, type MarketTicker } from '@/lib/api/market';
 
-const OTC_QUOTES = [
-  { id: '1', pair: 'BTC/USDT', buy: '67,820.00', sell: '67,850.00', min: '0.1', max: '50',  spread: '0.04%' },
-  { id: '2', pair: 'ETH/USDT', buy: '3,510.50',  sell: '3,512.80',  min: '1',   max: '500', spread: '0.07%' },
-  { id: '3', pair: 'SOL/USDT', buy: '182.30',    sell: '182.45',    min: '10',  max: '5000',spread: '0.08%' },
-  { id: '4', pair: 'USDT/USD', buy: '1.000',     sell: '1.002',     min: '1000',max: '1M',  spread: '0.20%' },
+interface OtcQuote {
+  id: string;
+  pair: string;
+  apiSymbol: string;
+  buy: string;
+  sell: string;
+  min: string;
+  max: string;
+  spread: string;
+}
+
+const INITIAL_QUOTES: OtcQuote[] = [
+  { id: '1', pair: 'BTC/USDT', apiSymbol: 'BTCUSDT', buy: '--', sell: '--', min: '0.1', max: '50', spread: '--' },
+  { id: '2', pair: 'ETH/USDT', apiSymbol: 'ETHUSDT', buy: '--', sell: '--', min: '1', max: '500', spread: '--' },
+  { id: '3', pair: 'SOL/USDT', apiSymbol: 'SOLUSDT', buy: '--', sell: '--', min: '10', max: '5000', spread: '--' },
+  { id: '4', pair: 'USDT/USD', apiSymbol: 'USDTUSD', buy: '1.000', sell: '1.002', min: '1000', max: '1M', spread: '0.20%' },
 ];
+
+function quoteFromTicker(base: OtcQuote, ticker: MarketTicker | null): OtcQuote {
+  if (!ticker || ticker.error) return base;
+  const bid = Number(ticker.bestBid || ticker.lastPrice);
+  const ask = Number(ticker.bestAsk || ticker.lastPrice);
+  const mid = Number(ticker.lastPrice);
+  const spread = bid > 0 && ask > 0 ? ((ask - bid) / ((ask + bid) / 2)) * 100 : 0;
+
+  return {
+    ...base,
+    buy: bid > 0 ? fmtPrice(bid) : mid > 0 ? fmtPrice(mid * 0.9998) : '--',
+    sell: ask > 0 ? fmtPrice(ask) : mid > 0 ? fmtPrice(mid * 1.0002) : '--',
+    spread: spread > 0 ? `${spread.toFixed(2)}%` : '0.04%',
+  };
+}
 
 export default function H5OTCSpotPage() {
   const [side, setSide] = useState<'buy' | 'sell'>('buy');
-  const [selected, setSelected] = useState(OTC_QUOTES[0]);
+  const [quotes, setQuotes] = useState(INITIAL_QUOTES);
+  const [selected, setSelected] = useState(INITIAL_QUOTES[0]);
   const [amount, setAmount] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadQuotes() {
+      const nextQuotes = await Promise.all(
+        INITIAL_QUOTES.map(async (quote) => {
+          if (quote.apiSymbol === 'USDTUSD') return quote;
+          const ticker = await marketApi.getTicker(quote.apiSymbol).catch(() => null);
+          return quoteFromTicker(quote, ticker);
+        }),
+      );
+
+      if (!alive) return;
+      setQuotes(nextQuotes);
+      setSelected((current) => nextQuotes.find((quote) => quote.id === current.id) ?? nextQuotes[0]);
+    }
+
+    loadQuotes();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <div style={{ padding: '12px' }}>
       <div style={{ marginBottom: 12 }}>
         <span style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC' }}>OTC 大宗交易</span>
         <div style={{ fontSize: 11, color: '#7B89B8', marginTop: 2 }}>
-          大额交易,场外撮合,0 滑点
+          大额交易，场外撮合，0 滑点
         </div>
       </div>
 
@@ -49,9 +100,9 @@ export default function H5OTCSpotPage() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
             {[
               { icon: DollarSign, label: '0 滑点', sub: '大额无冲击' },
-              { icon: Clock,      label: '快速撮合', sub: '5秒成交' },
-              { icon: ShieldCheck,label: '资金安全', sub: '冷钱包存储' },
-              { icon: Handshake,  label: '专属客服', sub: '24h 服务' },
+              { icon: Clock, label: '快速撮合', sub: '5秒成交' },
+              { icon: ShieldCheck, label: '资金安全', sub: '冷钱包存储' },
+              { icon: Handshake, label: '专属客服', sub: '24h 服务' },
             ].map((item) => {
               const Icon = item.icon;
               return (
@@ -89,7 +140,7 @@ export default function H5OTCSpotPage() {
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-        {OTC_QUOTES.map((q) => (
+        {quotes.map((q) => (
           <button
             key={q.id}
             onClick={() => setSelected(q)}
@@ -191,7 +242,7 @@ export default function H5OTCSpotPage() {
 
         <div style={{ marginTop: 12, padding: 10, background: 'rgba(15, 27, 61, 0.40)', borderRadius: 8 }}>
           <Row label={side === 'buy' ? '买入价' : '卖出价'} value={side === 'buy' ? selected.buy : selected.sell} highlight />
-          <Row label="预估成交" value={`${amount || '0'} ${selected.pair.split('/')[0]}`} />
+          <Row label="预计成交" value={`${amount || '0'} ${selected.pair.split('/')[0]}`} />
           <Row label="手续费 (0.05%)" value="0.00 USDT" />
         </div>
       </div>

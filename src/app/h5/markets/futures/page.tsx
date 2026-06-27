@@ -3,25 +3,108 @@
 /**
  * H5 合约行情页
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Flame } from 'lucide-react';
-import { getQuotePairs } from '@/lib/h5-mock';
+import { marketApi, fmtChange, fmtPrice, fmtVolume, type MarketTicker } from '@/lib/api/market';
+import { PAIR_MAP, type H5Pair } from '@/lib/h5/top20-pairs';
 
-const FUTURES_PAIRS = getQuotePairs().map((p) => ({
-  ...p,
-  funding: '+0.0' + (Math.floor(Math.random() * 9) + 1) + '%',
-  volume24h: '$' + (Math.floor(Math.random() * 90) + 10) + 'B',
-  oi: '$' + (Math.floor(Math.random() * 9) + 1) + '.' + Math.floor(Math.random() * 9) + 'B',
-}));
+type SortKey = 'default' | 'gainers' | 'losers' | 'oi';
+
+interface PerpContract {
+  symbol: string;
+  baseAsset?: string;
+  quoteAsset?: string;
+  maxLeverage?: number;
+  isActive?: boolean;
+}
+
+interface FuturesRow {
+  symbol: string;
+  hot: boolean;
+  price: string;
+  change: string;
+  up: boolean;
+  funding: string;
+  oi: string;
+  oiValue: number;
+  changeValue: number;
+}
+
+function h5SymbolFromApi(symbol: string, baseAsset?: string, quoteAsset = 'USDT') {
+  if (baseAsset) return `${baseAsset}/${quoteAsset}`;
+  if (symbol.endsWith('USDT')) return `${symbol.slice(0, -4)}/USDT`;
+  return symbol;
+}
+
+function formatFunding(rate: string | number | undefined) {
+  const n = Number.parseFloat(String(rate ?? '0'));
+  if (!Number.isFinite(n)) return '--';
+  const pct = n * 100;
+  return `${pct >= 0 ? '+' : ''}${pct.toFixed(4)}%`;
+}
+
+function rowFromTicker(contract: PerpContract, pair: H5Pair | undefined, ticker: MarketTicker): FuturesRow {
+  const h5Symbol = h5SymbolFromApi(contract.symbol, contract.baseAsset, contract.quoteAsset);
+  const changeSource = ticker.changePercent24h ?? ticker.change24h ?? '0';
+  const changeValue = Number.parseFloat(String(changeSource));
+  const changed = fmtChange(Number.isFinite(changeValue) ? changeValue : 0);
+  const openInterestValue = Number.parseFloat(String((ticker as any).openInterestValue || ticker.openInterest || 0));
+  const lastPrice = Number.parseFloat(String(ticker.lastPrice));
+
+  return {
+    symbol: h5Symbol,
+    hot: pair?.hot ?? false,
+    price: ticker.error || !Number.isFinite(lastPrice) || lastPrice <= 0 ? '--' : fmtPrice(ticker.lastPrice),
+    change: ticker.error ? '--' : changed.text,
+    up: changed.up,
+    funding: formatFunding(ticker.fundingRate),
+    oi: openInterestValue > 0 ? `$${fmtVolume(openInterestValue)}` : '--',
+    oiValue: openInterestValue,
+    changeValue,
+  };
+}
 
 export default function H5FuturesMarketPage() {
-  const [sort, setSort] = useState<'default' | 'gainers' | 'losers' | 'oi'>('default');
+  const [sort, setSort] = useState<SortKey>('default');
+  const [rows, setRows] = useState<FuturesRow[]>([]);
 
-  let list = [...FUTURES_PAIRS];
-  if (sort === 'gainers') list = list.filter((p) => p.up).sort((a, b) => parseFloat(b.change) - parseFloat(a.change));
-  if (sort === 'losers')  list = list.filter((p) => !p.up).sort((a, b) => parseFloat(a.change) - parseFloat(b.change));
-  if (sort === 'oi')      list = list.sort((a, b) => parseFloat(b.oi.replace(/[^\d.]/g, '')) - parseFloat(a.oi.replace(/[^\d.]/g, '')));
+  useEffect(() => {
+    let alive = true;
+
+    async function loadFuturesRows() {
+      try {
+        const contracts = (await marketApi.getContracts()) as PerpContract[];
+        const activeContracts = contracts.filter((contract) => contract.isActive !== false);
+        const nextRows = await Promise.all(
+          activeContracts.map(async (contract) => {
+            const h5Symbol = h5SymbolFromApi(contract.symbol, contract.baseAsset, contract.quoteAsset);
+            const pair = PAIR_MAP[h5Symbol];
+            const ticker = await marketApi.getTicker(contract.symbol);
+            return rowFromTicker(contract, pair, ticker);
+          }),
+        );
+
+        if (alive) setRows(nextRows);
+      } catch {
+        if (alive) setRows([]);
+      }
+    }
+
+    loadFuturesRows();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const list = useMemo(() => {
+    let next = [...rows];
+    if (sort === 'gainers') next = next.filter((p) => p.up && p.change !== '--').sort((a, b) => b.changeValue - a.changeValue);
+    if (sort === 'losers') next = next.filter((p) => !p.up && p.change !== '--').sort((a, b) => a.changeValue - b.changeValue);
+    if (sort === 'oi') next = next.sort((a, b) => b.oiValue - a.oiValue);
+    return next;
+  }, [rows, sort]);
 
   return (
     <div style={{ padding: '12px' }}>
@@ -42,14 +125,14 @@ export default function H5FuturesMarketPage() {
         {[
           { k: 'default', l: '默认' },
           { k: 'gainers', l: '涨幅榜' },
-          { k: 'losers',  l: '跌幅榜' },
-          { k: 'oi',      l: '持仓榜' },
+          { k: 'losers', l: '跌幅榜' },
+          { k: 'oi', l: '持仓榜' },
         ].map((s) => {
           const active = s.k === sort;
           return (
             <button
               key={s.k}
-              onClick={() => setSort(s.k as any)}
+              onClick={() => setSort(s.k as SortKey)}
               style={{
                 padding: '6px 0', borderRadius: 8,
                 background: active ? 'rgba(167, 139, 250, 0.20)' : 'transparent',

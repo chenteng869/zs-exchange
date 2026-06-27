@@ -3,9 +3,9 @@
 /**
  * H5 跨链桥页
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Network, ArrowLeftRight, Clock, Zap } from 'lucide-react';
-import { getAssets } from '@/lib/h5-mock';
+import { walletApi, type WalletBalance } from '@/lib/api/wallet';
 
 const CHAINS = [
   { key: 'eth',    label: 'Ethereum',  color: '#627EEA', gas: '$1.20', time: '≈ 3分钟' },
@@ -22,11 +22,47 @@ const RECENT_BRIDGES = [
   { id: 'B3', from: 'BSC',       to: 'Polygon',  token: 'BNB',  amount: '0.500',    time: '2小时前',  status: 'pending' },
 ];
 
+interface BridgeCoin {
+  symbol: string;
+  amount: string;
+}
+
+const DEFAULT_COIN: BridgeCoin = { symbol: 'USDT', amount: '0' };
+
+function toBridgeCoin(balance: WalletBalance): BridgeCoin {
+  return {
+    symbol: balance.currency,
+    amount: balance.available || balance.balance || '0',
+  };
+}
+
 export default function H5BridgePage() {
   const [from, setFrom] = useState('eth');
   const [to, setTo] = useState('bsc');
-  const [coin, setCoin] = useState(getAssets()[2]);
+  const [coins, setCoins] = useState<BridgeCoin[]>([DEFAULT_COIN]);
+  const [coin, setCoin] = useState<BridgeCoin>(DEFAULT_COIN);
   const [amount, setAmount] = useState('');
+
+  useEffect(() => {
+    let alive = true;
+
+    walletApi.getBalances()
+      .then((balances) => {
+        if (!alive) return;
+        const nextCoins = balances.map(toBridgeCoin);
+        setCoins(nextCoins.length > 0 ? nextCoins : [DEFAULT_COIN]);
+        setCoin(nextCoins[0] ?? DEFAULT_COIN);
+      })
+      .catch(() => {
+        if (!alive) return;
+        setCoins([DEFAULT_COIN]);
+        setCoin(DEFAULT_COIN);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const swap = () => {
     const tmp = from;
@@ -76,7 +112,7 @@ export default function H5BridgePage() {
       >
         <div style={{ fontSize: 12, color: '#7B89B8', marginBottom: 8 }}>选择币种</div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-          {getAssets().slice(0, 5).map((a) => (
+          {coins.slice(0, 5).map((a) => (
             <button
               key={a.symbol}
               onClick={() => setCoin(a)}

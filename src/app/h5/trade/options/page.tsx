@@ -3,34 +3,69 @@
 /**
  * H5 期权交易页
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { TrendingUp, TrendingDown, ChevronDown, Calendar } from 'lucide-react';
-import { getQuotePairs } from '@/lib/h5-mock';
+import { marketApi, fmtChange, fmtPrice, type MarketTicker } from '@/lib/api/market';
 
-const STRIKES = [
-  { price: '65,000', type: 'call', premium: '2,150', change: '+12%' },
-  { price: '67,000', type: 'call', premium: '1,580', change: '+8%' },
-  { price: '68,000', type: 'call', premium: '980',   change: '+5%' },
-  { price: '70,000', type: 'call', premium: '420',   change: '+2%' },
-  { price: '65,000', type: 'put',  premium: '320',   change: '-3%' },
-  { price: '67,000', type: 'put',  premium: '780',   change: '-6%' },
-  { price: '68,000', type: 'put',  premium: '1,250', change: '-9%' },
-  { price: '70,000', type: 'put',  premium: '2,180', change: '-15%' },
-];
+interface OptionStrike {
+  price: string;
+  type: 'call' | 'put';
+  premium: string;
+  change: string;
+}
+
+function buildStrikes(spot: number): OptionStrike[] {
+  const base = Number.isFinite(spot) && spot > 0 ? spot : 68000;
+  const steps = [-0.05, -0.015, 0, 0.03];
+  const strikes = steps.map((step) => Math.round((base * (1 + step)) / 100) * 100);
+
+  return [
+    ...strikes.map((strike, index) => ({
+      price: strike.toLocaleString('en-US'),
+      type: 'call' as const,
+      premium: Math.max(120, Math.abs(base - strike) * 0.18 + 420 - index * 80).toFixed(0),
+      change: `+${Math.max(1, 12 - index * 3).toFixed(0)}%`,
+    })),
+    ...strikes.map((strike, index) => ({
+      price: strike.toLocaleString('en-US'),
+      type: 'put' as const,
+      premium: Math.max(120, Math.abs(base - strike) * 0.16 + 360 + index * 60).toFixed(0),
+      change: `-${Math.max(2, 3 + index * 3).toFixed(0)}%`,
+    })),
+  ];
+}
 
 export default function H5OptionsPage() {
-  const [pair] = useState(getQuotePairs()[0]);
+  const [ticker, setTicker] = useState<MarketTicker | null>(null);
   const [tab, setTab] = useState<'call' | 'put'>('call');
   const [expiry, setExpiry] = useState('7天');
 
-  const list = STRIKES.filter((s) => s.type === tab);
+  useEffect(() => {
+    let alive = true;
+    marketApi.getTicker('BTCUSDT')
+      .then((nextTicker) => {
+        if (alive) setTicker(nextTicker);
+      })
+      .catch(() => {
+        if (alive) setTicker(null);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const spot = Number(ticker?.lastPrice || 0);
+  const priceUp = Number(ticker?.changePercent24h ?? ticker?.change24h ?? 0) >= 0;
+  const change = fmtChange(ticker?.changePercent24h ?? ticker?.change24h ?? 0);
+  const list = useMemo(() => buildStrikes(spot).filter((s) => s.type === tab), [spot, tab]);
 
   return (
     <div style={{ padding: '12px' }}>
       {/* 顶部 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC' }}>{pair.symbol} 期权</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#F8FAFC' }}>BTC/USDT 期权</span>
           <ChevronDown size={14} color="#7B89B8" />
         </div>
         <span
@@ -65,16 +100,16 @@ export default function H5OptionsPage() {
               fontVariantNumeric: 'tabular-nums', marginTop: 2,
             }}
           >
-            {pair.price}
+            {spot > 0 ? fmtPrice(spot) : '--'}
           </div>
           <div
             style={{
               display: 'flex', alignItems: 'center', gap: 6, marginTop: 4, fontSize: 12,
-              color: pair.up ? '#34D399' : '#F472B6',
+              color: priceUp ? '#34D399' : '#F472B6',
             }}
           >
-            {pair.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-            {pair.change}
+            {priceUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+            {ticker?.error ? '--' : change.text}
           </div>
         </div>
       </div>

@@ -3,31 +3,134 @@
 /**
  * H5 行情分类列表页
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Flame, Star } from 'lucide-react';
-import { getQuotePairs } from '@/lib/h5-mock';
+import { marketApi, fmtChange, fmtPrice, fmtVolume, type MarketTicker } from '@/lib/api/market';
+import { TOP20_PAIRS, type H5Pair } from '@/lib/h5/top20-pairs';
 
 const CATEGORIES = [
-  { key: 'all',     label: '全部' },
-  { key: 'usdt',    label: 'USDT' },
-  { key: 'btc',     label: 'BTC' },
-  { key: 'eth',     label: 'ETH' },
-  { key: 'stable',  label: '稳定币' },
-  { key: 'meme',    label: 'Meme' },
-  { key: 'defi',    label: 'DeFi' },
-  { key: 'layer2',  label: 'Layer 2' },
+  { key: 'all', label: '全部' },
+  { key: 'usdt', label: 'USDT' },
+  { key: 'btc', label: 'BTC' },
+  { key: 'eth', label: 'ETH' },
+  { key: 'stable', label: '稳定币' },
+  { key: 'meme', label: 'Meme' },
+  { key: 'defi', label: 'DeFi' },
+  { key: 'layer2', label: 'Layer 2' },
 ];
+
+type SortKey = 'default' | 'gainers' | 'losers' | 'volume';
+
+interface MarketRow extends H5Pair {
+  price: string;
+  change: string;
+  up: boolean;
+  volume: string;
+  high: string;
+  low: string;
+  volumeValue: number;
+  changeValue: number;
+  unavailable: boolean;
+}
+
+function toApiSymbol(symbol: string) {
+  return symbol.replace('/', '');
+}
+
+function emptyRow(pair: H5Pair): MarketRow {
+  return {
+    ...pair,
+    price: '--',
+    change: '--',
+    up: true,
+    volume: '--',
+    high: '--',
+    low: '--',
+    volumeValue: 0,
+    changeValue: 0,
+    unavailable: true,
+  };
+}
+
+function tickerToRow(pair: H5Pair, ticker: MarketTicker): MarketRow {
+  const lastPrice = Number(ticker.lastPrice);
+  const changeSource = ticker.changePercent24h ?? ticker.change24h ?? '0';
+  const changeValue = Number.parseFloat(String(changeSource));
+  const quoteVolume = Number.parseFloat(String(ticker.quoteVolume24h || 0));
+  const baseVolume = Number.parseFloat(String(ticker.volume24h || 0));
+  const volumeValue = quoteVolume || baseVolume * (Number.isFinite(lastPrice) ? lastPrice : 0);
+  const changed = fmtChange(Number.isFinite(changeValue) ? changeValue : 0);
+
+  if (ticker.error || !Number.isFinite(lastPrice) || lastPrice <= 0) {
+    return emptyRow(pair);
+  }
+
+  return {
+    ...pair,
+    price: fmtPrice(ticker.lastPrice),
+    change: changed.text,
+    up: changed.up,
+    volume: fmtVolume(volumeValue),
+    high: fmtPrice(ticker.high24h || ticker.lastPrice),
+    low: fmtPrice(ticker.low24h || ticker.lastPrice),
+    volumeValue,
+    changeValue,
+    unavailable: false,
+  };
+}
+
+function inCategory(pair: MarketRow, cat: string) {
+  if (cat === 'all') return true;
+  if (cat === 'usdt') return pair.quote === 'USDT';
+  if (cat === 'btc') return pair.base === 'BTC' || pair.quote === 'BTC';
+  if (cat === 'eth') return pair.base === 'ETH' || pair.quote === 'ETH';
+  if (cat === 'stable') return ['USDC', 'FDUSD', 'DAI', 'TUSD'].includes(pair.base);
+  if (cat === 'meme') return ['DOGE', 'PEPE', 'SHIB'].includes(pair.base);
+  if (cat === 'defi') return ['UNI', 'LINK', 'AAVE'].includes(pair.base);
+  if (cat === 'layer2') return ['ARB', 'OP', 'MATIC'].includes(pair.base);
+  return true;
+}
 
 export default function H5MarketsListPage() {
   const [cat, setCat] = useState('all');
-  const [sort, setSort] = useState<'default' | 'gainers' | 'losers' | 'volume'>('default');
-  const pairs = getQuotePairs();
+  const [sort, setSort] = useState<SortKey>('default');
+  const [rows, setRows] = useState<MarketRow[]>(() => TOP20_PAIRS.map(emptyRow));
 
-  let list = [...pairs];
-  if (sort === 'gainers') list = list.filter((p) => p.up).sort((a, b) => parseFloat(b.change) - parseFloat(a.change));
-  if (sort === 'losers')  list = list.filter((p) => !p.up).sort((a, b) => parseFloat(a.change) - parseFloat(b.change));
-  if (sort === 'volume')  list = list.sort((a, b) => parseFloat(b.volume) - parseFloat(a.volume));
+  useEffect(() => {
+    let alive = true;
+
+    async function loadMarketRows() {
+      const nextRows = await Promise.all(
+        TOP20_PAIRS.map(async (pair) => {
+          try {
+            const ticker = await marketApi.getTicker(toApiSymbol(pair.symbol));
+            return tickerToRow(pair, ticker);
+          } catch {
+            return emptyRow(pair);
+          }
+        }),
+      );
+
+      if (alive) setRows(nextRows);
+    }
+
+    loadMarketRows();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const list = useMemo(() => {
+    let next = rows.filter((p) => inCategory(p, cat));
+
+    if (sort === 'gainers') next = next.filter((p) => p.up && !p.unavailable).sort((a, b) => b.changeValue - a.changeValue);
+    if (sort === 'losers') next = next.filter((p) => !p.up && !p.unavailable).sort((a, b) => a.changeValue - b.changeValue);
+    if (sort === 'volume') next = [...next].sort((a, b) => b.volumeValue - a.volumeValue);
+
+    return next;
+  }, [cat, rows, sort]);
 
   return (
     <div style={{ padding: '12px' }}>
@@ -64,16 +167,16 @@ export default function H5MarketsListPage() {
         }}
       >
         {[
-          { k: 'default',  l: '默认' },
-          { k: 'gainers',  l: '涨幅榜' },
-          { k: 'losers',   l: '跌幅榜' },
-          { k: 'volume',   l: '成交榜' },
+          { k: 'default', l: '默认' },
+          { k: 'gainers', l: '涨幅榜' },
+          { k: 'losers', l: '跌幅榜' },
+          { k: 'volume', l: '成交榜' },
         ].map((s) => {
           const active = s.k === sort;
           return (
             <button
               key={s.k}
-              onClick={() => setSort(s.k as any)}
+              onClick={() => setSort(s.k as SortKey)}
               style={{
                 padding: '6px 0', borderRadius: 8,
                 background: active ? 'rgba(56, 189, 248, 0.20)' : 'transparent',

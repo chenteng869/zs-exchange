@@ -2,9 +2,9 @@ import { NextRequest } from 'next/server';
 import { success, badRequest } from '@/lib/api/response';
 import { requireAuth, AuthContext } from '@/lib/api/auth';
 import { depositRepository } from '@/repositories/deposit.repository';
-import { walletAddressRepository } from '@/repositories/wallet-address.repository';
 import { walletCurrencyRepository } from '@/repositories/wallet-currency.repository';
 import { parsePagination, formatPaginatedResult } from '@/lib/api/pagination';
+import { depositCreditService, DepositCreditError } from '@/lib/wallet/deposit-credit-service';
 
 export async function GET(req: NextRequest) {
   return requireAuth(req, async (ctx: AuthContext) => {
@@ -28,28 +28,54 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const currency = String(body.currency || '').toUpperCase();
     const chain = body.chain || 'ethereum';
+    const action = String(body.action || 'address').toLowerCase();
 
     if (!currency) {
       return badRequest('Currency is required');
     }
 
-    const walletCurrency = await walletCurrencyRepository.findBySymbol(currency);
-    if (!walletCurrency || !walletCurrency.depositEnabled) {
-      return badRequest('Deposit is not available for this currency');
+    try {
+      if (action === 'address' || action === 'create-address') {
+        const result = await depositCreditService.getOrCreateAddress({
+          userId: ctx.userId,
+          currency,
+          chain,
+        });
+
+        return success({
+          ...result.address,
+          currency: result.currency.symbol,
+          chain: result.chain,
+          minDepositAmount: result.currency.minDepositAmount,
+          requiredConfirmations: result.currency.confirmationCount,
+          reused: result.reused,
+        });
+      }
+
+      if (action === 'ingest' || action === 'simulate') {
+        const result = await depositCreditService.ingestDeposit({
+          userId: ctx.userId,
+          currency,
+          chain,
+          address: body.address,
+          txHash: body.txHash,
+          amount: body.amount,
+          confirmations: body.confirmations,
+          blockNumber: body.blockNumber,
+          fee: body.fee,
+          logIndex: body.logIndex,
+          eventIndex: body.eventIndex,
+        });
+
+        return success(result);
+      }
+
+      return badRequest('Unsupported deposit action');
+    } catch (error) {
+      if (error instanceof DepositCreditError) {
+        return badRequest(error.message, { code: error.code });
+      }
+      throw error;
     }
-
-    let address = await walletAddressRepository.findByUserIdAndCurrency(ctx.userId, walletCurrency.id);
-
-    if (!address) {
-      address = await walletAddressRepository.create({
-        userId: ctx.userId,
-        currencyId: walletCurrency.id,
-        address: `${chain}_${currency.toLowerCase()}_${ctx.userId.slice(0, 8)}_${Date.now().toString(36)}`,
-        tag: chain,
-        status: 'active',
-      } as any);
-    }
-
-    return success(address);
   });
 }

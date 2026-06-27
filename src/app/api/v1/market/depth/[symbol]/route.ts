@@ -9,8 +9,13 @@ export async function GET(req: NextRequest, { params }: { params: { symbol: stri
   const symbol = normalizeTradeSymbol(params.symbol);
   const searchParams = req.nextUrl.searchParams;
   const limit = parseInt(searchParams.get('limit') || '20');
+  const source = searchParams.get('source');
 
   return withRateLimit(req, `depth:${symbol}`, 30, 60 * 1000, async () => {
+    if (source === 'spot' || source === 'book') {
+      return success(await getSpotOrderBookSnapshot(symbol, limit));
+    }
+
     const depth = await depthRepository.findLatestBySymbol(symbol);
 
     if (!depth) {

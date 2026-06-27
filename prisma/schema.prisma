@@ -413,6 +413,590 @@ model WalletInternalTransfer {
   completedAt         DateTime?  @db.Timestamptz
 }
 
+enum TransferChainType {
+  evm
+  tron
+  solana
+}
+
+enum DepositAddressStatus {
+  active
+  disabled
+  archived
+}
+
+enum DepositStatus {
+  detected
+  confirming
+  confirmed
+  credited
+  failed
+  ignored
+  orphaned
+}
+
+enum WithdrawalStatus {
+  created
+  risk_checking
+  waiting_approval
+  approved
+  signing
+  signed
+  broadcasting
+  broadcasted
+  confirming
+  confirmed
+  failed
+  rejected
+  canceled
+}
+
+enum ApprovalStatus {
+  pending
+  approved
+  rejected
+  expired
+  canceled
+}
+
+enum HotWalletRole {
+  hot
+  warm
+  cold
+  fee
+  sweep
+}
+
+enum HotWalletStatus {
+  active
+  frozen
+  disabled
+  maintenance
+}
+
+enum LedgerDirection {
+  in
+  out
+}
+
+enum LedgerBizType {
+  deposit
+  withdraw
+  fee
+  sweep
+  rebalance
+  manual_adjust
+  correction
+}
+
+enum LockStatus {
+  locked
+  released
+  consumed
+  expired
+}
+
+enum SweepTaskStatus {
+  pending
+  signing
+  signed
+  broadcasting
+  broadcasted
+  confirmed
+  failed
+  canceled
+}
+
+enum ChainTxStatus {
+  created
+  signed
+  broadcasted
+  confirmed
+  failed
+  dropped
+  replaced
+}
+
+enum ReconciliationStatus {
+  pending
+  matched
+  mismatched
+  resolved
+  ignored
+}
+
+model WalletDepositAddress {
+  id             String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId         String               @db.Uuid
+  walletId       String?              @db.Uuid
+  chainType      TransferChainType
+  chainId        String               @db.VarChar(64)
+  address        String               @db.VarChar(255)
+  memo           String?              @db.VarChar(128)
+  derivationPath String?              @db.VarChar(128)
+  addressIndex   Int                  @default(0)
+  addressType    String               @default("deposit") @db.VarChar(32)
+  status         DepositAddressStatus @default(active)
+
+  lastUsedAt     DateTime?            @db.Timestamptz
+  createdAt      DateTime             @default(now()) @db.Timestamptz
+  updatedAt      DateTime             @updatedAt @db.Timestamptz
+
+  @@unique([chainType, chainId, address])
+  @@index([userId])
+  @@index([walletId])
+  @@index([chainType, chainId])
+  @@index([status])
+  @@index([addressIndex])
+  @@map("wallet_deposit_addresses")
+}
+
+model WalletChainCursor {
+  id           String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  chainType    TransferChainType
+  chainId      String            @db.VarChar(64)
+  scannerName  String            @db.VarChar(64)
+  currentBlock BigInt            @default(0) @db.BigInt
+  safeBlock    BigInt            @default(0) @db.BigInt
+  latestBlock  BigInt            @default(0) @db.BigInt
+  status       String            @default("active") @db.VarChar(32)
+  errorMessage String?           @db.VarChar(1024)
+  updatedAt    DateTime          @updatedAt @db.Timestamptz
+  createdAt    DateTime          @default(now()) @db.Timestamptz
+
+  @@unique([chainType, chainId, scannerName])
+  @@index([status])
+  @@map("wallet_chain_cursors")
+}
+
+model WalletDepositRecord {
+  id                    String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  depositNo             String            @unique @db.VarChar(64)
+
+  userId                String            @db.Uuid
+  walletId              String?           @db.Uuid
+
+  chainType             TransferChainType
+  chainId               String            @db.VarChar(64)
+  txHash                String            @db.VarChar(255)
+  logIndex              Int?
+  instructionIndex      Int?
+  innerInstructionIndex Int?
+
+  fromAddress           String?           @db.VarChar(255)
+  toAddress             String            @db.VarChar(255)
+
+  assetSymbol           String            @db.VarChar(64)
+  contractAddress       String?           @db.VarChar(255)
+  tokenAccount          String?           @db.VarChar(255)
+
+  amount                Decimal           @db.Decimal(65, 18)
+  amountRaw             String?           @db.VarChar(255)
+  decimals              Int               @default(18)
+
+  blockNumber           BigInt            @db.BigInt
+  blockHash             String?           @db.VarChar(255)
+  blockTime             DateTime?         @db.Timestamptz
+
+  confirmations         Int               @default(0)
+  requiredConfirmations Int               @default(12)
+
+  status                DepositStatus     @default(detected)
+  failureReason         String?           @db.VarChar(1024)
+
+  detectedAt            DateTime          @db.Timestamptz
+  confirmedAt           DateTime?         @db.Timestamptz
+  creditedAt            DateTime?         @db.Timestamptz
+  ignoredAt             DateTime?         @db.Timestamptz
+
+  createdAt             DateTime          @default(now()) @db.Timestamptz
+  updatedAt             DateTime          @updatedAt @db.Timestamptz
+
+  @@unique([chainType, chainId, txHash, logIndex])
+  @@index([userId])
+  @@index([walletId])
+  @@index([toAddress])
+  @@index([chainType, chainId, status])
+  @@index([txHash])
+  @@index([blockNumber])
+  @@index([detectedAt])
+  @@map("wallet_deposit_records")
+}
+
+model WalletUserAssetBalance {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId          String            @db.Uuid
+  walletId        String?           @db.Uuid
+  chainType       TransferChainType
+  chainId         String            @db.VarChar(64)
+
+  assetSymbol     String            @db.VarChar(64)
+  contractAddress String?           @db.VarChar(255)
+
+  available       Decimal           @default(0) @db.Decimal(65, 18)
+  frozen          Decimal           @default(0) @db.Decimal(65, 18)
+  total           Decimal           @default(0) @db.Decimal(65, 18)
+
+  updatedAt       DateTime          @updatedAt @db.Timestamptz
+  createdAt       DateTime          @default(now()) @db.Timestamptz
+
+  @@unique([userId, chainType, chainId, assetSymbol, contractAddress])
+  @@index([walletId])
+  @@index([assetSymbol])
+  @@map("wallet_user_asset_balances")
+}
+
+model WalletUserAssetLedger {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ledgerNo        String            @unique @db.VarChar(64)
+
+  userId          String            @db.Uuid
+  walletId        String?           @db.Uuid
+  chainType       TransferChainType
+  chainId         String            @db.VarChar(64)
+
+  assetSymbol     String            @db.VarChar(64)
+  contractAddress String?           @db.VarChar(255)
+
+  direction       LedgerDirection
+  bizType         LedgerBizType
+  bizNo           String            @db.VarChar(64)
+
+  amount          Decimal           @db.Decimal(65, 18)
+  balanceBefore   Decimal           @db.Decimal(65, 18)
+  balanceAfter    Decimal           @db.Decimal(65, 18)
+
+  remark          String?           @db.VarChar(512)
+  createdAt       DateTime          @default(now()) @db.Timestamptz
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([bizType, bizNo])
+  @@index([assetSymbol])
+  @@index([createdAt])
+  @@map("wallet_user_asset_ledgers")
+}
+
+model WalletWithdrawalRecord {
+  id              String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  withdrawNo      String             @unique @db.VarChar(64)
+  idempotencyKey  String?            @unique @db.VarChar(128)
+
+  userId          String             @db.Uuid
+  walletId        String?            @db.Uuid
+
+  chainType       TransferChainType
+  chainId         String             @db.VarChar(64)
+
+  fromAddress     String?            @db.VarChar(255)
+  toAddress       String             @db.VarChar(255)
+
+  assetSymbol     String             @db.VarChar(64)
+  contractAddress String?            @db.VarChar(255)
+
+  amount          Decimal            @db.Decimal(65, 18)
+  feeAmount       Decimal            @default(0) @db.Decimal(65, 18)
+  netAmount       Decimal            @db.Decimal(65, 18)
+
+  txHash          String?            @db.VarChar(255)
+  nonce           BigInt?            @db.BigInt
+  rawTxRef        String?            @db.VarChar(255)
+  signedTxHash    String?            @db.VarChar(255)
+
+  hotWalletNo     String?            @db.VarChar(64)
+
+  riskScore       Int                @default(0)
+  riskLevel       String             @default("low") @db.VarChar(32)
+
+  approvalNo      String?            @db.VarChar(64)
+  approvalStatus  ApprovalStatus?
+
+  status          WithdrawalStatus   @default(created)
+  failureReason   String?            @db.VarChar(1024)
+
+  requestedAt     DateTime           @db.Timestamptz
+  approvedAt      DateTime?          @db.Timestamptz
+  signedAt        DateTime?          @db.Timestamptz
+  broadcastAt     DateTime?          @db.Timestamptz
+  confirmedAt     DateTime?          @db.Timestamptz
+  failedAt        DateTime?          @db.Timestamptz
+  canceledAt      DateTime?          @db.Timestamptz
+
+  createdAt       DateTime           @default(now()) @db.Timestamptz
+  updatedAt       DateTime           @updatedAt @db.Timestamptz
+
+  approvals       WalletWithdrawalApproval[]
+
+  @@index([userId])
+  @@index([walletId])
+  @@index([chainType, chainId, status])
+  @@index([txHash])
+  @@index([hotWalletNo])
+  @@index([requestedAt])
+  @@map("wallet_withdrawal_records")
+}
+
+model WalletWithdrawalApproval {
+  id             String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  approvalNo     String         @unique @db.VarChar(64)
+  withdrawNo     String         @db.VarChar(64)
+
+  userId         String         @db.Uuid
+  walletId       String?        @db.Uuid
+  orgId          String?        @db.Uuid
+
+  requiredCount  Int            @default(1)
+  approvedCount  Int            @default(0)
+  approverRoles  Json?          @db.JsonB
+
+  status         ApprovalStatus @default(pending)
+  reason         String?        @db.VarChar(512)
+
+  expiresAt      DateTime       @db.Timestamptz
+  approvedAt     DateTime?      @db.Timestamptz
+  rejectedAt     DateTime?      @db.Timestamptz
+  createdAt      DateTime       @default(now()) @db.Timestamptz
+  updatedAt      DateTime       @updatedAt @db.Timestamptz
+
+  withdrawal     WalletWithdrawalRecord @relation(fields: [withdrawNo], references: [withdrawNo])
+
+  @@index([withdrawNo])
+  @@index([userId])
+  @@index([orgId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("wallet_withdrawal_approvals")
+}
+
+model WalletWithdrawalApprovalDecision {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  approvalNo    String   @db.VarChar(64)
+  withdrawNo    String   @db.VarChar(64)
+
+  approverId    String   @db.Uuid
+  approverRole  String   @db.VarChar(64)
+  decision      String   @db.VarChar(32)
+  reason        String?  @db.VarChar(512)
+
+  ipAddress     String?  @db.VarChar(64)
+  userAgent     String?  @db.VarChar(512)
+
+  createdAt     DateTime @default(now()) @db.Timestamptz
+
+  @@unique([approvalNo, approverId])
+  @@index([withdrawNo])
+  @@index([approverId])
+  @@map("wallet_withdrawal_approval_decisions")
+}
+
+model WalletHotWallet {
+  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  walletNo          String            @unique @db.VarChar(64)
+
+  chainType         TransferChainType
+  chainId           String            @db.VarChar(64)
+  address           String            @db.VarChar(255)
+
+  assetSymbol       String?           @db.VarChar(64)
+  contractAddress   String?           @db.VarChar(255)
+
+  walletRole        HotWalletRole     @default(hot)
+
+  balance           Decimal           @default(0) @db.Decimal(65, 18)
+  availableBalance  Decimal           @default(0) @db.Decimal(65, 18)
+  lockedBalance     Decimal           @default(0) @db.Decimal(65, 18)
+
+  minBalance        Decimal           @default(0) @db.Decimal(65, 18)
+  maxBalance        Decimal           @default(0) @db.Decimal(65, 18)
+  sweepThreshold    Decimal           @default(0) @db.Decimal(65, 18)
+
+  dailyLimit        Decimal?          @db.Decimal(65, 18)
+  singleLimit       Decimal?          @db.Decimal(65, 18)
+
+  keyRef            String?           @db.VarChar(255)
+  provider          String?           @db.VarChar(64)
+
+  status            HotWalletStatus   @default(active)
+  lastSyncAt        DateTime?         @db.Timestamptz
+
+  createdAt         DateTime          @default(now()) @db.Timestamptz
+  updatedAt         DateTime          @updatedAt @db.Timestamptz
+
+  @@unique([chainType, chainId, address, assetSymbol, contractAddress])
+  @@index([chainType, chainId])
+  @@index([walletRole, status])
+  @@index([assetSymbol])
+  @@map("wallet_hot_wallets")
+}
+
+model WalletHotWalletLedger {
+  id              String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ledgerNo        String            @unique @db.VarChar(64)
+
+  walletNo        String            @db.VarChar(64)
+  chainType       TransferChainType
+  chainId         String            @db.VarChar(64)
+
+  assetSymbol     String            @db.VarChar(64)
+  contractAddress String?           @db.VarChar(255)
+
+  direction       LedgerDirection
+  bizType         LedgerBizType
+  bizNo           String            @db.VarChar(64)
+
+  amount          Decimal           @db.Decimal(65, 18)
+  balanceBefore   Decimal           @db.Decimal(65, 18)
+  balanceAfter    Decimal           @db.Decimal(65, 18)
+
+  remark          String?           @db.VarChar(512)
+  createdAt       DateTime          @default(now()) @db.Timestamptz
+
+  @@index([walletNo])
+  @@index([bizType, bizNo])
+  @@index([assetSymbol])
+  @@index([createdAt])
+  @@map("wallet_hot_wallet_ledgers")
+}
+
+model WalletHotWalletLock {
+  id              String      @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  lockNo          String      @unique @db.VarChar(64)
+
+  walletNo        String      @db.VarChar(64)
+  bizType         String      @db.VarChar(64)
+  bizNo           String      @db.VarChar(64)
+
+  assetSymbol     String      @db.VarChar(64)
+  contractAddress String?     @db.VarChar(255)
+
+  amount          Decimal     @db.Decimal(65, 18)
+  status          LockStatus  @default(locked)
+
+  lockedAt        DateTime    @default(now()) @db.Timestamptz
+  releasedAt      DateTime?   @db.Timestamptz
+  consumedAt      DateTime?   @db.Timestamptz
+  expiresAt       DateTime?   @db.Timestamptz
+
+  createdAt       DateTime    @default(now()) @db.Timestamptz
+  updatedAt       DateTime    @updatedAt @db.Timestamptz
+
+  @@unique([walletNo, bizType, bizNo])
+  @@index([walletNo])
+  @@index([bizType, bizNo])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("wallet_hot_wallet_locks")
+}
+
+model WalletSweepTask {
+  id              String          @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  sweepNo         String          @unique @db.VarChar(64)
+
+  chainType       TransferChainType
+  chainId         String          @db.VarChar(64)
+
+  fromAddress     String          @db.VarChar(255)
+  toAddress       String          @db.VarChar(255)
+
+  assetSymbol     String          @db.VarChar(64)
+  contractAddress String?         @db.VarChar(255)
+
+  amount          Decimal         @db.Decimal(65, 18)
+  feeAmount       Decimal         @default(0) @db.Decimal(65, 18)
+
+  txHash          String?         @db.VarChar(255)
+  rawTxRef        String?         @db.VarChar(255)
+
+  status          SweepTaskStatus @default(pending)
+  failureReason   String?         @db.VarChar(1024)
+
+  createdAt       DateTime        @default(now()) @db.Timestamptz
+  updatedAt       DateTime        @updatedAt @db.Timestamptz
+  broadcastAt     DateTime?       @db.Timestamptz
+  confirmedAt     DateTime?       @db.Timestamptz
+
+  @@index([chainType, chainId, status])
+  @@index([fromAddress])
+  @@index([toAddress])
+  @@index([txHash])
+  @@map("wallet_sweep_tasks")
+}
+
+model WalletChainTransaction {
+  id              String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  chainTxNo       String        @unique @db.VarChar(64)
+
+  bizType         String        @db.VarChar(64)
+  bizNo           String        @db.VarChar(64)
+
+  chainType       TransferChainType
+  chainId         String        @db.VarChar(64)
+
+  txHash          String?       @db.VarChar(255)
+  nonce           BigInt?       @db.BigInt
+
+  fromAddress     String?       @db.VarChar(255)
+  toAddress       String?       @db.VarChar(255)
+
+  assetSymbol     String?       @db.VarChar(64)
+  contractAddress String?       @db.VarChar(255)
+  amount          Decimal?      @db.Decimal(65, 18)
+
+  rawTxRef        String?       @db.VarChar(255)
+  signedTxHash    String?       @db.VarChar(255)
+
+  blockNumber     BigInt?       @db.BigInt
+  confirmations   Int           @default(0)
+  status          ChainTxStatus  @default(created)
+
+  failureReason   String?       @db.VarChar(1024)
+
+  createdAt       DateTime      @default(now()) @db.Timestamptz
+  updatedAt       DateTime      @updatedAt @db.Timestamptz
+  broadcastAt     DateTime?     @db.Timestamptz
+  confirmedAt     DateTime?     @db.Timestamptz
+
+  @@unique([bizType, bizNo])
+  @@index([chainType, chainId, status])
+  @@index([txHash])
+  @@index([fromAddress])
+  @@index([nonce])
+  @@map("wallet_chain_transactions")
+}
+
+model WalletReconciliationRecord {
+  id              String                 @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  reconcileNo     String                 @unique @db.VarChar(64)
+
+  chainType       TransferChainType
+  chainId         String                 @db.VarChar(64)
+
+  bizType         String                 @db.VarChar(64)
+  bizNo           String                 @db.VarChar(64)
+
+  txHash          String?                @db.VarChar(255)
+  assetSymbol     String                 @db.VarChar(64)
+  contractAddress String?                @db.VarChar(255)
+
+  systemAmount    Decimal?               @db.Decimal(65, 18)
+  chainAmount     Decimal?               @db.Decimal(65, 18)
+
+  status          ReconciliationStatus   @default(pending)
+  difference      Decimal?               @db.Decimal(65, 18)
+  reason          String?                @db.VarChar(1024)
+
+  checkedAt       DateTime?              @db.Timestamptz
+  resolvedAt      DateTime?              @db.Timestamptz
+  createdAt       DateTime               @default(now()) @db.Timestamptz
+  updatedAt       DateTime               @updatedAt @db.Timestamptz
+
+  @@index([chainType, chainId])
+  @@index([bizType, bizNo])
+  @@index([txHash])
+  @@index([status])
+  @@map("wallet_reconciliation_records")
+}
+
 // ============================================================
 // kyc Schema - KYC/实名/合规检查
 // ============================================================

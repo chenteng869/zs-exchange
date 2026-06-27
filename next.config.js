@@ -17,9 +17,14 @@ const nextConfig = {
   // 跳过 webpack 模块缺失警告（MetaMask SDK RN 依赖在 Web 端不需要）
   webpack: (config) => {
     config.resolve = config.resolve || {};
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      'pino-pretty': false,
+    };
     config.resolve.fallback = {
       ...(config.resolve.fallback || {}),
       '@react-native-async-storage/async-storage': false,
+      'pino-pretty': false,
       'react-native': false,
     };
     return config;

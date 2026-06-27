@@ -3,15 +3,119 @@
 /**
  * H5 资产管理页（汇总管理）
  */
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Wallet, ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, Settings } from 'lucide-react';
-import { getAssets, getTotalAssetValue } from '@/lib/h5-mock';
+import { marketApi } from '@/lib/api/market';
+import { walletApi, type WalletAccountBalances, type WalletBalance } from '@/lib/api/wallet';
+
+interface AssetRow {
+  symbol: string;
+  name: string;
+  amount: string;
+  value: string;
+  pct: number;
+  valueNumber: number;
+}
+
+const DEFAULT_ACCOUNTS: WalletAccountBalances = {
+  spot: '0',
+  fund: '0',
+  futures: '0',
+};
+
+function displayName(symbol: string) {
+  const names: Record<string, string> = {
+    BTC: 'Bitcoin',
+    ETH: 'Ethereum',
+    USDT: 'Tether',
+    USDC: 'USD Coin',
+    SOL: 'Solana',
+    BNB: 'BNB',
+    ADA: 'Cardano',
+  };
+  return names[symbol] ?? symbol;
+}
+
+function formatAmount(value: number) {
+  if (!Number.isFinite(value)) return '0.000000';
+  if (value >= 1000) return value.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  if (value >= 1) return value.toLocaleString('en-US', { maximumFractionDigits: 6 });
+  return value.toLocaleString('en-US', { maximumFractionDigits: 8 });
+}
+
+function formatMoney(value: number) {
+  if (!Number.isFinite(value)) return '0.00';
+  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+async function priceForCurrency(currency: string) {
+  if (['USDT', 'USDC', 'USD'].includes(currency)) return 1;
+  try {
+    const ticker = await marketApi.getTicker(`${currency}USDT`);
+    const price = Number(ticker.lastPrice);
+    return Number.isFinite(price) && price > 0 ? price : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function balanceToAssetRow(balance: WalletBalance): Promise<AssetRow> {
+  const amount = Number(balance.balance || balance.available || 0);
+  const price = await priceForCurrency(balance.currency);
+  const valueNumber = amount * price;
+
+  return {
+    symbol: balance.currency,
+    name: displayName(balance.currency),
+    amount: formatAmount(amount),
+    value: formatMoney(valueNumber),
+    pct: 0,
+    valueNumber,
+  };
+}
 
 export default function H5ManagePage() {
   const [tab, setTab] = useState('overview');
-  const total = getTotalAssetValue();
-  const assets = getAssets();
+  const [assets, setAssets] = useState<AssetRow[]>([]);
+  const [accounts, setAccounts] = useState<WalletAccountBalances>(DEFAULT_ACCOUNTS);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadAssets() {
+      try {
+        const balances = await walletApi.getBalances();
+        const rows = await Promise.all(balances.map(balanceToAssetRow));
+        const totalValue = rows.reduce((sum, row) => sum + row.valueNumber, 0);
+        const nextRows = rows.map((row) => ({
+          ...row,
+          pct: totalValue > 0 ? Number(((row.valueNumber / totalValue) * 100).toFixed(2)) : 0,
+        }));
+        const firstCurrency = balances[0]?.currency ?? 'USDT';
+        const transferOverview = await walletApi.getTransfers(firstCurrency).catch(() => null);
+
+        if (!alive) return;
+        setAssets(nextRows);
+        setAccounts(transferOverview?.accountBalances ?? DEFAULT_ACCOUNTS);
+      } catch {
+        if (!alive) return;
+        setAssets([]);
+        setAccounts(DEFAULT_ACCOUNTS);
+      }
+    }
+
+    loadAssets();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const total = useMemo(() => assets.reduce((sum, asset) => sum + asset.valueNumber, 0), [assets]);
+  const spotTotal = Number(accounts.spot || 0);
+  const fundTotal = Number(accounts.fund || 0);
+  const futuresTotal = Number(accounts.futures || 0);
 
   return (
     <div style={{ padding: '12px' }}>
@@ -52,9 +156,9 @@ export default function H5ManagePage() {
               fontVariantNumeric: 'tabular-nums', marginBottom: 4,
             }}
           >
-            {total.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {formatMoney(total)}
           </div>
-          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.60)' }}>≈ ${(total * 1).toFixed(2)} USD</div>
+          <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.60)' }}>≈ ${formatMoney(total)} USD</div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginTop: 14 }}>
             <div
@@ -66,7 +170,7 @@ export default function H5ManagePage() {
               }}
             >
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.60)' }}>现货</div>
-              <div style={{ fontSize: 14, color: '#fff', fontWeight: 600, marginTop: 2 }}>¥{(total * 0.7).toFixed(0)}</div>
+              <div style={{ fontSize: 14, color: '#fff', fontWeight: 600, marginTop: 2 }}>≈{formatMoney(spotTotal)}</div>
             </div>
             <div
               style={{
@@ -77,7 +181,7 @@ export default function H5ManagePage() {
               }}
             >
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.60)' }}>理财</div>
-              <div style={{ fontSize: 14, color: '#FCD535', fontWeight: 600, marginTop: 2 }}>¥{(total * 0.2).toFixed(0)}</div>
+              <div style={{ fontSize: 14, color: '#FCD535', fontWeight: 600, marginTop: 2 }}>≈{formatMoney(fundTotal)}</div>
             </div>
             <div
               style={{
@@ -88,7 +192,7 @@ export default function H5ManagePage() {
               }}
             >
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.60)' }}>合约</div>
-              <div style={{ fontSize: 14, color: '#F472B6', fontWeight: 600, marginTop: 2 }}>¥{(total * 0.1).toFixed(0)}</div>
+              <div style={{ fontSize: 14, color: '#F472B6', fontWeight: 600, marginTop: 2 }}>≈{formatMoney(futuresTotal)}</div>
             </div>
           </div>
         </div>
@@ -105,9 +209,9 @@ export default function H5ManagePage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
           {[
             { icon: ArrowDownToLine, label: '充值', href: '/h5/wallet/deposit', color: '#38BDF8' },
-            { icon: ArrowUpFromLine,  label: '提现', href: '/h5/wallet/withdraw', color: '#A78BFA' },
-            { icon: ArrowLeftRight,   label: '划转', href: '/h5/wallet/transfer', color: '#F472B6' },
-            { icon: Wallet,           label: '钱包', href: '/h5/wallet', color: '#FCD535' },
+            { icon: ArrowUpFromLine, label: '提现', href: '/h5/wallet/withdraw', color: '#A78BFA' },
+            { icon: ArrowLeftRight, label: '划转', href: '/h5/wallet/transfer', color: '#F472B6' },
+            { icon: Wallet, label: '钱包', href: '/h5/wallet', color: '#FCD535' },
           ].map((btn) => {
             const Icon = btn.icon;
             return (
@@ -139,7 +243,7 @@ export default function H5ManagePage() {
       <div style={{ display: 'flex', gap: 4, marginBottom: 12, background: 'rgba(15, 27, 61, 0.50)', borderRadius: 10, padding: 4 }}>
         {[
           { k: 'overview', l: '概览' },
-          { k: 'detail',   l: '明细' },
+          { k: 'detail', l: '明细' },
         ].map((t) => {
           const active = t.k === tab;
           return (

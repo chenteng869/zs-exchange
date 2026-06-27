@@ -58,7 +58,7 @@ export class DepositRepository extends BaseRepository<
       where: {
         userId,
         currencyId,
-        status: 'confirmed',
+        status: { in: ['confirmed', 'credited'] },
         createdAt: { gte: startTime, lte: endTime },
       },
       _sum: { amount: true, fee: true },
