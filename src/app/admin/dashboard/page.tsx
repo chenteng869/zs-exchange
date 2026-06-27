@@ -85,57 +85,44 @@ export default function DashboardPage() {
 
   const recentActivities = activitiesData || [];
 
-  // 生成用户增长图表配置
+  // 生成用户增长图表配置（API 返回 [{ date, count }]）
   const userGrowthOption = useMemo(() => {
-    if (!userGrowthData) return {};
+    const rows: Array<{ date: string; count: number }> = Array.isArray(userGrowthData) ? userGrowthData : [];
+    if (rows.length === 0) return {};
     return {
       tooltip: { trigger: 'axis' },
-      legend: { data: userGrowthData.series.map((s: any) => s.name) },
+      legend: { data: ['新增用户'] },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: userGrowthData.labels,
-      },
+      xAxis: { type: 'category', boundaryGap: false, data: rows.map((r) => r.date) },
       yAxis: { type: 'value' },
-      series: userGrowthData.series.map((item: any, index: number) => ({
-        name: item.name,
+      series: [{
+        name: '新增用户',
         type: 'line',
         smooth: true,
         lineStyle: { width: 2 },
-        data: item.data,
-        itemStyle: {
-          color: index === 0 ? '#1677FF' : '#16A34A',
-        },
-        areaStyle: {
-          color: index === 0 ? '#1677FF' : '#16A34A',
-          opacity: 0.3,
-        },
-      })),
+        data: rows.map((r) => r.count),
+        itemStyle: { color: '#1677FF' },
+        areaStyle: { color: '#1677FF', opacity: 0.3 },
+      }],
     };
   }, [userGrowthData]);
 
-  // 生成交易量图表配置
+  // 生成交易量图表配置（API 返回 [{ date, count, volume }]）
   const transactionOption = useMemo(() => {
-    if (!transactionData) return {};
+    const rows: Array<{ date: string; count: number; volume: number }> = Array.isArray(transactionData) ? transactionData : [];
+    if (rows.length === 0) return {};
     return {
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      legend: { data: transactionData.series.map((s: any) => s.name) },
+      legend: { data: ['交易笔数'] },
       grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-      xAxis: {
-        type: 'category',
-        data: transactionData.labels,
-      },
+      xAxis: { type: 'category', data: rows.map((r) => r.date) },
       yAxis: { type: 'value' },
-      series: transactionData.series.map((item: any, index: number) => ({
-        name: item.name,
+      series: [{
+        name: '交易笔数',
         type: 'bar',
-        stack: 'total',
-        data: item.data,
-        itemStyle: {
-          color: index === 0 ? '#1677FF' : '#7C3AED',
-        },
-      })),
+        data: rows.map((r) => r.count),
+        itemStyle: { color: '#1677FF' },
+      }],
     };
   }, [transactionData]);
 
