@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -25,106 +25,38 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockRevenueData = [
-  {
-    id: 'REV-001',
-    source: '现货交易手续费',
-    amount: 565511.23,
-    percentage: 45.0,
-    trend: 'up',
-    trendValue: '+18.2%',
-  },
-  {
-    id: 'REV-002',
-    source: '合约交易手续费',
-    amount: 377034.15,
-    percentage: 30.0,
-    trend: 'up',
-    trendValue: '+25.6%',
-  },
-  {
-    id: 'REV-003',
-    source: '提现手续费',
-    amount: 125678.05,
-    percentage: 10.0,
-    trend: 'up',
-    trendValue: '+12.3%',
-  },
-  {
-    id: 'REV-004',
-    source: '杠杆借贷利息',
-    amount: 87724.64,
-    percentage: 7.0,
-    trend: 'up',
-    trendValue: '+32.1%',
-  },
-  {
-    id: 'REV-005',
-    source: 'VIP订阅服务费',
-    amount: 50171.22,
-    percentage: 4.0,
-    trend: 'up',
-    trendValue: '+45.8%',
-  },
-  {
-    id: 'REV-006',
-    source: 'NFT交易佣金',
-    amount: 37627.82,
-    percentage: 3.0,
-    trend: 'down',
-    trendValue: '-5.2%',
-  },
-  {
-    id: 'REV-007',
-    source: 'DEX流动性奖励',
-    amount: 12542.61,
-    percentage: 1.0,
-    trend: 'up',
-    trendValue: '+28.9%',
-  },
-  {
-    id: 'REV-008',
-    source: 'IEO/IDO项目分成',
-    amount: 6271.30,
-    percentage: 0.5,
-    trend: 'down',
-    trendValue: '-12.4%',
-  },
-  {
-    id: 'REV-009',
-    source: 'API接口服务费',
-    amount: 3762.78,
-    percentage: 0.3,
-    trend: 'up',
-    trendValue: '+15.7%',
-  },
-  {
-    id: 'REV-010',
-    source: '市场数据订阅',
-    amount: 2510.85,
-    percentage: 0.2,
-    trend: 'up',
-    trendValue: '+22.1%',
-  },
-  {
-    id: 'REV-011',
-    source: '广告合作收入',
-    amount: 1255.43,
-    percentage: 0.1,
-    trend: 'stable',
-    trendValue: '0%',
-  },
-  {
-    id: 'REV-012',
-    source: '其他杂项收入',
-    amount: 890.21,
-    percentage: 0.07,
-    trend: 'down',
-    trendValue: '-3.8%',
-  },
-];
-
 export default function RevenueManagementPage() {
+  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/finance/fees?pageSize=100', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items = d?.data?.items ?? [];
+        // Aggregate by category
+        const grouped: Record<string, number> = {};
+        for (const item of items) {
+          const key = item.category || '交易手续费';
+          grouped[key] = (grouped[key] || 0) + item.amount;
+        }
+        const total = Object.values(grouped).reduce((s: number, v) => s + (v as number), 0);
+        const result = Object.entries(grouped).map(([source, amount], i) => ({
+          id: String(i + 1),
+          source,
+          amount: amount as number,
+          percentage: total > 0 ? parseFloat(((amount as number / total) * 100).toFixed(1)) : 0,
+          trend: 'up',
+          trendValue: '+0%',
+        }));
+        setRevenueData(result);
+      })
+      .catch(() => setRevenueData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+
   const getTrendTag = (trend: string, value: string) => {
     if (trend === 'up') return <Tag color="success" icon={<RiseOutlined />}>{value}</Tag>;
     if (trend === 'down') return <Tag color="error" icon={<FallOutlined />}>{value}</Tag>;
@@ -206,7 +138,7 @@ export default function RevenueManagementPage() {
     },
   ];
 
-  const totalRevenue = mockRevenueData.reduce((sum, item) => sum + item.amount, 0);
+  const totalRevenue = revenueData.reduce((sum, item) => sum + item.amount, 0);
 
   return (
     <AdminLayout>
@@ -283,7 +215,8 @@ export default function RevenueManagementPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockRevenueData}
+            dataSource={revenueData}
+            loading={loading}
             title="收入来源明细"
             rowKey="id"
             actions={actions}

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -24,106 +24,30 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockSettlementData = [
-  {
-    id: 'SET-2024-001',
-    parties: '商户A → 平台',
-    amount: 125000.0,
-    currency: 'USDT',
-    time: '2024-06-23 14:30',
-    status: 'completed',
-  },
-  {
-    id: 'SET-2024-002',
-    parties: '平台 → 用户B',
-    amount: 45600.5,
-    currency: 'BTC',
-    time: '2024-06-23 13:15',
-    status: 'processing',
-  },
-  {
-    id: 'SET-2024-003',
-    parties: '商户C → 平台',
-    amount: 89200.75,
-    currency: 'ETH',
-    time: '2024-06-23 12:08',
-    status: 'pending',
-  },
-  {
-    id: 'SET-2024-004',
-    parties: '平台 → 流动性提供商D',
-    amount: 234000.0,
-    currency: 'USDT',
-    time: '2024-06-23 11:42',
-    status: 'completed',
-  },
-  {
-    id: 'SET-2024-005',
-    parties: '用户E → 平台',
-    amount: 67800.25,
-    currency: 'BNB',
-    time: '2024-06-23 10:25',
-    status: 'processing',
-  },
-  {
-    id: 'SET-2024-006',
-    parties: '平台 → 商户F',
-    amount: 156700.0,
-    currency: 'USDT',
-    time: '2024-06-23 09:18',
-    status: 'failed',
-  },
-  {
-    id: 'SET-2024-007',
-    parties: '机构G → 平台',
-    amount: 389000.5,
-    currency: 'USDT',
-    time: '2024-06-23 08:05',
-    status: 'completed',
-  },
-  {
-    id: 'SET-2024-008',
-    parties: '平台 → 做市商H',
-    amount: 192300.0,
-    currency: 'ETH',
-    time: '2024-06-22 16:52',
-    status: 'pending',
-  },
-  {
-    id: 'SET-2024-009',
-    parties: '用户I → 平台',
-    amount: 76400.75,
-    currency: 'USDT',
-    time: '2024-06-22 15:35',
-    status: 'completed',
-  },
-  {
-    id: 'SET-2024-010',
-    parties: '平台 → 合作伙伴J',
-    amount: 51200.0,
-    currency: 'BTC',
-    time: '2024-06-22 14:20',
-    status: 'processing',
-  },
-  {
-    id: 'SET-2024-011',
-    parties: '交易所K → 平台',
-    amount: 278900.25,
-    currency: 'USDT',
-    time: '2024-06-22 13:08',
-    status: 'completed',
-  },
-  {
-    id: 'SET-2024-012',
-    parties: '平台 → 用户L',
-    amount: 34500.0,
-    currency: 'BNB',
-    time: '2024-06-22 11:45',
-    status: 'pending',
-  },
-];
-
 export default function SettlementManagementPage() {
+  const [settlementData, setSettlementData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/withdrawals?pageSize=100', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        const items = (d?.data?.items ?? []).map((w: any) => ({
+          id: w.id.slice(0, 12),
+          parties: '平台 → 用户',
+          amount: parseFloat(w.amount) || 0,
+          currency: w.currency || 'USDT',
+          time: w.createdAt?.slice(0, 16).replace('T', ' ') ?? '-',
+          status: w.status === 'confirmed' ? 'completed' : w.status === 'pending' ? 'pending' : 'processing',
+        }));
+        setSettlementData(items);
+      })
+      .catch(() => setSettlementData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
+
   const getStatusTag = (status: string) => {
     const statusMap: Record<string, { color: string; text: string }> = {
       completed: { color: 'green', text: '已完成' },
@@ -214,8 +138,8 @@ export default function SettlementManagementPage() {
     },
   ];
 
-  const totalAmount = mockSettlementData.reduce((sum, item) => sum + item.amount, 0);
-  const successRate = ((mockSettlementData.filter((s) => s.status === 'completed').length / mockSettlementData.length) * 100).toFixed(1);
+  const totalAmount = settlementData.reduce((sum, item) => sum + item.amount, 0);
+  const successRate = settlementData.length > 0 ? ((settlementData.filter((s) => s.status === 'completed').length / settlementData.length) * 100).toFixed(1) : '0.0';
 
   return (
     <AdminLayout>
@@ -304,7 +228,8 @@ export default function SettlementManagementPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockSettlementData}
+            dataSource={settlementData}
+            loading={loading}
             title="结算记录列表"
             rowKey="id"
             actions={actions}
