@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { userApi } from '@/services/api';
 import {
   Button,
   Space,
@@ -23,100 +24,6 @@ import {
 } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { DataTable } from '@/components/admin/DataTable';
-
-// 模拟数据
-const mockUsers = [
-  {
-    id: '1',
-    username: 'user_001',
-    email: 'user001@example.com',
-    phone: '13800138000',
-    walletAddress: '0x1234...5678',
-    did: 'did:example:user001',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=1',
-    kycStatus: 'approved',
-    userLevel: 3,
-    isActive: true,
-    inviteCode: 'INV001',
-    inviterId: 'system',
-    totalAssets: 15890.50,
-    totalTransactions: 128,
-    createdAt: '2026-04-30 10:30',
-    updatedAt: '2026-05-10 08:00',
-  },
-  {
-    id: '2',
-    username: 'creator_002',
-    email: 'creator002@example.com',
-    phone: '13800138001',
-    walletAddress: '0xabc1...def2',
-    did: 'did:example:creator002',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=2',
-    kycStatus: 'approved',
-    userLevel: 4,
-    isActive: true,
-    inviteCode: 'INV002',
-    inviterId: '1',
-    totalAssets: 85400.25,
-    totalTransactions: 520,
-    createdAt: '2026-04-20 15:20',
-    updatedAt: '2026-05-09 22:00',
-  },
-  {
-    id: '3',
-    username: 'user_003',
-    email: 'user003@example.com',
-    phone: '13800138002',
-    walletAddress: '0x9876...5432',
-    did: '',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=3',
-    kycStatus: 'pending',
-    userLevel: 2,
-    isActive: false,
-    inviteCode: 'INV003',
-    inviterId: '2',
-    totalAssets: 0,
-    totalTransactions: 5,
-    createdAt: '2026-04-10 09:15',
-    updatedAt: '2026-05-07 14:30',
-  },
-  {
-    id: '4',
-    username: 'nft_lover',
-    email: 'nft@example.com',
-    phone: '13800138003',
-    walletAddress: '0x4444...4444',
-    did: 'did:example:nftlover',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=4',
-    kycStatus: 'approved',
-    userLevel: 3,
-    isActive: true,
-    inviteCode: 'INV004',
-    inviterId: '1',
-    totalAssets: 52000.00,
-    totalTransactions: 256,
-    createdAt: '2026-04-25 11:45',
-    updatedAt: '2026-05-10 09:00',
-  },
-  {
-    id: '5',
-    username: 'newbie_005',
-    email: 'newbie@example.com',
-    phone: '',
-    walletAddress: '',
-    did: '',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=5',
-    kycStatus: 'not_started',
-    userLevel: 1,
-    isActive: true,
-    inviteCode: 'INV005',
-    inviterId: null,
-    totalAssets: 0,
-    totalTransactions: 0,
-    createdAt: '2026-05-10 08:00',
-    updatedAt: '2026-05-10 08:00',
-  },
-];
 
 // KYC 状态映射
 const KYC_STATUS_MAP = {
@@ -147,38 +54,28 @@ export default function UsersPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['users', searchKeyword, kycFilter, statusFilter],
     queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      let filtered = [...mockUsers];
-      
-      if (searchKeyword) {
-        const keyword = searchKeyword.toLowerCase();
-        filtered = filtered.filter(u => 
-          u.username.toLowerCase().includes(keyword) ||
-          u.email.toLowerCase().includes(keyword) ||
-          u.phone.includes(keyword) ||
-          u.walletAddress.toLowerCase().includes(keyword)
-        );
-      }
-      
-      if (kycFilter) {
-        filtered = filtered.filter(u => u.kycStatus === kycFilter);
-      }
-      
+      const res = await userApi.getUsers({
+        page: 1,
+        pageSize: 50,
+        keyword: searchKeyword || undefined,
+        kycStatus: kycFilter || undefined,
+      });
+      const items = (res as any)?.data?.items ?? [];
+      const total = (res as any)?.data?.total ?? 0;
+      let filtered = items;
       if (statusFilter) {
-        filtered = filtered.filter(u => 
+        filtered = items.filter((u: any) =>
           statusFilter === 'active' ? u.isActive : !u.isActive
         );
       }
-      
-      return { items: filtered, total: filtered.length, page: 1, pageSize: 10 };
+      return { items: filtered, total: statusFilter ? filtered.length : total, page: 1, pageSize: 50 };
     },
   });
 
   // 切换用户状态
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: string; isActive: boolean }) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await userApi.updateUserStatus(id, isActive);
       return { id, isActive };
     },
     onSuccess: (_, { isActive }) => {

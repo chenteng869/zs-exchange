@@ -1,12 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
   Card,
   Tag,
-  Space,
   Typography,
 } from 'antd';
 import {
@@ -25,125 +24,28 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockWithdrawData = [
-  {
-    id: 'WTH-2024-001',
-    user: 'user_78234',
-    amount: 25000.0,
-    address: '0x8f3a...9c2d',
-    status: 'pending',
-    reviewer: '-',
-    time: '2024-06-23 14:32:15',
-  },
-  {
-    id: 'WTH-2024-002',
-    user: 'user_45621',
-    amount: 150000.5,
-    address: '0xa1b2...c3d4',
-    status: 'reviewing',
-    reviewer: 'admin_zhang',
-    time: '2024-06-23 14:18:42',
-  },
-  {
-    id: 'WTH-2024-003',
-    user: 'user_12876',
-    amount: 50000.0,
-    address: '0x9876...5432',
-    status: 'approved',
-    reviewer: 'admin_li',
-    time: '2024-06-23 14:05:08',
-  },
-  {
-    id: 'WTH-2024-004',
-    user: 'user_89342',
-    amount: 80000.75,
-    address: '0x1122...3344',
-    status: 'completed',
-    reviewer: 'admin_wang',
-    time: '2024-06-23 13:52:33',
-  },
-  {
-    id: 'WTH-2024-005',
-    user: 'user_34567',
-    amount: 35000.25,
-    address: '0xffee...ddcc',
-    status: 'rejected',
-    reviewer: 'admin_zhao',
-    time: '2024-06-23 13:38:57',
-  },
-  {
-    id: 'WTH-2024-006',
-    user: 'user_67890',
-    amount: 200000.0,
-    address: '0xcafe...babe',
-    status: 'pending',
-    reviewer: '-',
-    time: '2024-06-23 13:25:22',
-  },
-  {
-    id: 'WTH-2024-007',
-    user: 'user_11111',
-    amount: 12000.5,
-    address: '0x1234...5678',
-    status: 'reviewing',
-    reviewer: 'admin_qian',
-    time: '2024-06-23 13:12:46',
-  },
-  {
-    id: 'WTH-2024-008',
-    user: 'user_22222',
-    amount: 95000.0,
-    address: '0xabcd...efgh',
-    status: 'approved',
-    reviewer: 'admin_sun',
-    time: '2024-06-23 12:59:11',
-  },
-  {
-    id: 'WTH-2024-009',
-    user: 'user_33333',
-    amount: 45000.75,
-    address: '0x9876...abcd',
-    status: 'completed',
-    reviewer: 'admin_li',
-    time: '2024-06-23 12:45:36',
-  },
-  {
-    id: 'WTH-2024-010',
-    user: 'user_44444',
-    amount: 67000.25,
-    address: '0xaaab...ccdd',
-    status: 'pending',
-    reviewer: '-',
-    time: '2024-06-23 12:32:01',
-  },
-  {
-    id: 'WTH-2024-011',
-    user: 'user_55555',
-    amount: 180000.0,
-    address: '0xbbbc...cdee',
-    status: 'rejected',
-    reviewer: 'admin_zhou',
-    time: '2024-06-23 12:18:26',
-  },
-  {
-    id: 'WTH-2024-012',
-    user: 'user_66666',
-    amount: 28000.5,
-    address: '0xccdd...eeff',
-    status: 'reviewing',
-    reviewer: 'admin_wu',
-    time: '2024-06-23 12:04:51',
-  },
-];
-
 export default function WithdrawManagementPage() {
+  const [withdrawData, setWithdrawData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/withdrawals?pageSize=50', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setWithdrawData(d?.data?.items ?? []))
+      .catch(() => setWithdrawData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const getStatusTag = (status: string) => {
     const statusMap: Record<string, { color: string; text: string }> = {
       pending: { color: 'orange', text: '待审核' },
       reviewing: { color: 'blue', text: '审核中' },
       approved: { color: 'cyan', text: '已通过' },
+      confirmed: { color: 'green', text: '已完成' },
       completed: { color: 'green', text: '已完成' },
       rejected: { color: 'red', text: '已拒绝' },
+      cancelled: { color: 'gray', text: '已取消' },
     };
     const config = statusMap[status] || { color: 'default', text: status };
     return <Tag color={config.color}>{config.text}</Tag>;
@@ -157,34 +59,33 @@ export default function WithdrawManagementPage() {
       width: 150,
       render: (text: string) => (
         <Text copyable style={{ fontFamily: 'monospace', fontSize: 13 }}>
-          {text}
+          {text.slice(0, 12)}...
         </Text>
       ),
     },
     {
       title: '用户',
-      dataIndex: 'user',
-      key: 'user',
+      dataIndex: 'userId',
+      key: 'userId',
       width: 110,
-      render: (text: string) => <Text code>{text}</Text>,
+      render: (text: string) => <Text code>{text?.slice(0, 8)}...</Text>,
     },
     {
-      title: '金额(USDT)',
-      dataIndex: 'amount',
+      title: '金额',
       key: 'amount',
       width: 140,
-      render: (amount: number) => (
+      render: (_: any, r: any) => (
         <Text strong style={{ color: '#DC2626', fontSize: 15 }}>
-          ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          {Number(r.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {r.currency}
         </Text>
       ),
     },
     {
       title: '提现地址',
-      dataIndex: 'address',
-      key: 'address',
+      dataIndex: 'destinationAddress',
+      key: 'destinationAddress',
       width: 140,
-      render: (addr: string) => <Text code style={{ fontSize: 12 }}>{addr}</Text>,
+      render: (addr: string) => <Text code style={{ fontSize: 12 }}>{addr ? addr.slice(0, 14) + '...' : '-'}</Text>,
     },
     {
       title: '状态',
@@ -194,17 +95,11 @@ export default function WithdrawManagementPage() {
       render: (status: string) => getStatusTag(status),
     },
     {
-      title: '审核人',
-      dataIndex: 'reviewer',
-      key: 'reviewer',
-      width: 110,
-      render: (text: string) => <Text>{text === '-' ? <Text type="secondary">待分配</Text> : text}</Text>,
-    },
-    {
       title: '时间',
-      dataIndex: 'time',
-      key: 'time',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       width: 160,
+      render: (v: string) => v?.slice(0, 19).replace('T', ' '),
     },
   ];
 
@@ -222,7 +117,15 @@ export default function WithdrawManagementPage() {
       icon: <CheckOutlined />,
       type: 'link',
       hidden: (record: any) => !['pending', 'reviewing'].includes(record.status),
-      onClick: (record: any) => console.log('通过:', record.id),
+      onClick: async (record: any) => {
+        await fetch('/api/admin/withdrawals', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: record.id, action: 'approve' }),
+        });
+        setWithdrawData((prev) => prev.map((w) => w.id === record.id ? { ...w, status: 'confirmed' } : w));
+      },
     },
     {
       key: 'reject',
@@ -231,14 +134,24 @@ export default function WithdrawManagementPage() {
       type: 'link',
       danger: true,
       hidden: (record: any) => !['pending', 'reviewing'].includes(record.status),
-      onClick: (record: any) => console.log('拒绝:', record.id),
+      onClick: async (record: any) => {
+        await fetch('/api/admin/withdrawals', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ id: record.id, action: 'reject' }),
+        });
+        setWithdrawData((prev) => prev.map((w) => w.id === record.id ? { ...w, status: 'rejected' } : w));
+      },
     },
   ];
 
-  const pendingCount = mockWithdrawData.filter((w) => w.status === 'pending').length;
-  const todayTotal = mockWithdrawData.reduce((sum, w) => sum + w.amount, 0);
-  const largeAmountCount = mockWithdrawData.filter((w) => w.amount >= 100000).length;
-  const approvedRate = ((mockWithdrawData.filter((w) => ['approved', 'completed'].includes(w.status)).length / mockWithdrawData.length) * 100).toFixed(1);
+  const pendingCount = withdrawData.filter((w) => w.status === 'pending').length;
+  const todayTotal = withdrawData.reduce((sum, w) => sum + Number(w.amount), 0);
+  const largeAmountCount = withdrawData.filter((w) => Number(w.amount) >= 100000).length;
+  const approvedRate = withdrawData.length > 0
+    ? ((withdrawData.filter((w) => ['confirmed', 'approved', 'completed'].includes(w.status)).length / withdrawData.length) * 100).toFixed(1)
+    : '0.0';
 
   return (
     <AdminLayout>
@@ -327,7 +240,8 @@ export default function WithdrawManagementPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockWithdrawData}
+            dataSource={withdrawData}
+            loading={loading}
             title="提现申请列表"
             rowKey="id"
             actions={actions}

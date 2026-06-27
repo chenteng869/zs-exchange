@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Row,
   Col,
@@ -24,118 +24,19 @@ import { DataTable } from '@/components/admin/DataTable';
 
 const { Title, Text } = Typography;
 
-const mockDepositData = [
-  {
-    id: 'DEP-2024-001',
-    user: 'user_78234',
-    amount: 50000.0,
-    network: 'TRC20',
-    txHash: '0x8f3a...9c2d1e4b',
-    status: 'success',
-    time: '2024-06-23 14:32:15',
-  },
-  {
-    id: 'DEP-2024-002',
-    user: 'user_45621',
-    amount: 25000.5,
-    network: 'ERC20',
-    txHash: '0xa1b2c3d4e5f6...',
-    status: 'pending',
-    time: '2024-06-23 14:18:42',
-  },
-  {
-    id: 'DEP-2024-003',
-    user: 'user_12876',
-    amount: 100000.0,
-    network: 'BEP20',
-    txHash: '0x9876543210fe...',
-    status: 'confirming',
-    time: '2024-06-23 14:05:08',
-  },
-  {
-    id: 'DEP-2024-004',
-    user: 'user_89342',
-    amount: 15000.75,
-    network: 'TRC20',
-    txHash: '0x112233445566...',
-    status: 'success',
-    time: '2024-06-23 13:52:33',
-  },
-  {
-    id: 'DEP-2024-005',
-    user: 'user_34567',
-    amount: 75000.25,
-    network: 'ERC20',
-    txHash: '0xffeeddccbb aa99...',
-    status: 'failed',
-    time: '2024-06-23 13:38:57',
-  },
-  {
-    id: 'DEP-2024-006',
-    user: 'user_67890',
-    amount: 32000.0,
-    network: 'Polygon',
-    txHash: '0xcafebabe dead...',
-    status: 'pending',
-    time: '2024-06-23 13:25:22',
-  },
-  {
-    id: 'DEP-2024-007',
-    user: 'user_11111',
-    amount: 8900.5,
-    network: 'Arbitrum',
-    txHash: '0x1234567890ab...',
-    status: 'success',
-    time: '2024-06-23 13:12:46',
-  },
-  {
-    id: 'DEP-2024-008',
-    user: 'user_22222',
-    amount: 156000.0,
-    network: 'Optimism',
-    txHash: '0xabcdef012345...',
-    status: 'confirming',
-    time: '2024-06-23 12:59:11',
-  },
-  {
-    id: 'DEP-2024-009',
-    user: 'user_33333',
-    amount: 45000.75,
-    network: 'TRC20',
-    txHash: '0x9876543210ab...',
-    status: 'success',
-    time: '2024-06-23 12:45:36',
-  },
-  {
-    id: 'DEP-2024-010',
-    user: 'user_44444',
-    amount: 67800.25,
-    network: 'ERC20',
-    txHash: '0xaaabbbcccddd...',
-    status: 'pending',
-    time: '2024-06-23 12:32:01',
-  },
-  {
-    id: 'DEP-2024-011',
-    user: 'user_55555',
-    amount: 22000.0,
-    network: 'BSC',
-    txHash: '0xbbbcccddeeff...',
-    status: 'failed',
-    time: '2024-06-23 12:18:26',
-  },
-  {
-    id: 'DEP-2024-012',
-    user: 'user_66666',
-    amount: 95000.5,
-    network: 'Avalanche',
-    txHash: '0xccdddeeeffff...',
-    status: 'success',
-    time: '2024-06-23 12:04:51',
-  },
-];
-
 export default function DepositManagementPage() {
+  const [depositData, setDepositData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch('/api/admin/deposits?pageSize=50', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => setDepositData(d?.data?.items ?? []))
+      .catch(() => setDepositData([]))
+      .finally(() => setLoading(false));
+  }, []);
+
   const getStatusTag = (status: string) => {
     const statusMap: Record<string, { color: string; text: string }> = {
       success: { color: 'green', text: '成功' },
@@ -147,20 +48,6 @@ export default function DepositManagementPage() {
     return <Tag color={config.color}>{config.text}</Tag>;
   };
 
-  const getNetworkColor = (network: string) => {
-    const colorMap: Record<string, string> = {
-      TRC20: '#F7931A',
-      ERC20: '#627EEA',
-      BEP20: '#F3BA2F',
-      Polygon: '#8247E5',
-      Arbitrum: '#28A0F0',
-      Optimism: '#FF0420',
-      BSC: '#F3BA2F',
-      Avalanche: '#E84142',
-    };
-    return <Tag style={{ color: colorMap[network] || '#9CA3AF', borderColor: colorMap[network] || '#9CA3AF' }}>{network}</Tag>;
-  };
-
   const columns = [
     {
       title: '订单号',
@@ -169,34 +56,33 @@ export default function DepositManagementPage() {
       width: 150,
       render: (text: string) => (
         <Text copyable style={{ fontFamily: 'monospace', fontSize: 13 }}>
-          {text}
+          {text.slice(0, 12)}...
         </Text>
       ),
     },
     {
       title: '用户',
-      dataIndex: 'user',
-      key: 'user',
+      dataIndex: 'userId',
+      key: 'userId',
       width: 120,
-      render: (text: string) => <Text code>{text}</Text>,
+      render: (text: string) => <Text code>{text?.slice(0, 8)}...</Text>,
     },
     {
-      title: '金额(USDT)',
-      dataIndex: 'amount',
+      title: '金额',
       key: 'amount',
       width: 140,
-      render: (amount: number) => (
+      render: (_: any, r: any) => (
         <Text strong style={{ color: '#16A34A', fontSize: 15 }}>
-          ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          {Number(r.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })} {r.currency}
         </Text>
       ),
     },
     {
       title: '网络',
-      dataIndex: 'network',
-      key: 'network',
+      dataIndex: 'currency',
+      key: 'currency',
       width: 110,
-      render: (network: string) => getNetworkColor(network),
+      render: (currency: string) => <Tag>{currency}</Tag>,
     },
     {
       title: 'TX哈希',
@@ -205,11 +91,8 @@ export default function DepositManagementPage() {
       width: 180,
       render: (hash: string) => (
         <Space>
-          <Text code style={{ fontSize: 12 }}>{hash}</Text>
-          <LinkOutlined
-            style={{ fontSize: 12, color: '#1677FF' }}
-            onClick={() => console.log('查看链上:', hash)}
-          />
+          <Text code style={{ fontSize: 12 }}>{hash ? hash.slice(0, 16) + '...' : '-'}</Text>
+          {hash && <LinkOutlined style={{ fontSize: 12, color: '#1677FF' }} />}
         </Space>
       ),
     },
@@ -222,9 +105,10 @@ export default function DepositManagementPage() {
     },
     {
       title: '时间',
-      dataIndex: 'time',
-      key: 'time',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       width: 160,
+      render: (v: string) => v?.slice(0, 19).replace('T', ' '),
     },
   ];
 
@@ -238,11 +122,13 @@ export default function DepositManagementPage() {
     },
   ];
 
-  const totalDeposit = mockDepositData
-    .filter((d) => d.status === 'success')
-    .reduce((sum, d) => sum + d.amount, 0);
-  const pendingCount = mockDepositData.filter((d) => d.status === 'pending' || d.status === 'confirming').length;
-  const failRate = ((mockDepositData.filter((d) => d.status === 'failed').length / mockDepositData.length) * 100).toFixed(1);
+  const totalDeposit = depositData
+    .filter((d) => d.status === 'credited' || d.status === 'success')
+    .reduce((sum, d) => sum + Number(d.amount), 0);
+  const pendingCount = depositData.filter((d) => d.status === 'pending' || d.status === 'confirming').length;
+  const failRate = depositData.length > 0
+    ? ((depositData.filter((d) => d.status === 'failed').length / depositData.length) * 100).toFixed(1)
+    : '0.0';
 
   return (
     <AdminLayout>
@@ -262,7 +148,7 @@ export default function DepositManagementPage() {
           <Col xs={24} sm={12} lg={8} xl={4}>
             <DataCard
               title="今日充值"
-              value={mockDepositData.reduce((sum, d) => sum + d.amount, 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              value={depositData.reduce((sum, d) => sum + Number(d.amount), 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               suffix="USDT"
               icon={<WalletOutlined />}
               color="#1677FF"
@@ -331,7 +217,8 @@ export default function DepositManagementPage() {
         >
           <DataTable
             columns={columns}
-            dataSource={mockDepositData}
+            dataSource={depositData}
+            loading={loading}
             title="充值订单列表"
             rowKey="id"
             actions={actions}

@@ -1,44 +1,46 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, Table, Tag, Button, Space, Form, Input, Select, DatePicker, Tabs } from 'antd';
 import { SearchOutlined, FilterOutlined, SyncOutlined, DownloadOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { transactionApi } from '@/services/api';
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
-const mockOrders = [
-  { id: '1', symbol: 'BTC/USDT', side: 'buy', type: 'limit', price: 67523.80, quantity: 0.1, filled: 0.05, status: 'partial', time: '2024-05-12 14:30:22' },
-  { id: '2', symbol: 'ETH/USDT', side: 'sell', type: 'market', price: 3285.50, quantity: 1, filled: 1, status: 'filled', time: '2024-05-12 14:25:15' },
-  { id: '3', symbol: 'GXT/USDT', side: 'buy', type: 'limit', price: 0.85, quantity: 1000, filled: 0, status: 'open', time: '2024-05-12 14:20:08' },
-  { id: '4', symbol: 'SOL/USDT', side: 'sell', type: 'limit', price: 180.00, quantity: 50, filled: 30, status: 'partial', time: '2024-05-12 14:15:33' },
-  { id: '5', symbol: 'BTC/USDT', side: 'sell', type: 'stop', price: 66000, quantity: 0.5, filled: 0, status: 'open', time: '2024-05-12 13:45:10' },
-];
-
-const mockTradeHistory = [
-  { id: '1', symbol: 'BTC/USDT', side: 'buy', price: 67523.80, quantity: 0.05, fee: 3.376, total: 3376.19, time: '2024-05-12 14:30:22' },
-  { id: '2', symbol: 'ETH/USDT', side: 'sell', price: 3285.50, quantity: 1, fee: 3.285, total: 3282.215, time: '2024-05-12 14:25:15' },
-  { id: '3', symbol: 'GXT/USDT', side: 'buy', price: 0.845, quantity: 500, fee: 0.4225, total: 422.0775, time: '2024-05-12 13:50:45' },
-];
-
 export default function OrderManagementPage() {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [orders, setOrders] = useState<any[]>([]);
+  const [trades, setTrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const statusColors = {
-    open: 'blue',
-    partial: 'orange',
-    filled: 'green',
-    cancelled: 'gray',
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await transactionApi.getTransactions({ pageSize: 50, status: statusFilter === 'all' ? undefined : statusFilter });
+      const items: any[] = (res as any)?.data?.items ?? [];
+      const keyword = searchText.toLowerCase();
+      const filtered = keyword
+        ? items.filter((o: any) => o.id.includes(keyword) || o.symbol?.toLowerCase().includes(keyword))
+        : items;
+      const open = filtered.filter((o: any) => ['pending', 'new', 'partial', 'open'].includes(o.status));
+      const filled = filtered.filter((o: any) => ['filled', 'cancelled', 'rejected'].includes(o.status));
+      setOrders(open);
+      setTrades(filled);
+    } catch {
+      setOrders([]);
+      setTrades([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const statusLabels = {
-    open: '待成交',
-    partial: '部分成交',
-    filled: '已成交',
-    cancelled: '已取消',
-  };
+  useEffect(() => { fetchOrders(); }, []);
+
+  const statusColors: Record<string, string> = { open: 'blue', new: 'blue', pending: 'blue', partial: 'orange', filled: 'green', cancelled: 'gray', rejected: 'red' };
+  const statusLabels: Record<string, string> = { open: '待成交', new: '待成交', pending: '待成交', partial: '部分成交', filled: '已成交', cancelled: '已取消', rejected: '已拒绝' };
 
   const tabItems = [
     {
@@ -49,8 +51,8 @@ export default function OrderManagementPage() {
           <div className="flex gap-4 mb-4">
             <Form layout="inline">
               <Form.Item>
-                <Input 
-                  placeholder="搜索订单号或交易对" 
+                <Input
+                  placeholder="搜索订单号或交易对"
                   prefix={<SearchOutlined />}
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
@@ -58,8 +60,8 @@ export default function OrderManagementPage() {
                 />
               </Form.Item>
               <Form.Item>
-                <Select 
-                  placeholder="筛选状态" 
+                <Select
+                  placeholder="筛选状态"
                   value={statusFilter}
                   onChange={setStatusFilter}
                   style={{ width: 150 }}
@@ -71,55 +73,56 @@ export default function OrderManagementPage() {
                 </Select>
               </Form.Item>
               <Form.Item>
-                <Button type="primary" icon={<FilterOutlined />}>筛选</Button>
+                <Button type="primary" icon={<FilterOutlined />} onClick={fetchOrders}>筛选</Button>
               </Form.Item>
             </Form>
           </div>
 
           <Table
-            dataSource={mockOrders}
+            dataSource={orders}
+            loading={loading}
             columns={[
-              { title: '订单号', dataIndex: 'id', key: 'id', width: 120 },
+              { title: '订单号', dataIndex: 'id', key: 'id', width: 120, render: (v: string) => v.slice(0, 8) + '...' },
               { title: '交易对', dataIndex: 'symbol', key: 'symbol', width: 120 },
-              { 
-                title: '方向', 
-                dataIndex: 'side', 
+              {
+                title: '方向',
+                dataIndex: 'side',
                 key: 'side',
                 width: 80,
-                render: (val) => <Tag color={val === 'buy' ? 'green' : 'red'}>{val === 'buy' ? '买入' : '卖出'}</Tag>
+                render: (val: string) => <Tag color={val === 'buy' ? 'green' : 'red'}>{val === 'buy' ? '买入' : '卖出'}</Tag>
               },
-              { 
-                title: '类型', 
-                dataIndex: 'type', 
+              {
+                title: '类型',
+                dataIndex: 'type',
                 key: 'type',
                 width: 100,
                 render: (val: string) => {
                   const types: Record<string, string> = { limit: '限价单', market: '市价单', stop: '止损单' };
-                  return <Tag color="blue">{types[val]}</Tag>;
+                  return <Tag color="blue">{types[val] ?? val}</Tag>;
                 }
               },
-              { title: '价格', dataIndex: 'price', key: 'price', width: 120, render: (val) => `$${val.toLocaleString()}` },
-              { title: '数量', dataIndex: 'quantity', key: 'quantity', width: 100 },
-              { 
-                title: '成交', 
-                dataIndex: 'filled', 
-                key: 'filled',
+              { title: '价格', dataIndex: 'price', key: 'price', width: 120, render: (val: string) => val ? `$${Number(val).toLocaleString()}` : '市价' },
+              { title: '数量', dataIndex: 'amount', key: 'amount', width: 100 },
+              {
+                title: '成交',
+                dataIndex: 'filledAmount',
+                key: 'filledAmount',
                 width: 100,
-                render: (val, record) => `${val}/${record.quantity}`
+                render: (val: string, record: any) => `${Number(val).toFixed(4)}/${Number(record.amount).toFixed(4)}`
               },
-              { 
-                title: '状态', 
-                dataIndex: 'status', 
+              {
+                title: '状态',
+                dataIndex: 'status',
                 key: 'status',
                 width: 100,
-                render: (val: string) => <Tag color={statusColors[val as keyof typeof statusColors]}>{statusLabels[val as keyof typeof statusLabels]}</Tag>
+                render: (val: string) => <Tag color={statusColors[val] ?? 'default'}>{statusLabels[val] ?? val}</Tag>
               },
-              { title: '创建时间', dataIndex: 'time', key: 'time', width: 180 },
-              { 
-                title: '操作', 
+              { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 180, render: (v: string) => v?.slice(0, 19).replace('T', ' ') },
+              {
+                title: '操作',
                 key: 'action',
                 width: 150,
-                render: (_, record) => (
+                render: (_: any, record: any) => (
                   <Space>
                     {record.status !== 'filled' && (
                       <>
@@ -145,8 +148,8 @@ export default function OrderManagementPage() {
           <div className="flex gap-4 mb-4">
             <Form layout="inline">
               <Form.Item>
-                <Input 
-                  placeholder="搜索订单号或交易对" 
+                <Input
+                  placeholder="搜索订单号或交易对"
                   prefix={<SearchOutlined />}
                   style={{ width: 250 }}
                 />
@@ -161,22 +164,23 @@ export default function OrderManagementPage() {
           </div>
 
           <Table
-            dataSource={mockTradeHistory}
+            dataSource={trades}
+            loading={loading}
             columns={[
-              { title: '订单号', dataIndex: 'id', key: 'id', width: 120 },
+              { title: '订单号', dataIndex: 'id', key: 'id', width: 120, render: (v: string) => v.slice(0, 8) + '...' },
               { title: '交易对', dataIndex: 'symbol', key: 'symbol', width: 120 },
-              { 
-                title: '方向', 
-                dataIndex: 'side', 
+              {
+                title: '方向',
+                dataIndex: 'side',
                 key: 'side',
                 width: 80,
-                render: (val) => <Tag color={val === 'buy' ? 'green' : 'red'}>{val === 'buy' ? '买入' : '卖出'}</Tag>
+                render: (val: string) => <Tag color={val === 'buy' ? 'green' : 'red'}>{val === 'buy' ? '买入' : '卖出'}</Tag>
               },
-              { title: '成交价格', dataIndex: 'price', key: 'price', width: 120, render: (val) => `$${val.toLocaleString()}` },
-              { title: '成交数量', dataIndex: 'quantity', key: 'quantity', width: 100 },
-              { title: '手续费', dataIndex: 'fee', key: 'fee', width: 100, render: (val) => `$${val.toFixed(4)}` },
-              { title: '成交总额', dataIndex: 'total', key: 'total', width: 120, render: (val) => `$${val.toFixed(2)}` },
-              { title: '成交时间', dataIndex: 'time', key: 'time', width: 180 },
+              { title: '成交价格', dataIndex: 'price', key: 'price', width: 120, render: (val: string) => val ? `$${Number(val).toLocaleString()}` : '-' },
+              { title: '成交数量', dataIndex: 'filledAmount', key: 'filledAmount', width: 100 },
+              { title: '手续费', dataIndex: 'fee', key: 'fee', width: 100, render: (val: string) => `$${Number(val).toFixed(4)}` },
+              { title: '成交总额', dataIndex: 'executedValue', key: 'executedValue', width: 120, render: (val: string) => `$${Number(val).toFixed(2)}` },
+              { title: '成交时间', dataIndex: 'updatedAt', key: 'updatedAt', width: 180, render: (v: string) => v?.slice(0, 19).replace('T', ' ') },
             ]}
             pagination={{ pageSize: 10 }}
             rowKey="id"
@@ -195,7 +199,7 @@ export default function OrderManagementPage() {
             <h1 className="text-2xl font-bold m-0">订单管理</h1>
           </div>
           <Space>
-            <Button icon={<SyncOutlined />}>刷新订单</Button>
+            <Button icon={<SyncOutlined />} onClick={fetchOrders}>刷新订单</Button>
             <Button icon={<DownloadOutlined />} type="primary">导出订单</Button>
           </Space>
         </div>
