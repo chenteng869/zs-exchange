@@ -30,10 +30,9 @@ const nextConfig = {
   // 启用 gzip/brotli 压缩 (生产环境由托管平台处理)
   compress: true,
   // 静态导出：让 `next build` 生成 out/ 目录，可直接打包进 APK（内嵌 H5 模式）
-  // 注意：开发模式下注释掉 output: 'export'，因为 middleware 不支持静态导出
-  // output: 'export',
+  output: 'export',
   // 静态导出时使用 trailingSlash，确保 out/h5/ 目录结构（Capacitor WebView 默认会找 index.html）
-  // trailingSlash: true,
+  trailingSlash: true,
   // 跳过 ESLint 错误
   eslint: { ignoreDuringBuilds: true },
   // 跳过 TypeScript 类型检查错误
