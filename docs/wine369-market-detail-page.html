@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>福建老酒 Wine369 全球会员权益详情页</title>
+  <style>
+    :root {
+      --bg: #120708;
+      --bg2: #220b0f;
+      --panel: rgba(255, 248, 226, 0.075);
+      --panel-strong: rgba(255, 248, 226, 0.12);
+      --line: rgba(231, 184, 91, 0.25);
+      --gold: #e7bf66;
+      --gold2: #f7df9a;
+      --cream: #fff5dc;
+      --muted: #cbbda3;
+      --red: #aa2a22;
+      --ink: #2a0b0d;
+      --shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 18% 8%, rgba(196, 137, 44, 0.17), transparent 32rem),
+        radial-gradient(circle at 82% 18%, rgba(166, 42, 34, 0.28), transparent 36rem),
+        linear-gradient(135deg, #130607 0%, #2a0c10 50%, #080505 100%);
+      color: var(--cream);
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+      letter-spacing: 0;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.34;
+      background-image:
+        linear-gradient(rgba(231, 184, 91, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(231, 184, 91, 0.08) 1px, transparent 1px);
+      background-size: 96px 96px;
+      mask-image: radial-gradient(circle at center, black, transparent 78%);
+    }
+
+    .page {
+      width: min(1180px, calc(100vw - 48px));
+      margin: 0 auto;
+      padding: 36px 0 80px;
+    }
+
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .brand {
+      color: var(--gold2);
+      font-size: 28px;
+      font-weight: 900;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 28px;
+      white-space: nowrap;
+    }
+
+    .hero {
+      min-height: 640px;
+      display: grid;
+      grid-template-columns: 0.92fr 1.08fr;
+      gap: 56px;
+      align-items: center;
+      padding: 58px;
+      border: 1px solid var(--line);
+      border-radius: 34px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025)),
+        radial-gradient(circle at 20% 20%, rgba(231,191,102,0.14), transparent 28rem);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -160px;
+      top: -140px;
+      width: 420px;
+      height: 420px;
+      border-radius: 999px;
+      background: rgba(231, 191, 102, 0.12);
+      filter: blur(12px);
+    }
+
+    .visual {
+      min-height: 520px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .bottle {
+      width: 235px;
+      height: 470px;
+      border: 4px solid rgba(231, 191, 102, 0.72);
+      border-radius: 74px 74px 38px 38px;
+      background:
+        linear-gradient(90deg, rgba(255,255,255,0.08), transparent 24%, rgba(255,255,255,0.1) 50%, transparent 70%),
+        linear-gradient(180deg, #431017, #160708 58%, #070404);
+      position: relative;
+      box-shadow: 0 45px 70px rgba(0, 0, 0, 0.46);
+    }
+
+    .bottle::before {
+      content: "";
+      position: absolute;
+      left: 70px;
+      top: -120px;
+      width: 88px;
+      height: 148px;
+      border-radius: 34px 34px 18px 18px;
+      background: linear-gradient(180deg, #f8e7a3, #b47a22 65%, #5b320c);
+      border: 3px solid rgba(255,255,255,0.2);
+    }
+
+    .label {
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 190px;
+      height: 150px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #fff3cb, #d5a24c);
+      color: #4c1213;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 2px rgba(96, 47, 11, 0.25);
+    }
+
+    .label strong {
+      display: block;
+      font-size: 34px;
+      line-height: 1.1;
+      margin-bottom: 8px;
+      font-family: "SimSun", "Noto Serif CJK SC", serif;
+    }
+
+    .label span {
+      font-size: 15px;
+      letter-spacing: 0.08em;
+    }
+
+    .cert {
+      position: absolute;
+      right: 20px;
+      bottom: 78px;
+      width: 250px;
+      min-height: 150px;
+      padding: 22px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #fff1bd, #b87922);
+      color: #2f0c0d;
+      transform: rotate(-6deg);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+    }
+
+    .cert b {
+      display: block;
+      font-size: 28px;
+      margin-bottom: 14px;
+    }
+
+    .cert span {
+      display: block;
+      font-size: 16px;
+      line-height: 1.65;
+      font-weight: 700;
+    }
+
+    .eyebrow {
+      width: fit-content;
+      padding: 10px 16px;
+      border: 1px solid rgba(231, 191, 102, 0.35);
+      border-radius: 999px;
+      color: var(--gold2);
+      background: rgba(231, 191, 102, 0.12);
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(54px, 7vw, 88px);
+      line-height: 1.02;
+      color: var(--cream);
+      font-weight: 950;
+    }
+
+    .subtitle {
+      margin: 24px 0 0;
+      max-width: 590px;
+      color: var(--muted);
+      font-size: 24px;
+      line-height: 1.65;
+    }
+
+    .price-row {
+      margin-top: 42px;
+      display: flex;
+      align-items: flex-end;
+      gap: 20px;
+    }
+
+    .price {
+      font-size: 88px;
+      line-height: 0.95;
+      font-weight: 950;
+      color: var(--gold2);
+    }
+
+    .price-note {
+      color: var(--muted);
+      font-size: 22px;
+      padding-bottom: 10px;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 40px;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 999px;
+      padding: 20px 28px;
+      font-size: 18px;
+      font-weight: 900;
+      cursor: default;
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, #fff0b6, #c88b2c);
+      color: #28090b;
+    }
+
+    .button.secondary {
+      color: var(--gold2);
+      border: 1px solid rgba(231,191,102,0.42);
+      background: rgba(255,255,255,0.055);
+    }
+
+    .section {
+      margin-top: 74px;
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+      font-size: clamp(36px, 4.3vw, 56px);
+      line-height: 1.12;
+      font-weight: 950;
+    }
+
+    .section-lead {
+      margin: 0 0 34px;
+      color: var(--muted);
+      font-size: 22px;
+      line-height: 1.7;
+      max-width: 880px;
+    }
+
+    .bundle-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .bundle-card,
+    .use-card,
+    .release-card,
+    .scenario-card,
+    .notice {
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: var(--panel);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.22);
+    }
+
+    .bundle-card {
+      min-height: 255px;
+      padding: 32px;
+    }
+
+    .icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #fff0b6, #b9781f);
+      margin-bottom: 26px;
+    }
+
+    .bundle-card h3,
+    .use-card h3,
+    .release-card h3 {
+      margin: 0 0 16px;
+      font-size: 32px;
+      line-height: 1.2;
+    }
+
+    .bundle-card p,
+    .use-card p,
+    .release-card p,
+    .scenario-card p,
+    .notice p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 20px;
+      line-height: 1.7;
+    }
+
+    .token-number {
+      display: block;
+      color: var(--gold2);
+      font-size: 38px;
+      font-weight: 950;
+      margin-top: 10px;
+    }
+
+    .release-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 22px;
+    }
+
+    .release-card {
+      min-height: 250px;
+      padding: 32px;
+    }
+
+    .percent {
+      color: var(--gold2);
+      font-size: 58px;
+      font-weight: 950;
+      margin-bottom: 16px;
+    }
+
+    .use-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .use-card {
+      min-height: 210px;
+      padding: 34px;
+      display: grid;
+      grid-template-columns: 78px 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .scenario {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+    }
+
+    .scenario-card {
+      min-height: 160px;
+      padding: 28px;
+      background: rgba(231, 191, 102, 0.095);
+    }
+
+    .scenario-card b {
+      display: block;
+      color: var(--gold2);
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 14px;
+      margin-top: 28px;
+    }
+
+    .flow span {
+      min-height: 86px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 14px;
+      border-radius: 20px;
+      color: var(--cream);
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(231,191,102,0.18);
+      font-size: 18px;
+      line-height: 1.45;
+      font-weight: 800;
+    }
+
+    .notice {
+      padding: 34px;
+      background: rgba(170, 42, 34, 0.16);
+    }
+
+    .notice strong {
+      display: block;
+      margin-bottom: 14px;
+      color: var(--gold2);
+      font-size: 28px;
+    }
+
+    @media (max-width: 900px) {
+      .page { width: min(100% - 28px, 680px); padding-top: 22px; }
+      .nav-links { display: none; }
+      .hero { grid-template-columns: 1fr; padding: 30px; gap: 28px; }
+      .visual { min-height: 430px; }
+      .bottle { width: 190px; height: 380px; }
+      .bottle::before { left: 55px; width: 76px; height: 118px; top: -94px; }
+      .label { top: 156px; height: 126px; }
+      .label strong { font-size: 28px; }
+      .cert { width: 206px; right: 2px; bottom: 46px; }
+      .price { font-size: 64px; }
+      .bundle-grid,
+      .release-grid,
+      .use-grid,
+      .scenario,
+      .flow {
+        grid-template-columns: 1fr;
+      }
+      .use-card { grid-template-columns: 1fr; }
+      .section { margin-top: 54px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <nav class="nav">
+      <div class="brand">Wine369</div>
+      <div class="nav-links">
+        <span>老酒礼包</span>
+        <span>NFT酒证</span>
+        <span>Token权益</span>
+        <span>海外会员</span>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="visual" aria-label="福建老酒产品视觉">
+        <div class="bottle">
+          <div class="label">
+            <div>
+              <strong>福建老酒</strong>
+              <span>WINE369 GLOBAL</span>
+            </div>
+          </div>
+        </div>
+        <div class="cert">
+          <b>NFT 酒证</b>
+          <span>溯源防伪<br />会员身份<br />链上凭证</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow">海外用户专属</div>
+        <h1>福建老酒<br />Wine369</h1>
+        <p class="subtitle">
+          面向全球会员的老酒实物礼包。每瓶对应 NFT 酒证，并获得 Wine369 Token 会员权益。
+        </p>
+        <div class="price-row">
+          <div class="price">$369</div>
+          <div class="price-note">USD / 老酒礼包</div>
+        </div>
+        <div class="actions">
+          <button class="button primary">购买老酒礼包</button>
+          <button class="button secondary">查看会员权益</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">一份礼包，三类权益</h2>
+      <p class="section-lead">市场端只展示用户获得的内容，不展示内部成本、市场费或利润结构。</p>
+      <div class="bundle-grid">
+        <article class="bundle-card">
+          <div class="icon"></div>
+          <h3>福建老酒实物</h3>
+          <p>用户购买的是可交付的老酒商品，商品价值是整个权益模型的基础。</p>
+        </article>
+        <article class="bundle-card">
+          <div class="icon"></div>
+          <h3>NFT 酒证</h3>
+          <p>每瓶绑定一张 NFT 酒证，可用于溯源、防伪、收藏和会员身份展示。</p>
+        </article>
+        <article class="bundle-card">
+          <div class="icon"></div>
+          <h3>Token 会员权益</h3>
+          <p>每瓶获得 <span class="token-number">369,000 枚</span> Wine369 Token 权益。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Token 分期释放</h2>
+      <p class="section-lead">释放规则面向长期会员关系设计，避免一次性释放造成短期抛压。</p>
+      <div class="release-grid">
+        <article class="release-card">
+          <div class="percent">20%</div>
+          <h3>立即释放</h3>
+          <p>购买后进入用户权益账户，可用于平台内会员权益。</p>
+        </article>
+        <article class="release-card">
+          <div class="percent">30%</div>
+          <h3>六个月释放</h3>
+          <p>按周期解锁，适合会员留存和复购权益绑定。</p>
+        </article>
+        <article class="release-card">
+          <div class="percent">50%</div>
+          <h3>十二至二十四个月释放</h3>
+          <p>长期权益绑定，保护生态稳定和会员体验。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">Wine369 Token 可以怎么用</h2>
+      <p class="section-lead">不是收益承诺，而是可消费、可升级、可兑换、可展示的会员权益。</p>
+      <div class="use-grid">
+        <article class="use-card">
+          <div class="icon"></div>
+          <div>
+            <h3>购酒抵扣</h3>
+            <p>按平台规则抵扣部分订单金额，提升会员复购体验。</p>
+          </div>
+        </article>
+        <article class="use-card">
+          <div class="icon"></div>
+          <div>
+            <h3>会员升级</h3>
+            <p>解锁限量酒、优先购、品鉴活动等会员资格。</p>
+          </div>
+        </article>
+        <article class="use-card">
+          <div class="icon"></div>
+          <div>
+            <h3>NFT 升级</h3>
+            <p>普通酒证可升级为年份版、收藏版或酒窖版。</p>
+          </div>
+        </article>
+        <article class="use-card">
+          <div class="icon"></div>
+          <div>
+            <h3>活动兑换</h3>
+            <p>可兑换酒具、运费券、礼盒、品鉴会门票等权益。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">市场情景说明</h2>
+      <p class="section-lead">以下仅用于说明 Token 权益的市场价格情景，不代表承诺、保底或投资建议。</p>
+      <div class="scenario">
+        <article class="scenario-card">
+          <b>$0.0001</b>
+          <p>369,000 枚约 $36.9</p>
+        </article>
+        <article class="scenario-card">
+          <b>$0.001</b>
+          <p>369,000 枚约 $369</p>
+        </article>
+        <article class="scenario-card">
+          <b>$0.005</b>
+          <p>369,000 枚约 $1,845</p>
+        </article>
+        <article class="scenario-card">
+          <b>自由定价</b>
+          <p>价格由市场供需决定</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">购买流程</h2>
+      <div class="flow">
+        <span>选择<br />老酒礼包</span>
+        <span>海外用户<br />资格校验</span>
+        <span>完成支付<br />订单确认</span>
+        <span>获得<br />NFT 酒证</span>
+        <span>Token 权益<br />按期释放</span>
+      </div>
+    </section>
+
+    <section class="section notice">
+      <strong>重要说明</strong>
+      <p>
+        中国大陆用户、中国身份用户、中国手机号、中国 IP 不开放。Wine369 Token 为会员权益工具，
+        可用于平台消费、升级、兑换和展示；市场自由定价，不承诺收益、回本、分红或涨幅。
+      </p>
+    </section>
+  </main>
+</body>
+</html>

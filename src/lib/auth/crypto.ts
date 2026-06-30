@@ -56,7 +56,7 @@ export const randomBytes = (length: number): Uint8Array => {
     return arr;
   }
   // Node 环境
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   return new Uint8Array(nodeCrypto.randomBytes(length));
 };
@@ -168,7 +168,7 @@ const hmac = async (
     return new Uint8Array(sig);
   }
   // Node
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   const hashAlgo = algo === 'SHA-1' ? 'sha1' : 'sha256';
   return new Uint8Array(nodeCrypto.createHmac(hashAlgo, Buffer.from(toUint8Array(key))).update(Buffer.from(toUint8Array(data))).digest());
@@ -182,7 +182,7 @@ export const sha256 = async (data: BinaryData): Promise<Uint8Array> => {
     const buf = await subtle.digest('SHA-256', toArrayBuffer(data));
     return new Uint8Array(buf);
   }
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   return new Uint8Array(nodeCrypto.createHash('sha256').update(Buffer.from(toUint8Array(data))).digest());
 };
@@ -230,7 +230,7 @@ export const pbkdf2 = async (
     return new Uint8Array(buf);
   }
   // Node
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   return new Uint8Array(
     nodeCrypto.pbkdf2Sync(
@@ -256,7 +256,7 @@ export const pbkdf2Async = (
     return pbkdf2(password, salt, iterations, keyLen);
   }
   return new Promise((resolve, reject) => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line
     const nodeCrypto = require('crypto') as typeof import('crypto');
     nodeCrypto.pbkdf2(
       Buffer.from(toUint8Array(password)),

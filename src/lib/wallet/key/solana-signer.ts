@@ -4,17 +4,20 @@ import {
   SignResult,
 } from './key.types';
 import { WalletKeyErrors } from './key.errors';
-import { keystoreCrypto } from './keystore.crypto';
+import { Keypair, Transaction, VersionedTransaction } from '@solana/web3.js';
+import { sign } from '@noble/ed25519';
+import bs58 from 'bs58';
 
 export class SolanaSigner {
   async signMessage(input: SignMessageInput, privateKey: string): Promise<SignResult> {
     try {
+      const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
       const messageBytes = Buffer.from(input.message, 'utf8');
-      const signature = this.signEd25519(messageBytes, privateKey);
-      const publicKey = this.privateKeyToPublicKey(privateKey);
+      const signature = sign(messageBytes, keypair.secretKey.slice(0, 32));
+      const publicKey = keypair.publicKey.toBase58();
 
       return {
-        signature,
+        signature: bs58.encode(Buffer.from(signature)),
         publicKey,
       };
     } catch (error) {
@@ -24,48 +27,48 @@ export class SolanaSigner {
 
   async signTransaction(input: SignSolanaTransactionInput, privateKey: string): Promise<SignResult> {
     try {
+      const keypair = Keypair.fromSecretKey(bs58.decode(privateKey));
+      
       const txBytes = Buffer.from(input.unsignedTx, 'base64');
-      const signature = this.signEd25519(txBytes, privateKey);
-      const publicKey = this.privateKeyToPublicKey(privateKey);
-
-      const signedTx = this.appendSignature(input.unsignedTx, signature);
+      
+      let signedTransaction: Transaction | VersionedTransaction;
+      let serialized: Buffer;
+      
+      try {
+        signedTransaction = VersionedTransaction.deserialize(txBytes);
+        signedTransaction.sign([keypair]);
+        serialized = Buffer.from(signedTransaction.serialize());
+      } catch {
+        const legacyTx = Transaction.from(txBytes);
+        legacyTx.sign(keypair);
+        signedTransaction = legacyTx;
+        serialized = Buffer.from(legacyTx.serialize());
+      }
 
       return {
-        signature,
-        rawTransaction: signedTx,
-        publicKey,
+        signature: bs58.encode(serialized.slice(0, 64)),
+        rawTransaction: serialized.toString('base64'),
+        publicKey: keypair.publicKey.toBase58(),
       };
     } catch (error) {
       throw WalletKeyErrors.UNSUPPORTED_SIGN_TYPE('transaction');
     }
   }
 
-  private signEd25519(message: Buffer, privateKey: string): string {
-    const privateKeyBytes = Buffer.from(privateKey, 'hex');
-    const hash = keystoreCrypto.sha256(
-      Buffer.concat([message, privateKeyBytes]),
-    );
-    return Buffer.from(hash, 'hex').toString('base64');
-  }
-
-  private privateKeyToPublicKey(privateKey: string): string {
-    const privateKeyBytes = Buffer.from(privateKey, 'hex');
-    const hash = keystoreCrypto.sha256(privateKeyBytes);
-    return Buffer.from(hash, 'hex').slice(0, 32).toString('base64');
-  }
-
-  private appendSignature(unsignedTx: string, signature: string): string {
-    const txBytes = Buffer.from(unsignedTx, 'base64');
-    const sigBytes = Buffer.from(signature, 'base64');
-    return Buffer.concat([sigBytes, txBytes]).toString('base64');
-  }
-
   verifyAddress(address: string): boolean {
     try {
-      const decoded = Buffer.from(address, 'base64');
+      const decoded = bs58.decode(address);
       return decoded.length === 32;
     } catch {
       return false;
     }
+  }
+
+  generateKeyPair(): { publicKey: string; privateKey: string } {
+    const keypair = Keypair.generate();
+    return {
+      publicKey: keypair.publicKey.toBase58(),
+      privateKey: bs58.encode(keypair.secretKey),
+    };
   }
 }

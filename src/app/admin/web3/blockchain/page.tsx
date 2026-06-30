@@ -286,9 +286,9 @@ export default function BlockchainMonitorPage() {
                 renderItem={(node) => (
                   <List.Item
                     actions={[
-                      <Button type="text" size="small">重启</Button>,
-                      <Button type="text" size="small">配置</Button>,
-                      <Button type="text" size="small" danger>移除</Button>,
+                      <Button key="restart" type="text" size="small">重启</Button>,
+                      <Button key="config" type="text" size="small">配置</Button>,
+                      <Button key="remove" type="text" size="small" danger>移除</Button>,
                     ]}
                   >
                     <List.Item.Meta

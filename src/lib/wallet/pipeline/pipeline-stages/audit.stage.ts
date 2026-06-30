@@ -24,6 +24,7 @@ import {
   type StageDefinition,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 审计阶段错误
@@ -632,9 +633,20 @@ export function createAuditStage(config?: AuditStageConfig): StageDefinition {
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.AUDIT] = result;
+      if (isLegacyInput(context)) {
+        const auditLogId = `audit_${Date.now()}`;
+        return legacySuccess({
+          auditId: auditLogId,
+          auditLogId,
+          timestamp: Date.now(),
+        });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.AUDIT] = result;
       return result;
+      });
     },
     skippable: true,
     retryable: false,

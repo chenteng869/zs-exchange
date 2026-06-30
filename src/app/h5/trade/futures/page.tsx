@@ -4,7 +4,7 @@
  * H5 永续合约交易页 — 真实后端数据
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { Suspense, useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { TrendingUp, TrendingDown, ChevronDown, AlertCircle, Loader2 } from 'lucide-react';
 import { useTickerData } from '@/hooks/useMarketData';
@@ -12,7 +12,7 @@ import { perpApi } from '@/lib/api/perp';
 
 const LEVERAGES = [10, 20, 50, 100, 125];
 
-export default function H5FuturesPage() {
+function H5FuturesPageInner() {
   const searchParams = useSearchParams();
   const h5Symbol = searchParams.get('symbol') ?? 'BTC/USDT';
   const apiSymbol = h5Symbol.replace('/', '');   // 'BTC/USDT' → 'BTCUSDT'
@@ -254,6 +254,14 @@ export default function H5FuturesPage() {
 
       <div style={{ height: 20 }} />
     </div>
+  );
+}
+
+export default function H5FuturesPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: '#7B89B8' }}>加载中...</div>}>
+      <H5FuturesPageInner />
+    </Suspense>
   );
 }
 

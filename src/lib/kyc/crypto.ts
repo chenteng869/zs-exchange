@@ -137,7 +137,7 @@ export const encryptPII = (plaintext: string, key: Buffer | Uint8Array | string)
 };
 
 const encryptNode = (plaintext: string, key: Buffer, iv: Uint8Array): string => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   const cipher = nodeCrypto.createCipheriv(ENCRYPTION_ALGORITHM, key, Buffer.from(iv));
   const enc = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
@@ -205,7 +205,7 @@ export const decryptPII = (
   const k = normalizeKey(key);
   const { iv, encCt, authTag } = unpackEncryptedPayload(ciphertext);
   // Node 路径
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   const decipher = nodeCrypto.createDecipheriv(ENCRYPTION_ALGORITHM, k, iv);
   decipher.setAuthTag(authTag);
@@ -381,7 +381,7 @@ export const maskEmail = (email: string): string => {
  */
 export const hashPII = (text: string): string => {
   if (!text) return '';
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   return nodeCrypto.createHash('sha256').update(text, 'utf8').digest('hex');
 };

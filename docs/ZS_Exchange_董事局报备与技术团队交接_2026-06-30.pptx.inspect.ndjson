@@ -1,0 +1,397 @@
+{"kind":"deck","id":"pr/k0hwa9","name":"Deck"}
+{"kind":"layout","layoutId":"a0864161-26fc-4e00-a6a3-5e1272069b70","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"83c8b155-47c3-4fa3-9790-af231455b785","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/fb8jjz","slide":1,"title":"ZS Exchange","textShapes":8}
+{"kind":"textbox","id":"sh/8v6psfil","slide":1,"text":"ZS Exchange","textPreview":"ZS Exchange","textChars":11,"textLines":1,"bbox":[58,72,520,70]}
+{"kind":"textbox","id":"sh/fa9w3m94","slide":1,"text":"交付工作包：董事局报备与技术团队交接","textPreview":"交付工作包：董事局报备与技术团队交接","textChars":18,"textLines":1,"bbox":[58,154,840,46]}
+{"kind":"textbox","id":"sh/qpg3ex0n","slide":1,"text":"工程资产已成型，MVP 主干接近可联调；尚未达到生产上线、主网上链、真实资金大规模承载标准。","textPreview":"工程资产已成型，MVP 主干接近可联调；尚未达到生产上线、主网上链、真实资金大规模承载标准。","textChars":46,"textLines":1,"bbox":[58,235,770,80]}
+{"kind":"shape","id":"sh/x4nap4r6","slide":1,"bbox":[860,96,310,190]}
+{"kind":"textbox","id":"sh/8jqh0fep","slide":1,"text":"67 / 100","textPreview":"67 / 100","textChars":8,"textLines":1,"bbox":[895,132,240,62]}
+{"kind":"textbox","id":"sh/fyxobm58","slide":1,"text":"当前完成度评估","textPreview":"当前完成度评估","textChars":7,"textLines":1,"bbox":[895,214,220,28]}
+{"kind":"textbox","id":"sh/qd4vmtwr","slide":1,"text":"可交接、可冲刺；不建议直接生产发布","textPreview":"可交接、可冲刺；不建议直接生产发布","textChars":17,"textLines":1,"bbox":[895,250,240,26]}
+{"kind":"shape","id":"sh/xs72x4na","slide":1,"bbox":[58,470,1064,2]}
+{"kind":"textbox","id":"sh/87ed8bat","slide":1,"text":"2026-06-30","textPreview":"2026-06-30","textChars":10,"textLines":1,"bbox":[58,500,300,32]}
+{"kind":"textbox","id":"sh/ed8v6psf","slide":1,"text":"Stock Exchange dapp / Web3 交易平台工程交付","textPreview":"Stock Exchange dapp / Web3 交易平台工程交付","textChars":35,"textLines":1,"bbox":[58,536,560,28]}
+{"kind":"notes","id":"nt/fb8jjz","slide":1,"text":""}
+{"kind":"slide","id":"sl/erwi89","slide":2,"title":"ZS Exchange 交付报备","textShapes":18}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":2,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/d0z61032","slide":2,"text":"董事局摘要：不是空壳，也不是生产系统","textPreview":"董事局摘要：不是空壳，也不是生产系统","textChars":18,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/kf6dcbul","slide":2,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/v6psfil0","slide":2,"bbox":[68,180,250,116]}
+{"kind":"textbox","id":"sh/2lszqtcj","slide":2,"text":"已成型","textPreview":"已成型","textChars":3,"textLines":1,"bbox":[88,202,210,42]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":2,"text":"工程资产、文档、模块、脚本完整沉淀","textPreview":"工程资产、文档、模块、脚本完整沉淀","textChars":17,"textLines":1,"bbox":[88,252,210,28]}
+{"kind":"shape","id":"sh/knih4byh","slide":2,"bbox":[358,180,250,116]}
+{"kind":"textbox","id":"sh/val87ed8","slide":2,"text":"67分","textPreview":"67分","textChars":3,"textLines":1,"bbox":[378,202,210,42]}
+{"kind":"textbox","id":"sh/6psfil0r","slide":2,"text":"按 100 分制的当前交付评估","textPreview":"按 100 分制的当前交付评估","textChars":15,"textLines":1,"bbox":[378,252,210,28]}
+{"kind":"shape","id":"sh/4r65wjud","slide":2,"bbox":[648,180,250,116]}
+{"kind":"textbox","id":"sh/xc3ylc7u","slide":2,"text":"33分","textPreview":"33分","textChars":3,"textLines":1,"bbox":[668,202,210,42]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":2,"text":"剩余缺口集中在真实资金与生产安全","textPreview":"剩余缺口集中在真实资金与生产安全","textChars":16,"textLines":1,"bbox":[668,252,210,28]}
+{"kind":"shape","id":"sh/f6dcbulw","slide":2,"bbox":[938,180,250,116]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":2,"text":"4条","textPreview":"4条","textChars":2,"textLines":1,"bbox":[958,202,210,42]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":2,"text":"下一阶段董事局重点决策主线","textPreview":"下一阶段董事局重点决策主线","textChars":13,"textLines":1,"bbox":[958,252,210,28]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":2,"text":"■","textPreview":"■","textChars":1,"textLines":1,"bbox":[90,365,18,20]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":2,"text":"可以交付技术团队接管，进入 MVP 冲刺、生产加固、内测准备阶段。","textPreview":"可以交付技术团队接管，进入 MVP 冲刺、生产加固、内测准备阶段。","textChars":33,"textLines":1,"bbox":[116,360,1014,34]}
+{"kind":"textbox","id":"sh/83itgfml","slide":2,"text":"■","textPreview":"■","textChars":1,"textLines":1,"bbox":[90,413,18,20]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":2,"text":"不建议直接对外生产发布，尤其不能承载真实资金大规模流转。","textPreview":"不建议直接对外生产发布，尤其不能承载真实资金大规模流转。","textChars":28,"textLines":1,"bbox":[116,408,1014,34]}
+{"kind":"textbox","id":"sh/lszqtcj6","slide":2,"text":"■","textPreview":"■","textChars":1,"textLines":1,"bbox":[90,461,18,20]}
+{"kind":"textbox","id":"sh/s72x4nap","slide":2,"text":"下一阶段重点不是继续堆页面，而是跑通交易、钱包、签名、监控、回滚和审计闭环。","textPreview":"下一阶段重点不是继续堆页面，而是跑通交易、钱包、签名、监控、回滚和审计闭环。","textChars":38,"textLines":1,"bbox":[116,456,1014,34]}
+{"kind":"textbox","id":"sh/3m94fu18","slide":2,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/a5gbq1or","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/erwi89","slide":2,"text":""}
+{"kind":"slide","id":"sl/i0vi0c","slide":3,"title":"ZS Exchange 交付报备","textShapes":27}
+{"kind":"textbox","id":"sh/p8nqxs72","slide":3,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/ih4byhgn","slide":3,"text":"100 分制进度：当前建议口径 67 / 100","textPreview":"100 分制进度：当前建议口径 67 / 100","textChars":24,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/72x4nap4","slide":3,"bbox":[52,130,1176,2]}
+{"kind":"textbox","id":"sh/0z61032l","slide":3,"text":"基础工程","textPreview":"基础工程","textChars":4,"textLines":1,"bbox":[72,170,190,24]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":3,"bbox":[280,174,650,16]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":3,"bbox":[280,174,585,16]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":3,"text":"9/10","textPreview":"9/10","textChars":4,"textLines":1,"bbox":[955,169,90,24]}
+{"kind":"textbox","id":"sh/0bi9s36h","slide":3,"text":"数据库与模型","textPreview":"数据库与模型","textChars":6,"textLines":1,"bbox":[72,215,190,24]}
+{"kind":"shape","id":"sh/pwb2hwfy","slide":3,"bbox":[280,219,650,16]}
+{"kind":"shape","id":"sh/94fu18jq","slide":3,"bbox":[280,219,541.67,16]}
+{"kind":"textbox","id":"sh/kjm1cfa9","slide":3,"text":"10/12","textPreview":"10/12","textChars":5,"textLines":1,"bbox":[955,214,90,24]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":3,"text":"API 主干","textPreview":"API 主干","textChars":6,"textLines":1,"bbox":[72,260,190,24]}
+{"kind":"shape","id":"sh/2hwfyxob","slide":3,"bbox":[280,264,650,16]}
+{"kind":"shape","id":"sh/9gr2p8nq","slide":3,"bbox":[280,264,433.33,16]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":3,"text":"8/12","textPreview":"8/12","textChars":4,"textLines":1,"bbox":[955,259,90,24]}
+{"kind":"textbox","id":"sh/ra5gbq1o","slide":3,"text":"交易闭环","textPreview":"交易闭环","textChars":4,"textLines":1,"bbox":[72,305,190,24]}
+{"kind":"shape","id":"sh/2p8nqxs7","slide":3,"bbox":[280,309,650,16]}
+{"kind":"shape","id":"sh/9knih4by","slide":3,"bbox":[280,309,379.17,16]}
+{"kind":"textbox","id":"sh/kzupwb2h","slide":3,"text":"7/12","textPreview":"7/12","textChars":4,"textLines":1,"bbox":[955,304,90,24]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":3,"text":"钱包资金安全","textPreview":"钱包资金安全","textChars":6,"textLines":1,"bbox":[72,350,190,24]}
+{"kind":"shape","id":"sh/p8nqxs72","slide":3,"bbox":[280,354,650,16]}
+{"kind":"shape","id":"sh/ih4byhgn","slide":3,"bbox":[280,354,346.67,16]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":3,"text":"8/15","textPreview":"8/15","textChars":4,"textLines":1,"bbox":[955,349,90,24]}
+{"kind":"textbox","id":"sh/0z61032l","slide":3,"text":"DID / Web3 / DApp","textPreview":"DID / Web3 / DApp","textChars":17,"textLines":1,"bbox":[72,395,190,24]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":3,"bbox":[280,399,650,16]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":3,"bbox":[280,399,390,16]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":3,"text":"6/10","textPreview":"6/10","textChars":4,"textLines":1,"bbox":[955,394,90,24]}
+{"kind":"textbox","id":"sh/0bi9s36h","slide":3,"text":"前端与后台","textPreview":"前端与后台","textChars":5,"textLines":1,"bbox":[72,440,190,24]}
+{"kind":"shape","id":"sh/pwb2hwfy","slide":3,"bbox":[280,444,650,16]}
+{"kind":"shape","id":"sh/fu18jqh0","slide":3,"bbox":[280,444,390,16]}
+{"kind":"textbox","id":"sh/m94fu18j","slide":3,"text":"6/10","textPreview":"6/10","textChars":4,"textLines":1,"bbox":[955,439,90,24]}
+{"kind":"textbox","id":"sh/x0nuxc3y","slide":3,"text":"测试与质量门禁","textPreview":"测试与质量门禁","textChars":7,"textLines":1,"bbox":[72,485,190,24]}
+{"kind":"shape","id":"sh/4fu18jqh","slide":3,"bbox":[280,489,650,16]}
+{"kind":"shape","id":"sh/fil0rqd4","slide":3,"bbox":[280,489,406.25,16]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":3,"text":"5/8","textPreview":"5/8","textChars":3,"textLines":1,"bbox":[955,484,90,24]}
+{"kind":"textbox","id":"sh/xobm58z2","slide":3,"text":"运维监控与上线","textPreview":"运维监控与上线","textChars":7,"textLines":1,"bbox":[72,530,190,24]}
+{"kind":"shape","id":"sh/83itgfml","slide":3,"bbox":[280,534,650,16]}
+{"kind":"shape","id":"sh/fepkzupw","slide":3,"bbox":[280,534,371.43,16]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":3,"text":"4/7","textPreview":"4/7","textChars":3,"textLines":1,"bbox":[955,529,90,24]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":3,"text":"合规、安全与审计","textPreview":"合规、安全与审计","textChars":8,"textLines":1,"bbox":[72,575,190,24]}
+{"kind":"shape","id":"sh/vahoza1g","slide":3,"bbox":[280,579,650,16]}
+{"kind":"shape","id":"sh/ovahoza1","slide":3,"bbox":[280,579,650,16]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":3,"text":"4/4","textPreview":"4/4","textChars":3,"textLines":1,"bbox":[955,574,90,24]}
+{"kind":"shape","id":"sh/6hcrmhk3","slide":3,"bbox":[1060,172,150,370]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":3,"text":"67","textPreview":"67","textChars":2,"textLines":1,"bbox":[1085,214,100,58]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":3,"text":"当前总分","textPreview":"当前总分","textChars":4,"textLines":1,"bbox":[1085,288,100,28]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":3,"text":"可交接\n可冲刺\n不可直接上线","textPreview":"可交接 | 可冲刺 | 不可直接上线","textChars":14,"textLines":3,"bbox":[1085,352,100,100]}
+{"kind":"textbox","id":"sh/6dcbulwv","slide":3,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/i0vi0c","slide":3,"text":""}
+{"kind":"slide","id":"sl/ie544i","slide":4,"title":"ZS Exchange 交付报备","textShapes":20}
+{"kind":"textbox","id":"sh/m1cfa9w3","slide":4,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":4,"text":"交付工程清单：技术团队可以按域接收","textPreview":"交付工程清单：技术团队可以按域接收","textChars":17,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/47y1kre1","slide":4,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/bat47y1k","slide":4,"bbox":[70,170,520,82]}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":4,"text":"主应用框架","textPreview":"主应用框架","textChars":5,"textLines":1,"bbox":[92,186,150,26]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":4,"text":"Next.js / React / TypeScript / Tailwind / Ant Design","textPreview":"Next.js / React / TypeScript / Tailwind / Ant Design","textChars":52,"textLines":1,"bbox":[250,186,305,42]}
+{"kind":"shape","id":"sh/4vmtwra5","slide":4,"bbox":[690,170,520,82]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":4,"text":"数据层","textPreview":"数据层","textChars":3,"textLines":1,"bbox":[712,186,150,26]}
+{"kind":"textbox","id":"sh/mhk3q5o7","slide":4,"text":"Prisma 覆盖用户、交易、钱包、Web3、审计、合约","textPreview":"Prisma 覆盖用户、交易、钱包、Web3、审计、合约","textChars":28,"textLines":1,"bbox":[870,186,305,42]}
+{"kind":"shape","id":"sh/0z61032l","slide":4,"bbox":[70,274,520,82]}
+{"kind":"textbox","id":"sh/pkzupwb2","slide":4,"text":"API 层","textPreview":"API 层","textChars":5,"textLines":1,"bbox":[92,290,150,26]}
+{"kind":"textbox","id":"sh/itgfmlkj","slide":4,"text":"用户、行情、交易、钱包、Solana、DID、后台管理","textPreview":"用户、行情、交易、钱包、Solana、DID、后台管理","textChars":27,"textLines":1,"bbox":[250,290,305,42]}
+{"kind":"shape","id":"sh/7ed8bat4","slide":4,"bbox":[690,274,520,82]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":4,"text":"交易能力","textPreview":"交易能力","textChars":4,"textLines":1,"bbox":[712,290,150,26]}
+{"kind":"textbox","id":"sh/p8nqxs72","slide":4,"text":"现货订单、撮合、成交、深度、永续合约代码","textPreview":"现货订单、撮合、成交、深度、永续合约代码","textChars":20,"textLines":1,"bbox":[870,290,305,42]}
+{"kind":"shape","id":"sh/ih4byhgn","slide":4,"bbox":[70,378,520,82]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":4,"text":"钱包能力","textPreview":"钱包能力","textChars":4,"textLines":1,"bbox":[92,394,150,26]}
+{"kind":"textbox","id":"sh/wjudg7ad","slide":4,"text":"充值、提现、地址、余额、热钱包、链监听、对账","textPreview":"充值、提现、地址、余额、热钱包、链监听、对账","textChars":22,"textLines":1,"bbox":[250,394,305,42]}
+{"kind":"shape","id":"sh/p4r65wju","slide":4,"bbox":[690,378,520,82]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":4,"text":"Web3 / DID","textPreview":"Web3 / DID","textChars":10,"textLines":1,"bbox":[712,394,150,26]}
+{"kind":"textbox","id":"sh/gvy90je9","slide":4,"text":"多链账户、签名、VC、钱包绑定、DApp Browser","textPreview":"多链账户、签名、VC、钱包绑定、DApp Browser","textChars":28,"textLines":1,"bbox":[870,394,305,42]}
+{"kind":"shape","id":"sh/ra5gbq1o","slide":4,"bbox":[70,482,520,82]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":4,"text":"运维与测试","textPreview":"运维与测试","textChars":5,"textLines":1,"bbox":[92,498,150,26]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":4,"text":"Docker、K8s 文档、Prometheus、P0 health scripts","textPreview":"Docker、K8s 文档、Prometheus、P0 health scripts","textChars":42,"textLines":1,"bbox":[250,498,305,42]}
+{"kind":"shape","id":"sh/kjm1cfa9","slide":4,"bbox":[690,482,520,82]}
+{"kind":"textbox","id":"sh/r2p8nqxs","slide":4,"text":"文档体系","textPreview":"文档体系","textChars":4,"textLines":1,"bbox":[712,498,150,26]}
+{"kind":"textbox","id":"sh/2hwfyxob","slide":4,"text":"技术、功能、实施计划、MVP 路线、上线审计","textPreview":"技术、功能、实施计划、MVP 路线、上线审计","textChars":22,"textLines":1,"bbox":[870,498,305,42]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":4,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/kb6xkf6d","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/ie544i","slide":4,"text":""}
+{"kind":"slide","id":"sl/tac6a5","slide":5,"title":"ZS Exchange 交付报备","textShapes":24}
+{"kind":"textbox","id":"sh/mp0bi9s3","slide":5,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/tgfmlkjm","slide":5,"text":"技术架构图 1：总体技术架构","textPreview":"技术架构图 1：总体技术架构","textChars":14,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/4vmtwra5","slide":5,"bbox":[52,130,1176,2]}
+{"kind":"textbox","id":"sh/bm58z25k","slide":5,"text":"用户入口","textPreview":"用户入口","textChars":4,"textLines":1,"bbox":[85,148,180,24]}
+{"kind":"shape","id":"sh/m1cfa9w3","slide":5,"bbox":[65,170,180,70]}
+{"kind":"textbox","id":"sh/tsvu9kni","slide":5,"text":"Web / H5\n用户端","textPreview":"Web / H5 | 用户端","textChars":12,"textLines":2,"bbox":[75,180,160,52]}
+{"kind":"shape","id":"sh/47y1kre1","slide":5,"bbox":[300,170,180,70]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":5,"text":"管理后台\n运营与风控","textPreview":"管理后台 | 运营与风控","textChars":10,"textLines":2,"bbox":[310,180,160,52]}
+{"kind":"shape","id":"sh/m58z25kb","slide":5,"bbox":[535,170,180,70]}
+{"kind":"textbox","id":"sh/o7qpg3ex","slide":5,"text":"移动端壳\nCapacitor","textPreview":"移动端壳 | Capacitor","textChars":14,"textLines":2,"bbox":[545,180,160,52]}
+{"kind":"textbox","id":"sh/dsji5sne","slide":5,"text":"应用层","textPreview":"应用层","textChars":3,"textLines":1,"bbox":[85,263,180,24]}
+{"kind":"shape","id":"sh/61032lsz","slide":5,"bbox":[65,285,180,70]}
+{"kind":"textbox","id":"sh/vmtwra5g","slide":5,"text":"页面路由\nsrc/app","textPreview":"页面路由 | src/app","textChars":12,"textLines":2,"bbox":[75,295,160,52]}
+{"kind":"shape","id":"sh/oj2t83it","slide":5,"bbox":[300,285,180,70]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":5,"text":"API Routes\nsrc/app/api","textPreview":"API Routes | src/app/api","textChars":22,"textLines":2,"bbox":[310,295,160,52]}
+{"kind":"shape","id":"sh/6dcbulwv","slide":5,"bbox":[535,285,180,70]}
+{"kind":"textbox","id":"sh/vy90je9c","slide":5,"text":"组件 / 状态\nhooks / stores","textPreview":"组件 / 状态 | hooks / stores","textChars":22,"textLines":2,"bbox":[545,295,160,52]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":5,"text":"核心业务域","textPreview":"核心业务域","textChars":5,"textLines":1,"bbox":[85,413,180,24]}
+{"kind":"shape","id":"sh/d8v6psfi","slide":5,"bbox":[65,435,180,70]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":5,"text":"用户认证\nJWT/RBAC","textPreview":"用户认证 | JWT/RBAC","textChars":13,"textLines":2,"bbox":[75,445,160,52]}
+{"kind":"shape","id":"sh/crmhk3q5","slide":5,"bbox":[300,435,180,70]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":5,"text":"行情\nK线/深度","textPreview":"行情 | K线/深度","textChars":8,"textLines":2,"bbox":[310,445,160,52]}
+{"kind":"shape","id":"sh/ulwval87","slide":5,"bbox":[535,435,180,70]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":5,"text":"交易\n订单/撮合","textPreview":"交易 | 订单/撮合","textChars":8,"textLines":2,"bbox":[545,445,160,52]}
+{"kind":"shape","id":"sh/c3ylc7u5","slide":5,"bbox":[770,435,180,70]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":5,"text":"钱包\n充提/对账","textPreview":"钱包 | 充提/对账","textChars":8,"textLines":2,"bbox":[780,445,160,52]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":5,"bbox":[1005,435,180,70]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":5,"text":"Web3/DID\n签名/DApp","textPreview":"Web3/DID | 签名/DApp","textChars":16,"textLines":2,"bbox":[1015,445,160,52]}
+{"kind":"textbox","id":"sh/8bat47y1","slide":5,"text":"数据、外部依赖与运维","textPreview":"数据、外部依赖与运维","textChars":10,"textLines":1,"bbox":[85,563,260,24]}
+{"kind":"shape","id":"sh/m58z25kb","slide":5,"bbox":[65,585,180,70]}
+{"kind":"textbox","id":"sh/bq1oryts","slide":5,"text":"PostgreSQL\nPrisma","textPreview":"PostgreSQL | Prisma","textChars":17,"textLines":2,"bbox":[75,595,160,52]}
+{"kind":"shape","id":"sh/4byhgn29","slide":5,"bbox":[300,585,180,70]}
+{"kind":"textbox","id":"sh/twra5gbq","slide":5,"text":"Redis\n缓存/队列","textPreview":"Redis | 缓存/队列","textChars":11,"textLines":2,"bbox":[310,595,160,52]}
+{"kind":"shape","id":"sh/mhk3q5o7","slide":5,"bbox":[535,585,180,70]}
+{"kind":"textbox","id":"sh/b2hwfyxo","slide":5,"text":"区块链 RPC\nEVM/Solana","textPreview":"区块链 RPC | EVM/Solana","textChars":18,"textLines":2,"bbox":[545,595,160,52]}
+{"kind":"shape","id":"sh/4nap4r65","slide":5,"bbox":[770,585,180,70]}
+{"kind":"textbox","id":"sh/t83itgfm","slide":5,"text":"KMS/MPC\n生产签名","textPreview":"KMS/MPC | 生产签名","textChars":12,"textLines":2,"bbox":[780,595,160,52]}
+{"kind":"shape","id":"sh/mp0bi9s3","slide":5,"bbox":[1005,585,180,70]}
+{"kind":"textbox","id":"sh/bat47y1k","slide":5,"text":"监控/测试\nDocker/K8s","textPreview":"监控/测试 | Docker/K8s","textChars":16,"textLines":2,"bbox":[1015,595,160,52]}
+{"kind":"shape","id":"sh/f6dcbulw","slide":5,"bbox":[154,240,2,45]}
+{"kind":"shape","id":"sh/mlkjm1cf","slide":5,"bbox":[389,240,2,45]}
+{"kind":"shape","id":"sh/xc3ylc7u","slide":5,"bbox":[624,240,2,45]}
+{"kind":"shape","id":"sh/4r65wjud","slide":5,"bbox":[154,355,2,80]}
+{"kind":"shape","id":"sh/fepkzupw","slide":5,"bbox":[389,355,2,80]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":5,"bbox":[624,355,2,80]}
+{"kind":"shape","id":"sh/xkf6dcbu","slide":5,"bbox":[154,505,2,80]}
+{"kind":"shape","id":"sh/4zidonyd","slide":5,"bbox":[389,505,2,80]}
+{"kind":"shape","id":"sh/fil0rqd4","slide":5,"bbox":[624,505,2,80]}
+{"kind":"shape","id":"sh/qxs72x4n","slide":5,"bbox":[859,505,2,80]}
+{"kind":"shape","id":"sh/0z61032l","slide":5,"bbox":[1094,505,2,80]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":5,"bbox":[390,354,705,2]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":5,"bbox":[155,504,940,2]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":5,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/tac6a5","slide":5,"text":""}
+{"kind":"slide","id":"sl/g0s54a","slide":6,"title":"ZS Exchange 交付报备","textShapes":21}
+{"kind":"textbox","id":"sh/e9cvixcz","slide":6,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/lwval87e","slide":6,"text":"技术架构图 2：交易与钱包核心闭环","textPreview":"技术架构图 2：交易与钱包核心闭环","textChars":17,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/wb2hwfyx","slide":6,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/3itgfmlk","slide":6,"bbox":[70,185,118,62]}
+{"kind":"textbox","id":"sh/ex0nuxc3","slide":6,"text":"注册/登录","textPreview":"注册/登录","textChars":5,"textLines":1,"bbox":[80,195,98,44]}
+{"kind":"shape","id":"sh/loj2t83i","slide":6,"bbox":[225,185,118,62]}
+{"kind":"textbox","id":"sh/w3m94fu1","slide":6,"text":"充值地址","textPreview":"充值地址","textChars":4,"textLines":1,"bbox":[235,195,98,44]}
+{"kind":"shape","id":"sh/3ex0nuxc","slide":6,"bbox":[380,185,118,62]}
+{"kind":"textbox","id":"sh/at47y1kr","slide":6,"text":"链上充值","textPreview":"链上充值","textChars":4,"textLines":1,"bbox":[390,195,98,44]}
+{"kind":"shape","id":"sh/knih4byh","slide":6,"bbox":[535,185,118,62]}
+{"kind":"textbox","id":"sh/d8bat47y","slide":6,"text":"充值监听","textPreview":"充值监听","textChars":4,"textLines":1,"bbox":[545,195,98,44]}
+{"kind":"shape","id":"sh/2lszqtcj","slide":6,"bbox":[690,185,118,62]}
+{"kind":"textbox","id":"sh/v6psfil0","slide":6,"text":"入账余额","textPreview":"入账余额","textChars":4,"textLines":1,"bbox":[700,195,98,44]}
+{"kind":"shape","id":"sh/kf6dcbul","slide":6,"bbox":[188,215,37,2]}
+{"kind":"shape","id":"sh/d0z61032","slide":6,"bbox":[343,215,37,2]}
+{"kind":"shape","id":"sh/29gr2p8n","slide":6,"bbox":[498,215,37,2]}
+{"kind":"shape","id":"sh/vu9knih4","slide":6,"bbox":[653,215,37,2]}
+{"kind":"shape","id":"sh/k3q5o7qp","slide":6,"bbox":[210,345,118,62]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":6,"text":"用户下单","textPreview":"用户下单","textChars":4,"textLines":1,"bbox":[220,355,98,44]}
+{"kind":"shape","id":"sh/hcrmhk3q","slide":6,"bbox":[365,345,118,62]}
+{"kind":"textbox","id":"sh/orytsvu9","slide":6,"text":"冻结余额","textPreview":"冻结余额","textChars":4,"textLines":1,"bbox":[375,355,98,44]}
+{"kind":"shape","id":"sh/z61032ls","slide":6,"bbox":[520,345,118,62]}
+{"kind":"textbox","id":"sh/al87ed8b","slide":6,"text":"撮合引擎","textPreview":"撮合引擎","textChars":4,"textLines":1,"bbox":[530,355,98,44]}
+{"kind":"shape","id":"sh/h0fepkzu","slide":6,"bbox":[675,345,118,62]}
+{"kind":"textbox","id":"sh/sfil0rqd","slide":6,"text":"成交记录","textPreview":"成交记录","textChars":4,"textLines":1,"bbox":[685,355,98,44]}
+{"kind":"shape","id":"sh/zupwb2hw","slide":6,"bbox":[830,345,118,62]}
+{"kind":"textbox","id":"sh/a9w3m94f","slide":6,"text":"清结算","textPreview":"清结算","textChars":3,"textLines":1,"bbox":[840,355,98,44]}
+{"kind":"shape","id":"sh/hwfyxobm","slide":6,"bbox":[328,375,37,2]}
+{"kind":"shape","id":"sh/obm58z25","slide":6,"bbox":[483,375,37,2]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":6,"bbox":[638,375,37,2]}
+{"kind":"shape","id":"sh/b6xkf6dc","slide":6,"bbox":[793,375,37,2]}
+{"kind":"shape","id":"sh/0rqd4vmt","slide":6,"bbox":[270,246,479,2]}
+{"kind":"shape","id":"sh/tcj6tova","slide":6,"bbox":[455,505,118,62]}
+{"kind":"textbox","id":"sh/idonyd0z","slide":6,"text":"提现申请","textPreview":"提现申请","textChars":4,"textLines":1,"bbox":[465,515,98,44]}
+{"kind":"shape","id":"sh/byhgn29g","slide":6,"bbox":[610,505,118,62]}
+{"kind":"textbox","id":"sh/0je9cvix","slide":6,"text":"后台审核","textPreview":"后台审核","textChars":4,"textLines":1,"bbox":[620,515,98,44]}
+{"kind":"shape","id":"sh/t47y1kre","slide":6,"bbox":[765,505,118,62]}
+{"kind":"textbox","id":"sh/i9s36hcr","slide":6,"text":"KMS/MPC\n签名","textPreview":"KMS/MPC | 签名","textChars":10,"textLines":2,"bbox":[775,515,98,44]}
+{"kind":"shape","id":"sh/bulwval8","slide":6,"bbox":[920,505,118,62]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":6,"text":"链上广播","textPreview":"链上广播","textChars":4,"textLines":1,"bbox":[930,515,98,44]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":6,"bbox":[1075,505,118,62]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":6,"text":"对账审计","textPreview":"对账审计","textChars":4,"textLines":1,"bbox":[1085,515,98,44]}
+{"kind":"shape","id":"sh/kb6xkf6d","slide":6,"bbox":[573,535,37,2]}
+{"kind":"shape","id":"sh/re1w7mp0","slide":6,"bbox":[728,535,37,2]}
+{"kind":"shape","id":"sh/2t83itgf","slide":6,"bbox":[883,535,37,2]}
+{"kind":"shape","id":"sh/9knih4by","slide":6,"bbox":[1038,535,37,2]}
+{"kind":"shape","id":"sh/kzupwb2h","slide":6,"bbox":[514,406,375,2]}
+{"kind":"shape","id":"sh/ra5gbq1o","slide":6,"bbox":[70,505,190,62]}
+{"kind":"textbox","id":"sh/2p8nqxs7","slide":6,"text":"风控规则\n限额/黑名单/异常行为","textPreview":"风控规则 | 限额/黑名单/异常行为","textChars":16,"textLines":2,"bbox":[80,515,170,44]}
+{"kind":"shape","id":"sh/cj6tovah","slide":6,"bbox":[260,535,195,2]}
+{"kind":"textbox","id":"sh/54zidony","slide":6,"text":"验收口径：脚本可跑、前端可演示、资金可对账、失败可恢复、关键操作可审计。","textPreview":"验收口径：脚本可跑、前端可演示、资金可对账、失败可恢复、关键操作可审计。","textChars":36,"textLines":1,"bbox":[75,615,1040,30]}
+{"kind":"textbox","id":"sh/udg7adsj","slide":6,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/nyd0z610","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/g0s54a","slide":6,"text":""}
+{"kind":"slide","id":"sl/mog4qy","slide":7,"title":"ZS Exchange 交付报备","textShapes":22}
+{"kind":"textbox","id":"sh/9knih4by","slide":7,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":7,"text":"技术架构图 3：生产部署与监控","textPreview":"技术架构图 3：生产部署与监控","textChars":15,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/re1w7mp0","slide":7,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/kb6xkf6d","slide":7,"bbox":[70,175,150,62]}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":7,"text":"开发/测试","textPreview":"开发/测试","textChars":5,"textLines":1,"bbox":[80,185,130,44]}
+{"kind":"shape","id":"sh/25kb6xkf","slide":7,"bbox":[250,175,150,62]}
+{"kind":"textbox","id":"sh/rqd4vmtw","slide":7,"text":"CI 门禁","textPreview":"CI 门禁","textChars":5,"textLines":1,"bbox":[260,185,130,44]}
+{"kind":"shape","id":"sh/kjm1cfa9","slide":7,"bbox":[430,175,150,62]}
+{"kind":"textbox","id":"sh/94fu18jq","slide":7,"text":"构建镜像","textPreview":"构建镜像","textChars":4,"textLines":1,"bbox":[440,185,130,44]}
+{"kind":"shape","id":"sh/1orytsvu","slide":7,"bbox":[610,175,150,62]}
+{"kind":"textbox","id":"sh/c7u54zid","slide":7,"text":"预生产","textPreview":"预生产","textChars":3,"textLines":1,"bbox":[620,185,130,44]}
+{"kind":"shape","id":"sh/jm1cfa9w","slide":7,"bbox":[790,175,150,62]}
+{"kind":"textbox","id":"sh/u18jqh0f","slide":7,"text":"冒烟检查","textPreview":"冒烟检查","textChars":4,"textLines":1,"bbox":[800,185,130,44]}
+{"kind":"shape","id":"sh/1032lszq","slide":7,"bbox":[970,175,150,62]}
+{"kind":"textbox","id":"sh/cfa9w3m9","slide":7,"text":"灰度发布","textPreview":"灰度发布","textChars":4,"textLines":1,"bbox":[980,185,130,44]}
+{"kind":"shape","id":"sh/judg7ads","slide":7,"bbox":[220,205,30,2]}
+{"kind":"shape","id":"sh/u9knih4b","slide":7,"bbox":[400,205,30,2]}
+{"kind":"shape","id":"sh/54zidony","slide":7,"bbox":[580,205,30,2]}
+{"kind":"shape","id":"sh/cj6tovah","slide":7,"bbox":[760,205,30,2]}
+{"kind":"shape","id":"sh/crmhk3q5","slide":7,"bbox":[940,205,30,2]}
+{"kind":"textbox","id":"sh/1cfa9w3m","slide":7,"text":"生产运行态","textPreview":"生产运行态","textChars":5,"textLines":1,"bbox":[80,305,200,24]}
+{"kind":"shape","id":"sh/ulwval87","slide":7,"bbox":[80,345,170,70]}
+{"kind":"textbox","id":"sh/j6tovaho","slide":7,"text":"Next.js\n服务","textPreview":"Next.js | 服务","textChars":10,"textLines":2,"bbox":[90,355,150,52]}
+{"kind":"shape","id":"sh/c3ylc7u5","slide":7,"bbox":[310,345,170,70]}
+{"kind":"textbox","id":"sh/1kre1w7m","slide":7,"text":"PostgreSQL\n主数据","textPreview":"PostgreSQL | 主数据","textChars":14,"textLines":2,"bbox":[320,355,150,52]}
+{"kind":"shape","id":"sh/uxc3ylc7","slide":7,"bbox":[80,455,170,70]}
+{"kind":"textbox","id":"sh/ji5snelo","slide":7,"text":"Redis\n缓存队列","textPreview":"Redis | 缓存队列","textChars":10,"textLines":2,"bbox":[90,465,150,52]}
+{"kind":"shape","id":"sh/8bat47y1","slide":7,"bbox":[310,455,170,70]}
+{"kind":"textbox","id":"sh/1w7mp0bi","slide":7,"text":"主备 RPC\n链上依赖","textPreview":"主备 RPC | 链上依赖","textChars":11,"textLines":2,"bbox":[320,465,150,52]}
+{"kind":"shape","id":"sh/7ed8bat4","slide":7,"bbox":[195,565,170,70]}
+{"kind":"textbox","id":"sh/itgfmlkj","slide":7,"text":"KMS/MPC\n生产签名","textPreview":"KMS/MPC | 生产签名","textChars":12,"textLines":2,"bbox":[205,575,150,52]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":7,"bbox":[250,379,60,2]}
+{"kind":"shape","id":"sh/0z61032l","slide":7,"bbox":[164,415,2,40]}
+{"kind":"shape","id":"sh/72x4nap4","slide":7,"bbox":[249,392,2,63]}
+{"kind":"shape","id":"sh/ih4byhgn","slide":7,"bbox":[279,525,2,40]}
+{"kind":"textbox","id":"sh/p8nqxs72","slide":7,"text":"可观测与应急","textPreview":"可观测与应急","textChars":6,"textLines":1,"bbox":[710,305,240,24]}
+{"kind":"shape","id":"sh/0nuxc3yl","slide":7,"bbox":[710,345,180,70]}
+{"kind":"textbox","id":"sh/7y1kre1w","slide":7,"text":"Prometheus\n指标采集","textPreview":"Prometheus | 指标采集","textChars":15,"textLines":2,"bbox":[720,355,160,52]}
+{"kind":"shape","id":"sh/ed8v6psf","slide":7,"bbox":[970,345,180,70]}
+{"kind":"textbox","id":"sh/yd0z6103","slide":7,"text":"Grafana\n看板","textPreview":"Grafana | 看板","textChars":10,"textLines":2,"bbox":[980,355,160,52]}
+{"kind":"shape","id":"sh/rytsvu9k","slide":7,"bbox":[710,455,180,70]}
+{"kind":"textbox","id":"sh/gfmlkjm1","slide":7,"text":"告警通道\n飞书/邮件","textPreview":"告警通道 | 飞书/邮件","textChars":10,"textLines":2,"bbox":[720,465,160,52]}
+{"kind":"shape","id":"sh/90je9cvi","slide":7,"bbox":[970,455,180,70]}
+{"kind":"textbox","id":"sh/y1kre1w7","slide":7,"text":"日志审计\n资金/业务","textPreview":"日志审计 | 资金/业务","textChars":10,"textLines":2,"bbox":[980,465,160,52]}
+{"kind":"shape","id":"sh/rmhk3q5o","slide":7,"bbox":[840,565,180,70]}
+{"kind":"textbox","id":"sh/g7adsji5","slide":7,"text":"一键回滚\n5分钟恢复","textPreview":"一键回滚 | 5分钟恢复","textChars":10,"textLines":2,"bbox":[850,575,160,52]}
+{"kind":"shape","id":"sh/9s36hcrm","slide":7,"bbox":[890,379,80,2]}
+{"kind":"shape","id":"sh/yxobm58z","slide":7,"bbox":[799,415,2,40]}
+{"kind":"shape","id":"sh/nih4byhg","slide":7,"bbox":[1059,415,2,40]}
+{"kind":"shape","id":"sh/dg7adsji","slide":7,"bbox":[800,524,130,2]}
+{"kind":"shape","id":"sh/ovahoza1","slide":7,"bbox":[930,524,130,2]}
+{"kind":"textbox","id":"sh/vahoza1g","slide":7,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/mog4qy","slide":7,"text":""}
+{"kind":"slide","id":"sl/yfvxjg","slide":8,"title":"ZS Exchange 交付报备","textShapes":12}
+{"kind":"textbox","id":"sh/0rqd4vmt","slide":8,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/b6xkf6dc","slide":8,"text":"商业价值：从交易平台到 Web3 资产入口","textPreview":"商业价值：从交易平台到 Web3 资产入口","textChars":21,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/il0rqd4v","slide":8,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/t47y1kre","slide":8,"bbox":[80,190,500,145]}
+{"kind":"textbox","id":"sh/0je9cvix","slide":8,"text":"交易基础设施","textPreview":"交易基础设施","textChars":6,"textLines":1,"bbox":[108,218,350,34]}
+{"kind":"textbox","id":"sh/byhgn29g","slide":8,"text":"行情、订单、撮合、钱包、充提构成交易所基础盘。","textPreview":"行情、订单、撮合、钱包、充提构成交易所基础盘。","textChars":23,"textLines":1,"bbox":[108,266,425,46]}
+{"kind":"shape","id":"sh/idonyd0z","slide":8,"bbox":[660,190,500,145]}
+{"kind":"textbox","id":"sh/p0bi9s36","slide":8,"text":"合规身份能力","textPreview":"合规身份能力","textChars":6,"textLines":1,"bbox":[688,218,350,34]}
+{"kind":"textbox","id":"sh/0fepkzup","slide":8,"text":"DID、VC、KYC、审计日志为机构合作与合规扩展打基础。","textPreview":"DID、VC、KYC、审计日志为机构合作与合规扩展打基础。","textChars":29,"textLines":1,"bbox":[688,266,425,46]}
+{"kind":"shape","id":"sh/itgfmlkj","slide":8,"bbox":[80,390,500,145]}
+{"kind":"textbox","id":"sh/7ed8bat4","slide":8,"text":"Web3 资产入口","textPreview":"Web3 资产入口","textChars":9,"textLines":1,"bbox":[108,418,350,34]}
+{"kind":"textbox","id":"sh/0z61032l","slide":8,"text":"Web3 钱包、DApp 浏览器、WalletConnect 构成用户资产入口。","textPreview":"Web3 钱包、DApp 浏览器、WalletConnect 构成用户资产入口。","textChars":40,"textLines":1,"bbox":[108,466,425,46]}
+{"kind":"shape","id":"sh/pkzupwb2","slide":8,"bbox":[660,390,500,145]}
+{"kind":"textbox","id":"sh/ih4byhgn","slide":8,"text":"业务扩展空间","textPreview":"业务扩展空间","textChars":6,"textLines":1,"bbox":[688,418,350,34]}
+{"kind":"textbox","id":"sh/72x4nap4","slide":8,"text":"DeFi、NFT、电商、福建老酒链上权益为多业务线预留接口。","textPreview":"DeFi、NFT、电商、福建老酒链上权益为多业务线预留接口。","textChars":30,"textLines":1,"bbox":[688,466,425,46]}
+{"kind":"textbox","id":"sh/0nuxc3yl","slide":8,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/p8nqxs72","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/yfvxjg","slide":8,"text":""}
+{"kind":"slide","id":"sl/wniwao","slide":9,"title":"ZS Exchange 交付报备","textShapes":14}
+{"kind":"textbox","id":"sh/9w3m94fu","slide":9,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/25kb6xkf","slide":9,"text":"业务落地计划：30 / 60 / 90 天推进","textPreview":"业务落地计划：30 / 60 / 90 天推进","textChars":23,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/rqd4vmtw","slide":9,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/kzupwb2h","slide":9,"bbox":[92,190,320,330]}
+{"kind":"textbox","id":"sh/9knih4by","slide":9,"text":"30 天","textPreview":"30 天","textChars":4,"textLines":1,"bbox":[122,224,150,54]}
+{"kind":"textbox","id":"sh/2t83itgf","slide":9,"text":"MVP 核心演示","textPreview":"MVP 核心演示","textChars":8,"textLines":1,"bbox":[122,300,230,34]}
+{"kind":"textbox","id":"sh/re1w7mp0","slide":9,"text":"注册、行情、充值、余额、下单、撮合、提现、后台审核、对账审计。","textPreview":"注册、行情、充值、余额、下单、撮合、提现、后台审核、对账审计。","textChars":31,"textLines":1,"bbox":[122,360,250,96]}
+{"kind":"shape","id":"sh/gvy90je9","slide":9,"bbox":[482,190,320,330]}
+{"kind":"textbox","id":"sh/9gr2p8nq","slide":9,"text":"60 天","textPreview":"60 天","textChars":4,"textLines":1,"bbox":[512,224,150,54]}
+{"kind":"textbox","id":"sh/dg7adsji","slide":9,"text":"预生产准入","textPreview":"预生产准入","textChars":5,"textLines":1,"bbox":[512,300,230,34]}
+{"kind":"textbox","id":"sh/ovahoza1","slide":9,"text":"权限、密钥、监控、告警、回滚、测试门禁、72h 稳定性准备。","textPreview":"权限、密钥、监控、告警、回滚、测试门禁、72h 稳定性准备。","textChars":30,"textLines":1,"bbox":[512,360,250,96]}
+{"kind":"shape","id":"sh/vahoza1g","slide":9,"bbox":[872,190,320,330]}
+{"kind":"textbox","id":"sh/6tovahoz","slide":9,"text":"90 天","textPreview":"90 天","textChars":4,"textLines":1,"bbox":[902,224,150,54]}
+{"kind":"textbox","id":"sh/d8v6psfi","slide":9,"text":"小流量试运营","textPreview":"小流量试运营","textChars":6,"textLines":1,"bbox":[902,300,230,34]}
+{"kind":"textbox","id":"sh/onyd0z61","slide":9,"text":"白名单用户、小额资金、限额交易、每日审计、正式运营评审。","textPreview":"白名单用户、小额资金、限额交易、每日审计、正式运营评审。","textChars":28,"textLines":1,"bbox":[902,360,250,96]}
+{"kind":"textbox","id":"sh/z25kb6xk","slide":9,"text":"推进原则：先跑通闭环，再扩展生态；先控制资金风险，再扩大用户规模。","textPreview":"推进原则：先跑通闭环，再扩展生态；先控制资金风险，再扩大用户规模。","textChars":33,"textLines":1,"bbox":[92,570,960,34]}
+{"kind":"textbox","id":"sh/6hcrmhk3","slide":9,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/d4vmtwra","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/wniwao","slide":9,"text":""}
+{"kind":"slide","id":"sl/9fy8qp","slide":10,"title":"ZS Exchange 交付报备","textShapes":16}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":10,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/4r65wjud","slide":10,"text":"上线红线：任一存在，不得生产发布","textPreview":"上线红线：任一存在，不得生产发布","textChars":16,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/xc3ylc7u","slide":10,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/mtwra5gb","slide":10,"bbox":[92,180,1020,54]}
+{"kind":"textbox","id":"sh/fepkzupw","slide":10,"text":"P0","textPreview":"P0","textChars":2,"textLines":1,"bbox":[116,194,50,24]}
+{"kind":"textbox","id":"sh/4zidonyd","slide":10,"text":"明文私钥或本地文件私钥用于生产签名","textPreview":"明文私钥或本地文件私钥用于生产签名","textChars":17,"textLines":1,"bbox":[180,193,850,28]}
+{"kind":"shape","id":"sh/xkf6dcbu","slide":10,"bbox":[92,252,1020,54]}
+{"kind":"textbox","id":"sh/qxs72x4n","slide":10,"text":"P0","textPreview":"P0","textChars":2,"textLines":1,"bbox":[116,266,50,24]}
+{"kind":"textbox","id":"sh/fil0rqd4","slide":10,"text":"JWT / 管理员权限存在默认兜底或绕过","textPreview":"JWT / 管理员权限存在默认兜底或绕过","textChars":20,"textLines":1,"bbox":[180,265,850,28]}
+{"kind":"shape","id":"sh/fepkzupw","slide":10,"bbox":[92,324,1020,54]}
+{"kind":"textbox","id":"sh/mtwra5gb","slide":10,"text":"P0","textPreview":"P0","textChars":2,"textLines":1,"bbox":[116,338,50,24]}
+{"kind":"textbox","id":"sh/xkf6dcbu","slide":10,"text":"充值监听、提币广播、余额对账未真实验证","textPreview":"充值监听、提币广播、余额对账未真实验证","textChars":19,"textLines":1,"bbox":[180,337,850,28]}
+{"kind":"shape","id":"sh/4zidonyd","slide":10,"bbox":[92,396,1020,54]}
+{"kind":"textbox","id":"sh/f6dcbulw","slide":10,"text":"P0","textPreview":"P0","textChars":2,"textLines":1,"bbox":[116,410,50,24]}
+{"kind":"textbox","id":"sh/mlkjm1cf","slide":10,"text":"无 Prometheus 告警、无日志审计、无 5 分钟回滚","textPreview":"无 Prometheus 告警、无日志审计、无 5 分钟回滚","textChars":30,"textLines":1,"bbox":[180,409,850,28]}
+{"kind":"shape","id":"sh/xc3ylc7u","slide":10,"bbox":[92,468,1020,54]}
+{"kind":"textbox","id":"sh/4r65wjud","slide":10,"text":"P0","textPreview":"P0","textChars":2,"textLines":1,"bbox":[116,482,50,24]}
+{"kind":"textbox","id":"sh/fu18jqh0","slide":10,"text":"依赖 critical / high 漏洞未修复或无隔离说明","textPreview":"依赖 critical / high 漏洞未修复或无隔离说明","textChars":30,"textLines":1,"bbox":[180,481,850,28]}
+{"kind":"shape","id":"sh/m94fu18j","slide":10,"bbox":[92,540,1020,54]}
+{"kind":"textbox","id":"sh/y90je9cv","slide":10,"text":"P0","textPreview":"P0","textChars":2,"textLines":1,"bbox":[116,554,50,24]}
+{"kind":"textbox","id":"sh/nuxc3ylc","slide":10,"text":"DID / Web3 / Admin 敏感接口未鉴权或响应字段未白名单","textPreview":"DID / Web3 / Admin 敏感接口未鉴权或响应字段未白名单","textChars":35,"textLines":1,"bbox":[180,553,850,28]}
+{"kind":"textbox","id":"sh/gbq1oryt","slide":10,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/5wjudg7a","slide":10,"text":"10","textPreview":"10","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/9fy8qp","slide":10,"text":""}
+{"kind":"slide","id":"sl/jpj8t5","slide":11,"title":"ZS Exchange 交付报备","textShapes":16}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":11,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/wra5gbq1","slide":11,"text":"技术团队接收：建议按负责人拆包","textPreview":"技术团队接收：建议按负责人拆包","textChars":15,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/lc7u54zi","slide":11,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/ed8bat47","slide":11,"bbox":[70,190,310,132]}
+{"kind":"textbox","id":"sh/7u54zido","slide":11,"text":"技术负责人","textPreview":"技术负责人","textChars":5,"textLines":1,"bbox":[94,216,220,30]}
+{"kind":"textbox","id":"sh/wfyxobm5","slide":11,"text":"架构把关、代码合并策略、质量门禁","textPreview":"架构把关、代码合并策略、质量门禁","textChars":16,"textLines":1,"bbox":[94,260,246,42]}
+{"kind":"shape","id":"sh/l0rqd4vm","slide":11,"bbox":[470,190,310,132]}
+{"kind":"textbox","id":"sh/e1w7mp0b","slide":11,"text":"后端/API","textPreview":"后端/API","textChars":6,"textLines":1,"bbox":[494,216,220,30]}
+{"kind":"textbox","id":"sh/7mp0bi9s","slide":11,"text":"接口、权限、Repository、DTO、业务联调","textPreview":"接口、权限、Repository、DTO、业务联调","textChars":25,"textLines":1,"bbox":[494,260,246,42]}
+{"kind":"shape","id":"sh/zed8v6ps","slide":11,"bbox":[870,190,310,132]}
+{"kind":"textbox","id":"sh/6xkf6dcb","slide":11,"text":"交易引擎","textPreview":"交易引擎","textChars":4,"textLines":1,"bbox":[894,216,220,30]}
+{"kind":"textbox","id":"sh/hk3q5o7q","slide":11,"text":"撮合、订单、余额、成交、手续费","textPreview":"撮合、订单、余额、成交、手续费","textChars":15,"textLines":1,"bbox":[894,260,246,42]}
+{"kind":"shape","id":"sh/oza1gvy9","slide":11,"bbox":[70,395,310,132]}
+{"kind":"textbox","id":"sh/zqtcj6to","slide":11,"text":"钱包/Web3","textPreview":"钱包/Web3","textChars":7,"textLines":1,"bbox":[94,421,220,30]}
+{"kind":"textbox","id":"sh/65wjudg7","slide":11,"text":"充提、链监听、签名、DID、DApp","textPreview":"充提、链监听、签名、DID、DApp","textChars":18,"textLines":1,"bbox":[94,465,246,42]}
+{"kind":"shape","id":"sh/hwfyxobm","slide":11,"bbox":[470,395,310,132]}
+{"kind":"textbox","id":"sh/obm58z25","slide":11,"text":"前端","textPreview":"前端","textChars":2,"textLines":1,"bbox":[494,421,220,30]}
+{"kind":"textbox","id":"sh/zupwb2hw","slide":11,"text":"用户端、后台端、核心流程真实化","textPreview":"用户端、后台端、核心流程真实化","textChars":15,"textLines":1,"bbox":[494,465,246,42]}
+{"kind":"shape","id":"sh/a9w3m94f","slide":11,"bbox":[870,395,310,132]}
+{"kind":"textbox","id":"sh/eloj2t83","slide":11,"text":"测试/SRE","textPreview":"测试/SRE","textChars":6,"textLines":1,"bbox":[894,421,220,30]}
+{"kind":"textbox","id":"sh/36hcrmhk","slide":11,"text":"自动化、监控、告警、回滚、安全治理","textPreview":"自动化、监控、告警、回滚、安全治理","textChars":17,"textLines":1,"bbox":[894,465,246,42]}
+{"kind":"textbox","id":"sh/wra5gbq1","slide":11,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/lc7u54zi","slide":11,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/jpj8t5","slide":11,"text":""}
+{"kind":"slide","id":"sl/kfk15l","slide":12,"title":"ZS Exchange 交付报备","textShapes":14}
+{"kind":"textbox","id":"sh/6psfil0r","slide":12,"text":"ZS Exchange 交付报备","textPreview":"ZS Exchange 交付报备","textChars":16,"textLines":1,"bbox":[52,34,360,24]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":12,"text":"董事局需要确认的三项决策","textPreview":"董事局需要确认的三项决策","textChars":12,"textLines":1,"bbox":[52,68,900,54]}
+{"kind":"shape","id":"sh/kre1w7mp","slide":12,"bbox":[52,130,1176,2]}
+{"kind":"shape","id":"sh/vixczed8","slide":12,"bbox":[105,180,960,92]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":12,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[130,204,55,32]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":12,"text":"确认 MVP 边界","textPreview":"确认 MVP 边界","textChars":9,"textLines":1,"bbox":[210,194,260,32]}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":12,"text":"先做注册、行情、下单、撮合、充值、提现、余额、后台审核；暂缓复杂生态模块。","textPreview":"先做注册、行情、下单、撮合、充值、提现、余额、后台审核；暂缓复杂生态模块。","textChars":37,"textLines":1,"bbox":[210,234,760,32]}
+{"kind":"shape","id":"sh/vu9knih4","slide":12,"bbox":[105,310,960,92]}
+{"kind":"textbox","id":"sh/29gr2p8n","slide":12,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[130,334,55,32]}
+{"kind":"textbox","id":"sh/kre1w7mp","slide":12,"text":"确认上线红线","textPreview":"确认上线红线","textChars":6,"textLines":1,"bbox":[210,324,260,32]}
+{"kind":"textbox","id":"sh/dcbulwva","slide":12,"text":"资金安全、密钥隔离、权限、监控、测试、回滚任一未达标，不得生产上线。","textPreview":"资金安全、密钥隔离、权限、监控、测试、回滚任一未达标，不得生产上线。","textChars":34,"textLines":1,"bbox":[210,364,760,32]}
+{"kind":"shape","id":"sh/6psfil0r","slide":12,"bbox":[105,440,960,92]}
+{"kind":"textbox","id":"sh/val87ed8","slide":12,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[130,464,55,32]}
+{"kind":"textbox","id":"sh/k3q5o7qp","slide":12,"text":"确认专项负责人","textPreview":"确认专项负责人","textChars":7,"textLines":1,"bbox":[210,454,260,32]}
+{"kind":"textbox","id":"sh/donyd0z6","slide":12,"text":"交易、钱包、安全、前端、SRE、测试必须各有负责人，避免一人扛全部 P0。","textPreview":"交易、钱包、安全、前端、SRE、测试必须各有负责人，避免一人扛全部 P0。","textChars":37,"textLines":1,"bbox":[210,494,760,32]}
+{"kind":"textbox","id":"sh/2x4nap4r","slide":12,"text":"建议结论：批准进入“技术团队接管 + MVP 冲刺 + 生产加固”阶段。","textPreview":"建议结论：批准进入“技术团队接管 + MVP 冲刺 + 生产加固”阶段。","textChars":36,"textLines":1,"bbox":[105,598,960,34]}
+{"kind":"textbox","id":"sh/vixczed8","slide":12,"text":"董事局报备 / 技术团队交接 · 2026-06-30","textPreview":"董事局报备 / 技术团队交接 · 2026-06-30","textChars":27,"textLines":1,"bbox":[52,676,500,22]}
+{"kind":"textbox","id":"sh/kf6dcbul","slide":12,"text":"12","textPreview":"12","textChars":2,"textLines":1,"bbox":[1180,676,50,22]}
+{"kind":"notes","id":"nt/kfk15l","slide":12,"text":""}

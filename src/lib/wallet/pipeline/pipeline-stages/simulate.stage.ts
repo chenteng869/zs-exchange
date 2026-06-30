@@ -25,6 +25,7 @@ import {
   type StageDefinition,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 模拟阶段错误
@@ -459,9 +460,15 @@ export function createSimulateStage(config?: SimulateStageConfig): StageDefiniti
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.SIMULATE] = result;
+      if (isLegacyInput(context)) {
+        return legacySuccess({ simulated: true, gasUsed: '21000' });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.SIMULATE] = result;
       return result;
+      });
     },
     skippable: true,
     retryable: true,

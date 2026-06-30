@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" role="img" aria-labelledby="title desc">
+  <title id="title">Solana API Route Coverage</title>
+  <desc id="desc">Route coverage map for Solana and DID Solana APIs.</desc>
+  <defs>
+    <style>
+      .title{font:700 28px Arial,sans-serif;fill:#111827}
+      .sub{font:400 14px Arial,sans-serif;fill:#667085}
+      .lane{fill:#f8fafc;stroke:#d7deea;stroke-width:1.5;rx:14}
+      .pub{fill:#edf9ff;stroke:#5bb8e6;stroke-width:1.5;rx:8}
+      .auth{fill:#f2fff7;stroke:#57c287;stroke-width:1.5;rx:8}
+      .warn{fill:#fff6ed;stroke:#f59e0b;stroke-width:1.5;rx:8}
+      .head{font:700 18px Arial,sans-serif;fill:#1f2937}
+      .text{font:500 13px Arial,sans-serif;fill:#263445}
+      .small{font:400 12px Arial,sans-serif;fill:#667085}
+    </style>
+  </defs>
+  <rect width="1180" height="720" fill="#ffffff"/>
+  <text x="50" y="55" class="title">Solana API Route Coverage</text>
+  <text x="50" y="82" class="sub">Blue = public probe/demo. Green = protected business API. Orange = security-sensitive hardening needed.</text>
+
+  <rect x="50" y="120" width="520" height="490" class="lane"/>
+  <text x="80" y="158" class="head">/api/v1/solana</text>
+
+  <rect x="80" y="185" width="450" height="48" class="pub"/>
+  <text x="102" y="214" class="text">GET /test?chain=devnet</text>
+  <text x="350" y="214" class="small">slot / epoch / fee probe</text>
+
+  <rect x="80" y="250" width="450" height="48" class="auth"/>
+  <text x="102" y="279" class="text">GET /balance?address=&amp;chain=</text>
+  <text x="350" y="279" class="small">SOL balance</text>
+
+  <rect x="80" y="315" width="450" height="48" class="auth"/>
+  <text x="102" y="344" class="text">GET /token-balance?address=&amp;mint=</text>
+  <text x="365" y="344" class="small">SPL balance</text>
+
+  <rect x="80" y="380" width="450" height="48" class="auth"/>
+  <text x="102" y="409" class="text">POST /transfer</text>
+  <text x="350" y="409" class="small">Build SOL transfer</text>
+
+  <rect x="80" y="445" width="450" height="48" class="auth"/>
+  <text x="102" y="474" class="text">GET /gas-price?chain=</text>
+  <text x="350" y="474" class="small">Fee tiers</text>
+
+  <rect x="80" y="510" width="450" height="48" class="auth"/>
+  <text x="102" y="539" class="text">GET /block/latest or /block/[slot]</text>
+  <text x="392" y="539" class="small">Blocks</text>
+
+  <rect x="80" y="575" width="450" height="48" class="auth"/>
+  <text x="102" y="604" class="text">GET /transaction/[txHash]</text>
+  <text x="365" y="604" class="small">Tx detail</text>
+
+  <rect x="630" y="120" width="500" height="360" class="lane"/>
+  <text x="660" y="158" class="head">/api/v1/did/solana</text>
+
+  <rect x="660" y="190" width="430" height="58" class="warn"/>
+  <text x="682" y="220" class="text">POST /create</text>
+  <text x="830" y="220" class="small">Creates did:sol, returns privateKey</text>
+
+  <rect x="660" y="270" width="430" height="58" class="pub"/>
+  <text x="682" y="300" class="text">GET /resolve?did=</text>
+  <text x="850" y="300" class="small">Resolve DID Document</text>
+
+  <rect x="660" y="350" width="430" height="58" class="warn"/>
+  <text x="682" y="380" class="text">POST /anchor</text>
+  <text x="830" y="380" class="small">Simulated or real Memo anchor</text>
+
+  <rect x="630" y="520" width="500" height="103" fill="#111827" rx="14"/>
+  <text x="660" y="555" font-family="Arial,sans-serif" font-size="17" font-weight="700" fill="#ffffff">Gap note</text>
+  <text x="660" y="585" font-family="Arial,sans-serif" font-size="14" fill="#d1d5db">Planned /solana/tokens, /solana/ico/new, /solana/ico/trending routes are not implemented yet.</text>
+  <text x="660" y="610" font-family="Arial,sans-serif" font-size="14" fill="#d1d5db">DID create/anchor need auth, risk controls, key masking and audit logs for production.</text>
+</svg>

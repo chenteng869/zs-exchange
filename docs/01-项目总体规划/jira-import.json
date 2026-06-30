@@ -1,0 +1,2835 @@
+{
+  "issues": [
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "阶段0: 项目准备 (W1)",
+        "issuetype": { "name": "Epic" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "preparation"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-19",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "立项 / 采购 / 团队组建 / 章程签字" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "阶段1: 基础平台 (W2-W7)",
+        "issuetype": { "name": "Epic" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "infra"],
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "K8s 集群 (3 master + 10 worker) + 9 种中间件 (PG/Redis/Mongo/Kafka/MinIO/Milvus/ClickHouse/InfluxDB/Fabric) + 监控告警" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "阶段2: 核心引擎 (W8-W13)",
+        "issuetype": { "name": "Epic" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "architect" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "engine"],
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "n8n + OpenClaw + AI 网关 + BPM + 集成测试 + 性能调优" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "阶段3: 业务模块 (W14-W21)",
+        "issuetype": { "name": "Epic" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend_lead" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "business"],
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-20",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "区块链存证 + DID + AI 全球获客 + Web 管理后台 + 移动 App + 小程序" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "阶段4: 性能与稳定性 (W22-W25)",
+        "issuetype": { "name": "Epic" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "performance"],
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-25",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "单元测试 + 集成测试 + E2E + 安全 + 压测 (50/100/1000 并发) + 72h 稳定性 + 灰度发布" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "阶段5: 上线运营 (W26+)",
+        "issuetype": { "name": "Epic" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "ops"],
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "生产部署 + 7x24 监控 + 故障响应 + 持续迭代" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "召开方案评审会",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "review"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-15",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "评审 AI 自动化平台 v1.0 方案;产出评审纪要;5+ 决策人签字" }] },
+            { "type": "paragraph", "content": [{ "type": "text", "text": "验收标准: 5+ 决策人签字, 纪要归档到 Confluence", "marks": [{ "type": "strong" }] }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "编写立项书 (含预算/范围/风险)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "charter"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "立项书 PDF;预算 157-238 万;18-24 周周期;风险矩阵" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "团队组建 (8 名工程师到岗)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "hr" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "team"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-19",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "架构师1/后端3/前端2/测试1/运维1;含 JD 和面试" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "云资源采购 (32 台 ECS)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "cloud"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-15",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "32 台 ECS / K8s ACK 开通;SSH 可达" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "域名 + SSL 证书申请",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "ssl"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-15",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "3 个域名 + 3 个证书;DNS 解析" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Git 仓库初始化",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "architect" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "git"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-15",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "GitLab 仓库创建;main/dev 分支保护" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "CI/CD 流水线搭建 (Hello World)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "cicd"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "GitLab CI + ArgoCD 跑通 hello-world 镜像自动部署" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "沟通渠道建立 (飞书群/邮件)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "comm"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-15",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "全员加入飞书群;邮件组创建" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "项目章程签字",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "charter"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-19",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "5+ 关键人签字的章程 PDF" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "启动会 + 第一次站会",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "kickoff"],
+        "customfield_story_points": 0.125,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-19",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "任务分工 100% 认领;会议纪要" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "需求调研 (10+ 业务部门访谈)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "research"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-19",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "需求池建立;10+ 访谈纪要" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "预算审批与合同签订",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-0", "finance"],
+        "customfield_story_points": 0.375,
+        "customfield_epic_link": "EPIC-0",
+        "duedate": "2026-06-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "合同签订;预算释放" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "K8s 集群初始化 (3 master + 10 worker)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "k8s"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-06-26",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "kubectl get nodes 显示 13 节点 Ready" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "网络插件 (Calico) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "network"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-06-26",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "NetworkPolicy 生效;Pod 间互通" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "存储类 (NFS/CSI) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "storage"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-06-26",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "4 套 StorageClass;PVC 动态创建" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Ingress (Nginx) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "ingress"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-06-26",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "https://test.example.com 返回 200" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "镜像仓库 (Harbor) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "harbor"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-06-26",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "docker push/pull 测试通过" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "证书管理 (cert-manager) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "cert"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-03",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "证书自动签发;*.example.com 全自动" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "GitOps (ArgoCD) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "gitops"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-03",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "修改 Git 自动同步 K8s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "命名空间规划 (dev/staging/prod)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "ns"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-06-26",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "3 个 ns 创建;YAML 提交 Git" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "镜像安全扫描 (Trivy) 集成",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "security"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-03",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "漏洞扫描失败阻止推送" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "K8s 备份 (Velero) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "backup"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-03",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "定时备份 CRD 资源;可恢复" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "PostgreSQL 16 集群 (1主2从+1只读)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "pg"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-10",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "主从切换 < 30s;连接池 100+ 并发" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Redis 7 Cluster (3主3从)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "redis"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-10",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "cluster info 状态 ok;槽位完整" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "MongoDB 7 集群 (1主2从)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "mongo"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-10",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "分片副本集正常;副本延迟 < 5s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Kafka 3.x 集群 (3 broker + ZK)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "kafka"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-10",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "生产消费测试通过;ISR 完整" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "MinIO 对象存储 (4 节点 EC)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "minio"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-10",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "上传/下载测试;纠删码正常" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Milvus 2.x 向量库 (3 节点+etcd)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "milvus"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "向量插入/检索;召回率 > 95%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "ClickHouse OLAP (3 节点)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "clickhouse"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "1 亿行导入;查询 P95 < 1s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "InfluxDB 2 时序库",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "influxdb"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-10",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "写入测试;retention policy 配置" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Hyperledger Fabric 部署 (4 peer + 3 orderer)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "fabric"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "chaincode 部署;存证 < 5s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Flyway 数据库迁移工具",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "flyway"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "自动建表;迁移日志可追踪" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "PgBouncer 连接池 (1000+ 并发)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "pgbouncer"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-17",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "pool_mode=transaction;1000 并发无耗尽" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Prometheus Operator 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "prometheus"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-24",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Prometheus + Alertmanager 抓取 K8s 指标" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Grafana 部署与 7 个核心仪表板",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "grafana"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-24",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "7 仪表板: 集群/Pod/DB/Kafka/应用/业务/告警" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "node-exporter 部署 (32 节点)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "exporter"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-24",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "所有节点 CPU/内存/磁盘/网络指标" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "kube-state-metrics 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "ksm"],
+        "customfield_story_points": 0.25,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-24",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Pod/Deployment 状态可视化" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "中间件 Exporter 集成 (9 个)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "exporter"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "PG/Redis/Mongo/Kafka/CH/Milvus/MinIO/Influx/Fabric 全有指标" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "日志收集 (Loki + Promtail)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "loki"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "日志聚合;P95 查询 < 2s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "ELK 备用日志栈",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "elk"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "ES + Kibana 全文检索" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "告警规则配置 (50+ 规则)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "alert"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "飞书通知测试;P0/P1/P2/P3 分级" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "On-Call 排班 (7x24)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "oncall"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-24",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "排班表;5min 内响应" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "故障注入演练 (Chaos Mesh)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "chaos"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "故障演练报告;P0 < 1min 响应" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "链路追踪 (Jaeger) 部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-1", "jaeger"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-1",
+        "duedate": "2026-07-31",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "全链路追踪;5+ 服务 span" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "n8n 单机版部署 (Docker)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "n8n"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-07",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "n8n UI 可访问;简单工作流通过" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "n8n Queue Mode 改造 (Main + Worker)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "n8n"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-14",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Webhook 触发;任务入 Redis 队列" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "OpenClaw 单机版启动",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "openclaw"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-07",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Gateway 启动;WebSocket 连通" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "OpenClaw → n8n 集成 (Function Calling)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "integration"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-14",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "智能体可调用 5+ n8n 节点" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "AI 模型网关 (FastAPI) 接入 2 模型",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "ai"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-14",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "GPT-5 + 通义千问;路由生效" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "AI 智能降级测试 (主备切换)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "ai"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-14",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "故障自动切备用;P95 < 3s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Flowable 单机版部署",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "bpm"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-07",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "BPM UI 可访问;简单流程跑通" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Hyperledger Fabric PoC 存证 < 5s",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "fabric"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-14",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "链码部署;存证 PoC < 5s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "API 网关 (Spring Cloud Gateway)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "gateway"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-21",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "路由/限流/鉴权/熔断四件套" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "统一鉴权服务 (JWT + OAuth2)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "auth"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-21",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "多端登录;P95 < 50ms" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "OpenClaw x n8n x AI 三方集成",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "integration"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-28",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "完整调用链;3 服务串联" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "n8n x Flowable 集成",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "bpm"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-28",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "BPM 流程可被 n8n 触发" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "统一日志 (TraceID 全链路)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "trace"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-28",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "一次请求可追踪 5+ 服务" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "集成测试用例编写 (100+ 用例)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "test"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-28",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "100+ 用例;100% 通过" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "性能基线测试",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "perf"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-28",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "P95 < 500ms 基线报告" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "限流熔断 (Sentinel) 集成",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "sentinel"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-08-21",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "限流 100 QPS;熔断降级" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "n8n Worker 扩容到 5 节点",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "n8n"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "5 worker x 10 并发 = 50+ 并发" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "OpenClaw 性能调优",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "openclaw"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "P95 < 200ms;吞吐 100 QPS" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "AI 网关缓存优化 (命中率 30%+)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "ai"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "重复请求 0 延迟;命中率 ≥ 30%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "PG 连接池调优 (1000+ 并发)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "pg"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "无连接耗尽;pool 利用率 < 80%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Redis Pipeline 批量优化",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "redis"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "批量操作 10x 性能提升" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "50 并发智能体压测 (k6)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "perf"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "50 并发稳定 1h;P95 < 2s;错误率 < 1%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "100 并发极限压测",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "perf"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "100 并发不崩;错误率 < 5%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "性能调优总结报告",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "perf"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "10+ 优化点;量化收益" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "智能体超时与重试调优",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "openclaw"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "超时分级;重试退避策略" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "JVM 调优 (G1GC)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "jvm"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "GC 暂停 < 50ms;堆 < 70%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "慢 SQL 优化 (Top 20)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "pg"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Top 20 慢 SQL P95 < 100ms" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "GC 日志分析与优化",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-2", "jvm"],
+        "customfield_story_points": 0.5,
+        "customfield_epic_link": "EPIC-2",
+        "duedate": "2026-09-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Young GC < 10ms;Full GC 0 触发" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "存证服务后端 (NestJS)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-09-25",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "4 个 API: 存证/验证/查询/列表" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "凭证预生成优化 (< 1秒)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-02",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "P95 < 1s;50 并发无延迟" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "异步上链 Worker (Kafka 消费)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-02",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "失败重试 3 次;DLQ 兜底" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "链上验证 API (< 2秒)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-02",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "验证接口 P95 < 2s" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "DID 服务后端 (4 API)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "did"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-02",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "创建/查询/验证/吊销 4 API" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "DID 客户端 SDK (NPM)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "did"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-09",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "NPM 包发布;3 种使用方式" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "多端验证 (手机/邮箱/指纹/人脸)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "did"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-09",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "4 种验证全通;识别率 > 99%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "存证管理 UI (列表/详情/搜索)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-09",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Web 页面;列表/详情/搜索/导出" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "存证接口测试 (50+ 用例)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-09",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "100% 通过;覆盖率 ≥ 80%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "链上数据浏览器 (可视化)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "blockchain"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-09",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "交易可追溯;区块可视化" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "抖音开放平台接入",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-16",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "视频/评论/达人数据采集" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "小红书接入",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-16",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "笔记/评论采集" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "TikTok Research API 接入",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-16",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "海外数据采集" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Instagram Graph API 接入",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-16",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "帖子/Story 采集" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "YouTube Data API 接入",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-16",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "视频/频道采集" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Kafka → Flink 流处理 (5分钟延迟)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-23",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "实时清洗;端到端 < 5min" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "获客看板后端 REST API (50+ 接口)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-23",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "50+ 接口;OpenAPI 文档" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "获客看板 UI (10+ 图表)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-30",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "10+ 图表 (ECharts);响应式" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "达人 AI 评估模型 (评分排序)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-30",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "准确率 > 80%;Top 100 排序" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "AI 策略推荐引擎 (Top 5)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-30",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "5 个策略 + ROI 预测" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "多平台内容生成 AI (3 平台文案)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "acquisition"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-10-30",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "抖音/小红书/视频号 3 平台适配" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "Web 管理后台基础 (20+ 页面)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "admin"],
+        "customfield_story_points": 10,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-20",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "智能体/工作流/BPM 三模块 20 页面" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "区块链管理 UI (6 页面)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "admin"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-06",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "存证/查询/统计/浏览器/节点/凭证" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "AI 获客管理 UI (8 页面)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "admin"],
+        "customfield_story_points": 5,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-13",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "看板/达人/策略/内容/投放/ROI 8 页面" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "系统管理 UI (用户/角色/审计)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "admin"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-06",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "6 页面: 用户/角色/权限/审计/通知/配置" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "数据分析仪表板 (7+ 图表)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "admin"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-06",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "7+ 图表 (ECharts);下钻支持" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "飞书机器人 (10+ 指令)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "bot"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-13",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "通知/查询/审批 10+ 指令" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "钉钉机器人 (10+ 指令)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "bot"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-13",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "同飞书 10+ 指令" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "移动 App (iOS + Android React Native)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "mobile"],
+        "customfield_story_points": 10,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-20",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "20+ 页面;2 端上架" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "微信小程序 (10+ 页面)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "frontend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-3", "mobile"],
+        "customfield_story_points": 5,
+        "customfield_epic_link": "EPIC-3",
+        "duedate": "2026-11-20",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "简易版管理;10+ 页面;发布" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "单元测试覆盖率提升 (≥ 70%)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "test"],
+        "customfield_story_points": 5,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-11-27",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Jest/Vitest 覆盖率 ≥ 70%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "集成测试 (200+ 用例)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "test"],
+        "customfield_story_points": 5,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-11-27",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "200+ 用例;100% 通过" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "E2E 测试 (Playwright 50+ 场景)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "test"],
+        "customfield_story_points": 5,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "50+ 场景;关键流程 100%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "安全审计 (SAST SonarQube)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "security" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "security"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-11-27",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "0 高危漏洞;中危 < 5" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "渗透测试",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "security" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "security"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "渗透测试报告;修复所有中危" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "OWASP Top 10 检查",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "security" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "security"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-04",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "10 项检查全通过" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "50 并发压测 (复测)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "perf"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "50 并发稳定 1h;零故障" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "100 并发压测",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "perf"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-11",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "100 并发 30min 稳定" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "1000 并发压测 (峰值)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "perf"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-18",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "1000 并发系统不崩" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "72 小时稳定性测试",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "perf"],
+        "customfield_story_points": 9,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-18",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "0 故障;P95 < 500ms;可用性 99.99%" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "灰度发布 (10% → 50% → 100%)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "release"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-18",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "无回滚;灰度报告" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "性能调优 (最终冲刺)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "perf"],
+        "customfield_story_points": 4,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-25",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "P95 < 500ms;10+ 优化点" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "项目文档定稿 (用户/运维/API)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "pm" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "doc"],
+        "customfield_story_points": 3,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-25",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "3 套文档完成;PDF + 在线" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "灾备演练 (主备切换)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "dr"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-18",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "RTO < 5min;RPO < 1min" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "浏览器与设备兼容性测试",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "qa" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-4", "test"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-4",
+        "duedate": "2026-12-18",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "Chrome/Safari/Edge + 5 设备" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "生产环境部署 (蓝绿)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "deploy"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "生产环境就位;DNS 切换" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "7x24 监控值守 (On-Call 排班)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "oncall"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "排班表;5min 响应" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "故障响应 (MTTR < 30min)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "incident"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "MTTR < 30min;复盘报告" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "月度健康检查 (8h/月)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "sre" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "health"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "月度健康报告;KPI 达成" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "用户培训 (视频+文档)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "product" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "training"],
+        "customfield_story_points": 2,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-08",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "10+ 培训视频;10+ 用户" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "客服支持 (工单系统)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "support" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "support"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "工单系统;首响 < 1h" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "持续性能优化 (每周)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "perf"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "每周 1+ 优化项" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "新功能开发 (每 2 周)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "backend" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "feature"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "每 2 周一个迭代版本" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "安全更新 (每月)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "security" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "security"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "CVE 24h 修复" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "数据备份验证 (8h/月)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P0" },
+        "assignee": { "name": "ops" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "backup"],
+        "customfield_story_points": 1,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "备份报告;RPO < 5min" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "客户增长运营 (拉新/留存)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P1" },
+        "assignee": { "name": "product" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "growth"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "月活增长 20%+" }] }
+          ]
+        }
+      }
+    },
+    {
+      "fields": {
+        "project": { "key": "AIP" },
+        "summary": "数据分析报告 (周/月)",
+        "issuetype": { "name": "Story" },
+        "priority": { "name": "P2" },
+        "assignee": { "name": "data" },
+        "reporter": { "name": "pm" },
+        "labels": ["stage-5", "report"],
+        "customfield_story_points": null,
+        "customfield_epic_link": "EPIC-5",
+        "duedate": "2027-01-01",
+        "description": {
+          "type": "doc",
+          "version": 1,
+          "content": [
+            { "type": "paragraph", "content": [{ "type": "text", "text": "周报/月报自动生成" }] }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -52,6 +52,8 @@ const PageTransition: React.FC<PageTransitionProps> = ({
   children,
   className = '',
 }) => {
+  const transitionKey = React.useId();
+
   // 检测用户是否偏好减少动画
   const [prefersReduced, setPrefersReduced] = React.useState(false);
 
@@ -71,7 +73,7 @@ const PageTransition: React.FC<PageTransitionProps> = ({
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={React.useId()} // 使用 key 强制重新挂载以触发动画
+        key={transitionKey} // 使用稳定 key 强制重新挂载以触发动画
         variants={pageVariants}
         initial="initial"
         animate="animate"

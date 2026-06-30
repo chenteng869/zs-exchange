@@ -1,0 +1,61 @@
+{
+  "protocols": [
+    {
+      "name": "Uniswap V3",
+      "displayName": "Uniswap V3",
+      "category": "Dexes",
+      "slug": "uniswap-v3",
+      "total24h": 1280000000,
+      "change_24h": 5.4,
+      "totalAllTime": 1200000000000,
+      "chains": ["Ethereum", "Arbitrum", "Optimism", "Polygon", "Base"],
+      "chain": "Ethereum",
+      "logo": "https://icons.llama.fi/uniswap.png"
+    },
+    {
+      "name": "PancakeSwap V3",
+      "displayName": "PancakeSwap V3",
+      "category": "Dexes",
+      "slug": "pancakeswap-v3",
+      "total24h": 850000000,
+      "change_24h": -2.1,
+      "totalAllTime": 480000000000,
+      "chains": ["BSC", "Ethereum", "Arbitrum", "Base"],
+      "chain": "BSC"
+    },
+    {
+      "name": "Curve",
+      "displayName": "Curve",
+      "category": "Dexes",
+      "slug": "curve-dex",
+      "total24h": 240000000,
+      "change_24h": 0.3,
+      "totalAllTime": 320000000000,
+      "chains": ["Ethereum", "Arbitrum", "Polygon", "Avalanche"],
+      "chain": "Ethereum"
+    },
+    {
+      "name": "dYdX",
+      "displayName": "dYdX",
+      "category": "Derivatives",
+      "slug": "dydx",
+      "total24h": 720000000,
+      "change_24h": -3.5,
+      "totalAllTime": 1100000000000,
+      "chains": ["Cosmos", "Ethereum"],
+      "chain": "Cosmos"
+    },
+    {
+      "name": "Hyperliquid",
+      "displayName": "Hyperliquid",
+      "category": "Derivatives",
+      "slug": "hyperliquid",
+      "total24h": 1120000000,
+      "change_24h": 12.4,
+      "totalAllTime": 95000000000,
+      "chains": ["Hyperliquid"],
+      "chain": "Hyperliquid"
+    }
+  ],
+  "allChains": ["Ethereum", "BSC", "Arbitrum", "Polygon", "Optimism", "Avalanche", "Base", "Solana", "Hyperliquid"]
+}

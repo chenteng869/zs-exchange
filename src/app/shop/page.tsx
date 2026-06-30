@@ -761,7 +761,7 @@ export default function ShopHomePage() {
                   独创这套酿造工艺。
                 </p>
                 <p style={{ marginBottom: '16px' }}>
-                  我们坚持"古法酿造，陶坛窖藏"的传统工艺，甄选优质糯米、
+                  我们坚持&quot;古法酿造，陶坛窖藏&quot;的传统工艺，甄选优质糯米、
                   红色曲米、山泉水为原料，历经三十六道工序，
                   至少三年窖藏方能出厂。
                 </p>
@@ -873,7 +873,7 @@ export default function ShopHomePage() {
                   fontStyle: 'italic',
                 }}
               >
-                "{reviews[currentReview].content}"
+                &quot;{reviews[currentReview].content}&quot;
               </p>
               <div>
                 <div style={{ fontSize: '16px', fontWeight: 600, color: '#F8FAFC' }}>

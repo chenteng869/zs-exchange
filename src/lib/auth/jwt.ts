@@ -17,12 +17,10 @@
 // 配置
 // ============================================================================
 
-const JWT_SECRET =
-  (typeof process !== 'undefined' && process.env?.JWT_SECRET) ||
-  'zs-exchange-secret-key-change-in-production';
-const JWT_REFRESH_SECRET =
-  (typeof process !== 'undefined' && process.env?.JWT_REFRESH_SECRET) ||
-  'zs-exchange-refresh-secret-change-in-production';
+const DEV_JWT_SECRET = 'zs-exchange-dev-secret-local-only';
+const DEV_JWT_REFRESH_SECRET = 'zs-exchange-dev-refresh-secret-local-only';
+const JWT_ISSUER = 'zs-exchange';
+const JWT_AUDIENCE = 'zs-exchange-api';
 
 const ACCESS_TOKEN_EXPIRES_IN = '15m';
 const REFRESH_TOKEN_EXPIRES_IN = '7d';
@@ -38,7 +36,7 @@ export function setJWTSecret(secret: string): void {
 }
 
 export function getJWTSecret(): string {
-  return CLIENT_JWT_SECRET || JWT_SECRET;
+  return CLIENT_JWT_SECRET || getServerSecret('JWT_SECRET', DEV_JWT_SECRET);
 }
 
 // ============================================================================
@@ -55,6 +53,12 @@ export interface JwtClaims {
   exp?: number;
   iat?: number;
   [key: string]: unknown;
+}
+
+export interface LegacyJwtOptions {
+  expiresIn?: number;
+  issuer?: string;
+  audience?: string;
 }
 
 // ============================================================================
@@ -110,26 +114,97 @@ async function getJose() {
   return jose;
 }
 
+function getJwtSecretForLegacy(secretOverride?: string): string {
+  return secretOverride || getServerSecret('JWT_SECRET', DEV_JWT_SECRET);
+}
+
+function getServerSecret(envName: 'JWT_SECRET' | 'JWT_REFRESH_SECRET', devFallback: string): string {
+  const value = typeof process !== 'undefined' ? process.env?.[envName] : undefined;
+  const isProduction = typeof process !== 'undefined' && process.env?.NODE_ENV === 'production';
+
+  if (!value) {
+    if (isProduction) {
+      throw new Error(`${envName} must be configured in production`);
+    }
+    return devFallback;
+  }
+
+  if (isProduction && isUnsafeProductionSecret(value)) {
+    throw new Error(`${envName} is not strong enough for production`);
+  }
+
+  return value;
+}
+
+function isUnsafeProductionSecret(value: string): boolean {
+  const lower = value.toLowerCase();
+  return (
+    value.length < 32 ||
+    lower.includes('change') ||
+    lower.includes('default') ||
+    lower.includes('secret-key') ||
+    lower.includes('dev') ||
+    lower.includes('local-only')
+  );
+}
+
 // ============================================================================
 // 服务端：生成令牌
 // ============================================================================
 
 export async function generateAccessToken(payload: TokenPayload): Promise<string> {
   const { SignJWT } = await getJose();
-  const secret = new TextEncoder().encode(JWT_SECRET);
+  const secret = new TextEncoder().encode(getServerSecret('JWT_SECRET', DEV_JWT_SECRET));
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(ACCESS_TOKEN_EXPIRES_IN)
     .sign(secret);
 }
 
-export async function generateRefreshToken(payload: TokenPayload): Promise<string> {
+export async function encodeJWT(
+  payload: Record<string, unknown>,
+  options: LegacyJwtOptions = {},
+  secretOverride?: string
+): Promise<string> {
   const { SignJWT } = await getJose();
-  const secret = new TextEncoder().encode(JWT_REFRESH_SECRET);
+  const secret = new TextEncoder().encode(getJwtSecretForLegacy(secretOverride));
+  const expiresIn = options.expiresIn ?? 15 * 60;
+
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
+    .setIssuer(options.issuer || JWT_ISSUER)
+    .setAudience(options.audience || JWT_AUDIENCE)
+    .setExpirationTime(Math.floor(Date.now() / 1000) + expiresIn)
+    .sign(secret);
+}
+
+export async function verifyJWT(
+  token: string,
+  options: LegacyJwtOptions = {},
+  secretOverride?: string
+): Promise<Record<string, unknown>> {
+  const { jwtVerify } = await getJose();
+  const secret = new TextEncoder().encode(getJwtSecretForLegacy(secretOverride));
+  const { payload } = await jwtVerify(token, secret, {
+    algorithms: ['HS256'],
+    issuer: options.issuer,
+    audience: options.audience,
+  });
+  return payload as Record<string, unknown>;
+}
+
+export async function generateRefreshToken(payload: TokenPayload): Promise<string> {
+  const { SignJWT } = await getJose();
+  const secret = new TextEncoder().encode(getServerSecret('JWT_REFRESH_SECRET', DEV_JWT_REFRESH_SECRET));
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(REFRESH_TOKEN_EXPIRES_IN)
     .sign(secret);
 }
@@ -154,8 +229,12 @@ export async function generateTokenPair(payload: TokenPayload) {
 export async function verifyToken(token: string): Promise<TokenPayload | null> {
   try {
     const { jwtVerify } = await getJose();
-    const secret = new TextEncoder().encode(JWT_SECRET);
-    const { payload } = await jwtVerify(token, secret);
+    const secret = new TextEncoder().encode(getServerSecret('JWT_SECRET', DEV_JWT_SECRET));
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
     return payload as unknown as TokenPayload;
   } catch {
     return null;
@@ -165,8 +244,12 @@ export async function verifyToken(token: string): Promise<TokenPayload | null> {
 export async function verifyRefreshToken(token: string): Promise<TokenPayload | null> {
   try {
     const { jwtVerify } = await getJose();
-    const secret = new TextEncoder().encode(JWT_REFRESH_SECRET);
-    const { payload } = await jwtVerify(token, secret);
+    const secret = new TextEncoder().encode(getServerSecret('JWT_REFRESH_SECRET', DEV_JWT_REFRESH_SECRET));
+    const { payload } = await jwtVerify(token, secret, {
+      algorithms: ['HS256'],
+      issuer: JWT_ISSUER,
+      audience: JWT_AUDIENCE,
+    });
     return payload as unknown as TokenPayload;
   } catch {
     return null;
@@ -198,11 +281,15 @@ export async function refreshJWT(
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
+    .setIssuer(JWT_ISSUER)
+    .setAudience(JWT_AUDIENCE)
     .setExpirationTime(expirationTime)
     .sign(secret);
 }
 
 export default {
+  encodeJWT,
+  verifyJWT,
   setJWTSecret,
   getJWTSecret,
   decodeJWT,

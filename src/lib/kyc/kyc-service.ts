@@ -582,10 +582,10 @@ const maskIdNumberForDisplay = (id: string): string => {
 // 内部使用 decryptPII（不导出）以避免循环依赖 + 严格控制 API
 const decryptPIIHelper = (ciphertext: string, key: Buffer | Uint8Array | string): string => {
   // 同步解密（Node 路径）
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const nodeCrypto = require('crypto') as typeof import('crypto');
   // 解包
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const cryptoMod = require('@/lib/auth/crypto') as typeof import('@/lib/auth/crypto');
   const bytes = cryptoMod.base64UrlDecode(ciphertext);
   const iv = Buffer.from(bytes.slice(0, 12));

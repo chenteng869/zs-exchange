@@ -407,6 +407,77 @@ export class SkipListOrderBook {
   // -------------------------------------------------------------------------
 
   /**
+   * 兼容旧接口：快速添加限价单
+   */
+  addLimitOrder(orderId: string, side: OrderSide, price: string, quantity: string): {
+    fills: MatchTrade[];
+    filledQty: string;
+    leavesQty: string;
+  } {
+    const order: SkipListOrder = {
+      id: orderId,
+      userId: 'legacy-user',
+      symbol: this.symbol,
+      side,
+      type: 'limit',
+      price,
+      quantity,
+      filledQuantity: '0',
+      remainingQuantity: quantity,
+      status: 'open',
+      timeInForce: 'GTC',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const result = side === 'buy' ? this.matchLimitBuy(order) : this.matchLimitSell(order);
+    return {
+      fills: result.trades,
+      filledQty: result.filledQuantity,
+      leavesQty: result.remainingQuantity,
+    };
+  }
+
+  /**
+   * 兼容旧接口：取消订单
+   */
+  cancelOrder(orderId: string): boolean {
+    return this.removeOrder(orderId) !== null;
+  }
+
+  /**
+   * 兼容旧接口：市价单撮合
+   */
+  matchMarketOrder(side: OrderSide, quantity: string): {
+    fills: MatchTrade[];
+    filledQty: string;
+    leavesQty: string;
+  } {
+    const order: SkipListOrder = {
+      id: `mkt-${Date.now()}`,
+      userId: 'legacy-user',
+      symbol: this.symbol,
+      side,
+      type: 'market',
+      price: side === 'buy' ? '999999999' : '0',
+      quantity,
+      filledQuantity: '0',
+      remainingQuantity: quantity,
+      status: 'open',
+      timeInForce: 'IOC',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    const result = side === 'buy' ? this.matchMarketBuy(order) : this.matchMarketSell(order);
+    return {
+      fills: result.trades,
+      filledQty: result.filledQuantity,
+      leavesQty: result.remainingQuantity,
+    };
+  }
+
+  /**
    * 添加订单到订单簿
    */
   addOrder(order: SkipListOrder): void {
@@ -966,17 +1037,29 @@ export class SkipListOrderBook {
   /**
    * 获取最佳买价
    */
-  getBestBid(): string | null {
+  getBestBid(): { price: string; quantity: string; orderCount: number } | null {
     const best = this.bids.last();
-    return best ? best.level.price : null;
+    return best
+      ? {
+        price: best.level.price,
+        quantity: best.level.totalQuantity,
+        orderCount: best.level.orderCount,
+      }
+      : null;
   }
 
   /**
    * 获取最佳卖价
    */
-  getBestAsk(): string | null {
+  getBestAsk(): { price: string; quantity: string; orderCount: number } | null {
     const best = this.asks.first();
-    return best ? best.level.price : null;
+    return best
+      ? {
+        price: best.level.price,
+        quantity: best.level.totalQuantity,
+        orderCount: best.level.orderCount,
+      }
+      : null;
   }
 
   /**
@@ -1002,7 +1085,7 @@ export class SkipListOrderBook {
     const bestBid = this.getBestBid();
     const bestAsk = this.getBestAsk();
     if (!bestBid || !bestAsk) return null;
-    return decTruncate(decDiv(decAdd(bestBid, bestAsk), '2', 10), 10);
+    return decTruncate(decDiv(decAdd(bestBid.price, bestAsk.price), '2', 10), 10);
   }
 
   /**
@@ -1016,31 +1099,37 @@ export class SkipListOrderBook {
    * 获取订单簿深度（指定档位数量）
    */
   getDepth(levels: number = 20): {
-    bids: Array<{ price: string; quantity: string; orderCount: number }>;
-    asks: Array<{ price: string; quantity: string; orderCount: number }>;
+    bids: Array<{ price: string; quantity: string; orderCount: number } | [string, string, string]>;
+    asks: Array<{ price: string; quantity: string; orderCount: number } | [string, string, string]>;
   } {
-    const bidLevels: Array<{ price: string; quantity: string; orderCount: number }> = [];
-    const askLevels: Array<{ price: string; quantity: string; orderCount: number }> = [];
+    const bidLevels: Array<[string, string, string]> = [];
+    const askLevels: Array<[string, string, string]> = [];
 
     let bidCount = 0;
     this.bids.forEachReverse((node) => {
       if (bidCount >= levels) return;
-      bidLevels.push({
-        price: node.level.price,
-        quantity: node.level.totalQuantity,
-        orderCount: node.level.orderCount,
-      });
+      const cumulative = bidLevels.length > 0
+        ? decAdd(bidLevels[bidLevels.length - 1][2], node.level.totalQuantity)
+        : node.level.totalQuantity;
+      bidLevels.push([
+        node.level.price,
+        node.level.totalQuantity,
+        cumulative,
+      ]);
       bidCount++;
     });
 
     let askCount = 0;
     this.asks.forEach((node) => {
       if (askCount >= levels) return;
-      askLevels.push({
-        price: node.level.price,
-        quantity: node.level.totalQuantity,
-        orderCount: node.level.orderCount,
-      });
+      const cumulative = askLevels.length > 0
+        ? decAdd(askLevels[askLevels.length - 1][2], node.level.totalQuantity)
+        : node.level.totalQuantity;
+      askLevels.push([
+        node.level.price,
+        node.level.totalQuantity,
+        cumulative,
+      ]);
       askCount++;
     });
 
@@ -1052,10 +1141,20 @@ export class SkipListOrderBook {
    */
   getSnapshot(levels: number = 100): OrderBookSnapshot {
     const depth = this.getDepth(levels);
+    const toObj = (entry: { price: string; quantity: string; orderCount: number } | [string, string, string]) => {
+      if (Array.isArray(entry)) {
+        return {
+          price: entry[0],
+          quantity: entry[1],
+          orderCount: 0,
+        };
+      }
+      return entry;
+    };
     return {
       symbol: this.symbol,
-      bids: depth.bids,
-      asks: depth.asks,
+      bids: depth.bids.map(toObj),
+      asks: depth.asks.map(toObj),
       lastUpdateId: this.updateId,
       timestamp: Date.now(),
     };

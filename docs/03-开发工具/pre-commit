@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# =============================================================
+# Git pre-commit hook: 检查代码质量（可选）
+# =============================================================
+# 在 commit 前运行 codegraph_affected 检测受影响的测试
+# 如果没有测试覆盖率，警告但不阻断
+# =============================================================
+
+set -e
+
+REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null)
+cd "$REPO_ROOT"
+
+# 仅在添加/修改的文件上运行
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts|tsx|js|jsx)$' || true)
+
+if [ -z "$STAGED_FILES" ]; then
+  exit 0
+fi
+
+# 检查 .codegraph 是否存在
+if [ ! -d ".codegraph" ]; then
+  exit 0
+fi
+
+echo "[CodeGraph] 检查 $(( $(echo "$STAGED_FILES" | wc -l) )) 个暂存文件的影响范围..."
+
+# 检测受影响的测试
+if command -v codegraph >/dev/null 2>&1; then
+  AFFECTED=$(codegraph affected $STAGED_FILES 2>&1 || true)
+  
+  if echo "$AFFECTED" | grep -q "No test files affected"; then
+    echo "[CodeGraph !] 警告: 没有找到覆盖受影响代码的测试"
+    echo "[CodeGraph !] 建议: 添加单元测试后再提交"
+    # 不阻断（很多项目还在补测试中）
+  elif echo "$AFFECTED" | grep -q "tests"; then
+    echo "[CodeGraph ✓] 已找到需要运行的测试"
+    echo "$AFFECTED" | head -5
+  fi
+fi
+
+exit 0

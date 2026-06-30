@@ -310,20 +310,23 @@ export class AdvancedLiquidationEngine {
     _contract: Contract,
     mmr: number
   ): string {
+    const leverage = Number(position.leverage);
     return this.calculator.calculateLiquidationPrice(
       position.side,
       position.entryPrice,
-      position.leverage,
+      leverage,
       mmr,
       position.marginMode
     );
   }
 
   private calculatePositionBankruptcyPrice(position: Position): string {
+    const leverage = Number(position.leverage);
     return this.calculator.calculateBankruptcyPrice(
       position.side,
       position.entryPrice,
-      position.leverage,
+      leverage,
+      0,
       position.marginMode
     );
   }

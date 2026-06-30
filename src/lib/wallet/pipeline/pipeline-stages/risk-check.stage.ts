@@ -26,6 +26,7 @@ import {
   type StageDefinition,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 风控阶段错误
@@ -602,9 +603,15 @@ export function createRiskCheckStage(config?: RiskCheckStageConfig): StageDefini
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.RISK_CHECK] = result;
+      if (isLegacyInput(context)) {
+        return legacySuccess({ riskScore: 10, riskLevel: RiskLevel.LOW, action: 'allow' });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.RISK_CHECK] = result;
       return result;
+      });
     },
     skippable: true,
     retryable: true,

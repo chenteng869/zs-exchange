@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi, mock } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { addressBlacklistRule } from '../../risk-engine/risk-rules/address-blacklist.rule';
 import { contractBlacklistRule } from '../../risk-engine/risk-rules/contract-blacklist.rule';
 import { largeTransferRule } from '../../risk-engine/risk-rules/large-transfer.rule';
@@ -30,7 +30,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Address Blacklist Rule - 地址黑名单规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(addressBlacklistRule.ruleCode).toBe('address-blacklist');
+      expect(addressBlacklistRule.ruleCode).toBe('ADDRESS_BLACKLIST');
     });
 
     it('应该具有正确的规则名称', () => {
@@ -38,12 +38,11 @@ describe('Risk Rules - 风控规则', () => {
     });
 
     it('黑名单地址应该匹配规则', async () => {
-      const { blacklistService } = require('../../risk-engine/blacklist.service');
-      blacklistService.isAddressBlacklisted.mockReturnValue(true);
+      addressBlacklistRule.addAddress('0x' + 'b'.repeat(40), 'test-blacklist');
 
       const result = await addressBlacklistRule.evaluate({
         ...defaultContext,
-        toAddress: '0x' + 'b'.repeat(40),
+        transaction: { to: '0x' + 'b'.repeat(40) },
       });
 
       expect(result.matched).toBe(true);
@@ -51,12 +50,9 @@ describe('Risk Rules - 风控规则', () => {
     });
 
     it('非黑名单地址不应该匹配规则', async () => {
-      const { blacklistService } = require('../../risk-engine/blacklist.service');
-      blacklistService.isAddressBlacklisted.mockReturnValue(false);
-
       const result = await addressBlacklistRule.evaluate({
         ...defaultContext,
-        toAddress: '0x' + 'c'.repeat(40),
+        transaction: { to: '0x' + 'c'.repeat(40) },
       });
 
       expect(result.matched).toBe(false);
@@ -70,16 +66,15 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Contract Blacklist Rule - 合约黑名单规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(contractBlacklistRule.ruleCode).toBe('contract-blacklist');
+      expect(contractBlacklistRule.ruleCode).toBe('CONTRACT_BLACKLIST');
     });
 
     it('黑名单合约应该匹配规则', async () => {
-      const { blacklistService } = require('../../risk-engine/blacklist.service');
-      blacklistService.isContractBlacklisted.mockReturnValue(true);
+      contractBlacklistRule.addContract('0x' + 'c'.repeat(40), 'test-contract-blacklist');
 
       const result = await contractBlacklistRule.evaluate({
         ...defaultContext,
-        contractAddress: '0x' + 'c'.repeat(40),
+        transaction: { contractAddress: '0x' + 'c'.repeat(40) },
       });
 
       expect(result.matched).toBe(true);
@@ -87,12 +82,9 @@ describe('Risk Rules - 风控规则', () => {
     });
 
     it('非黑名单合约不应该匹配规则', async () => {
-      const { blacklistService } = require('../../risk-engine/blacklist.service');
-      blacklistService.isContractBlacklisted.mockReturnValue(false);
-
       const result = await contractBlacklistRule.evaluate({
         ...defaultContext,
-        contractAddress: '0x' + 'd'.repeat(40),
+        transaction: { contractAddress: '0x' + 'd'.repeat(40) },
       });
 
       expect(result.matched).toBe(false);
@@ -101,7 +93,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Large Transfer Rule - 大额转账规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(largeTransferRule.ruleCode).toBe('large-transfer');
+      expect(largeTransferRule.ruleCode).toBe('LARGE_TRANSFER');
     });
 
     it('大额转账应该匹配规则', async () => {
@@ -131,14 +123,14 @@ describe('Risk Rules - 风控规则', () => {
     });
 
     it('应该支持配置大额阈值', () => {
-      largeTransferRule.configure({ threshold: '5000' });
-      expect(largeTransferRule.parameters?.threshold).toBeDefined();
+      largeTransferRule.setThreshold(ChainType.EVM, '5000');
+      expect(largeTransferRule.getThreshold(ChainType.EVM)).toBe('5000');
     });
   });
 
   describe('Unlimited Approval Rule - 无限授权规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(unlimitedApprovalRule.ruleCode).toBe('unlimited-approval');
+      expect(unlimitedApprovalRule.ruleCode).toBe('UNLIMITED_APPROVAL');
     });
 
     it('无限授权应该匹配规则', async () => {
@@ -178,7 +170,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('New Address Rule - 新地址规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(newAddressRule.ruleCode).toBe('new-address');
+      expect(newAddressRule.ruleCode).toBe('NEW_ADDRESS');
     });
 
     it('新地址转账应该匹配规则', async () => {
@@ -209,7 +201,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Frequent Transactions Rule - 高频交易规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(frequentTransactionsRule.ruleCode).toBe('frequent-transactions');
+      expect(frequentTransactionsRule.ruleCode).toBe('FREQUENT_TRANSACTIONS');
     });
 
     it('高频交易应该匹配规则', async () => {
@@ -233,7 +225,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Suspicious Contract Rule - 可疑合约规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(suspiciousContractRule.ruleCode).toBe('suspicious-contract');
+      expect(suspiciousContractRule.ruleCode).toBe('SUSPICIOUS_CONTRACT');
     });
 
     it('可疑合约交互应该匹配规则', async () => {
@@ -259,7 +251,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Zero Value Transfer Rule - 零值转账规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(zeroValueTransferRule.ruleCode).toBe('zero-value-transfer');
+      expect(zeroValueTransferRule.ruleCode).toBe('ZERO_VALUE_TRANSFER');
     });
 
     it('零值转账应该匹配规则', async () => {
@@ -285,7 +277,7 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('NFT Approval Rule - NFT 授权规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(nftApprovalRule.ruleCode).toBe('nft-approval');
+      expect(nftApprovalRule.ruleCode).toBe('NFT_APPROVAL_FOR_ALL');
     });
 
     it('NFT 批量授权应该匹配规则', async () => {
@@ -313,16 +305,15 @@ describe('Risk Rules - 风控规则', () => {
 
   describe('Phishing Domain Rule - 钓鱼域名规则', () => {
     it('应该具有正确的规则代码', () => {
-      expect(phishingDomainRule.ruleCode).toBe('phishing-domain');
+      expect(phishingDomainRule.ruleCode).toBe('PHISHING_DOMAIN');
     });
 
     it('钓鱼域名应该匹配规则', async () => {
-      const { blacklistService } = require('../../risk-engine/blacklist.service');
-      blacklistService.isDomainBlacklisted.mockReturnValue(true);
+      phishingDomainRule.addPhishingDomain('evil-phishing.com', 'test-phishing');
 
       const result = await phishingDomainRule.evaluate({
         ...defaultContext,
-        dappDomain: 'evil-phishing.com',
+        dapp: { domain: 'evil-phishing.com', url: 'https://evil-phishing.com' },
       });
 
       expect(result.matched).toBe(true);
@@ -330,12 +321,9 @@ describe('Risk Rules - 风控规则', () => {
     });
 
     it('正常域名不应该匹配规则', async () => {
-      const { blacklistService } = require('../../risk-engine/blacklist.service');
-      blacklistService.isDomainBlacklisted.mockReturnValue(false);
-
       const result = await phishingDomainRule.evaluate({
         ...defaultContext,
-        dappDomain: 'safe-dapp.com',
+        dapp: { domain: 'safe-dapp.com', url: 'https://safe-dapp.com' },
       });
 
       expect(result.matched).toBe(false);

@@ -1,0 +1,72 @@
+{{- if .Values.autoscaling.enabled -}}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "zs-ai-platform.fullname" . }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+  {{- if .Values.autoscaling.behavior }}
+  behavior:
+    {{- toYaml .Values.autoscaling.behavior | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.verticalPodAutoscaler.enabled -}}
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "zs-ai-platform.fullname" . }}
+  updatePolicy:
+    updateMode: {{ .Values.verticalPodAutoscaler.updateMode }}
+  resourcePolicy:
+    {{- toYaml .Values.verticalPodAutoscaler.resourcePolicy | nindent 4 }}
+{{- end }}
+
+{{- if .Values.podDisruptionBudget.enabled -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.podDisruptionBudget.minAvailable }}
+  minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
+  {{- else if .Values.podDisruptionBudget.maxUnavailable }}
+  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "zs-ai-platform.selectorLabels" . | nindent 6 }}
+{{- end }}

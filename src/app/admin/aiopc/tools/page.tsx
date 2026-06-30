@@ -249,10 +249,10 @@ export default function AiopcToolsPage() {
                   >
                     立即使用
                   </Button>,
-                  <Tooltip title="查看文档">
+                  <Tooltip key="doc-tip" title="查看文档">
                     <Button key="doc" size="small" icon={<FileSearchOutlined />} type="text" />
                   </Tooltip>,
-                  <Tooltip title="API接入">
+                  <Tooltip key="api-tip" title="API接入">
                     <Button key="api" size="small" icon={<ApiOutlined />} type="text" />
                   </Tooltip>,
                 ]}

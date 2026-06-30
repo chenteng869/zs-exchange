@@ -21,7 +21,7 @@ import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
 import { Button, Badge, Modal, Card } from '@/components/ui';
 import Table from '@/components/ui/Table';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line
 const T: any = Table;
 import { fadeInUp, staggerContainer, staggerItem, hoverLift } from '@/lib/animations';
 

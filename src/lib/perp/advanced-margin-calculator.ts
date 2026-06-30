@@ -140,8 +140,8 @@ const DEFAULT_MARGIN_TIERS: MarginTier[] = [
   { name: 'Tier 3', minNotional: '250000', maxNotional: '1000000', initialMarginRate: 0.05, maintenanceMarginRate: 0.025, maxLeverage: 20 },
   { name: 'Tier 4', minNotional: '1000000', maxNotional: '5000000', initialMarginRate: 0.1, maintenanceMarginRate: 0.05, maxLeverage: 10 },
   { name: 'Tier 5', minNotional: '5000000', maxNotional: '20000000', initialMarginRate: 0.2, maintenanceMarginRate: 0.1, maxLeverage: 5 },
-  { name: 'Tier 6', minNotional: '20000000', maxNotional: '100000000', initialMarginRate: 0.333, maintenanceMarginRate: 0.167, maxLeverage: 3 },
-  { name: 'Tier 7', minNotional: '100000000', maxNotional: '10000000000', initialMarginRate: 0.5, maintenanceMarginRate: 0.25, maxLeverage: 2 },
+  { name: 'Tier 6', minNotional: '20000000', maxNotional: '50000000', initialMarginRate: 0.333, maintenanceMarginRate: 0.167, maxLeverage: 3 },
+  { name: 'Tier 7', minNotional: '50000000', maxNotional: '10000000000', initialMarginRate: 0.5, maintenanceMarginRate: 0.25, maxLeverage: 2 },
 ];
 
 // ============================================================================
@@ -185,7 +185,7 @@ export class AdvancedMarginCalculator {
    */
   calculateInitialMargin(notional: string, leverage: number): string {
     const rate = 1 / leverage;
-    return decTruncate(decMul(notional, String(rate)), 8);
+    return toFixedScale(decTruncate(decMul(notional, String(rate)), 8), 8);
   }
 
   /**
@@ -195,7 +195,7 @@ export class AdvancedMarginCalculator {
   calculateMaintenanceMargin(notional: string, leverage: number): string {
     const tier = this.getMarginTier(notional);
     const mmr = Math.min(tier.maintenanceMarginRate, 1 / leverage);
-    return decTruncate(decMul(notional, String(mmr)), 8);
+    return toFixedScale(decTruncate(decMul(notional, String(mmr)), 8), 8);
   }
 
   /**
@@ -471,15 +471,15 @@ export class AdvancedMarginCalculator {
     const ratioNum = parseFloat(marginRatio);
     const mmrNum = mmr;
 
-    if (ratioNum < mmrNum) {
+    if (ratioNum <= mmrNum) {
       return 'liquidation';
-    } else if (ratioNum < mmrNum * 1.05) {
+    } else if (ratioNum <= mmrNum * 1.05) {
       return 'dangerous';
-    } else if (ratioNum < mmrNum * 1.2) {
+    } else if (ratioNum <= mmrNum * 1.2) {
       return 'high';
-    } else if (ratioNum < mmrNum * 1.5) {
+    } else if (ratioNum <= mmrNum * 1.5) {
       return 'medium';
-    } else if (ratioNum < mmrNum * 2) {
+    } else if (ratioNum <= mmrNum * 2) {
       return 'low';
     } else {
       return 'safe';
@@ -716,4 +716,12 @@ function decNeg(value: string): string {
     return value.substring(1);
   }
   return `-${value}`;
+}
+
+function toFixedScale(value: string, scale: number): string {
+  const negative = value.startsWith('-');
+  const raw = negative ? value.slice(1) : value;
+  const [intPart, fracPart = ''] = raw.split('.');
+  const fixed = `${intPart}.${fracPart.padEnd(scale, '0').slice(0, scale)}`;
+  return negative ? `-${fixed}` : fixed;
 }

@@ -120,8 +120,8 @@ export default function AnimePage() {
             <Card>
               <List dataSource={episodes} renderItem={(episode) => (
                 <List.Item actions={[
-                  <Button type="link" icon={<PlayCircleOutlined />}>播放</Button>,
-                  <Button type="link" icon={<HeartOutlined />}>收藏</Button>,
+                  <Button key="play" type="link" icon={<PlayCircleOutlined />}>播放</Button>,
+                  <Button key="fav" type="link" icon={<HeartOutlined />}>收藏</Button>,
                 ]}>
                   <div className="font-bold">{episode.title}</div>
                   <div className="flex items-center gap-4">

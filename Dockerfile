@@ -7,12 +7,21 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+RUN apk add --no-cache libc6-compat python3 make g++
+
 COPY package.json package-lock.json* ./
-RUN npm ci --no-audit --no-fund
+
+RUN if [ -f package-lock.json ]; then \
+      npm ci --no-audit --no-fund --prefer-offline; \
+    else \
+      npm install --no-audit --no-fund --prefer-offline; \
+    fi
 
 # --- 阶段 2: 构建 ---
 FROM node:20-alpine AS builder
 WORKDIR /app
+
+RUN apk add --no-cache libc6-compat python3 make g++
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .

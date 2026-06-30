@@ -1,0 +1,22 @@
+# Claude Desktop MCP 配置文件
+#
+# 位置:
+#   Windows: %APPDATA%\Claude\claude_desktop_config.json
+#   macOS:   ~/Library/Application Support/Claude/claude_desktop_config.json
+#
+# 复制本文件内容到上述位置即可启用
+
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "codegraph",
+      "args": [
+        "serve",
+        "--mcp",
+        "--path",
+        "D:\\3、系统项目开发\\trae_projects\\Stock Exchange dapp20260608-01"
+      ],
+      "description": "中萨数字科技交易所 - CodeGraph 代码智能"
+    }
+  }
+}

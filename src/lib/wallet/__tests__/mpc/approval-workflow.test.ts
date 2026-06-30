@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi, mock } from 'vitest';
 import { ApprovalWorkflow, ApprovalStatus, ApprovalType } from '../../mpc/approval-workflow';
 import { ChainType } from '../../mpc/mpc.types';
+import { auditService } from '../../audit/audit.service';
+import { notificationService } from '../../mpc/notification.service';
 
 vi.mock('../../mpc/policy-engine', () => ({
   policyEngine: {
@@ -96,8 +98,6 @@ describe('ApprovalWorkflow - 审批工作流', () => {
         title: '测试',
         requiredApprovals: 1,
       });
-
-      const { auditService } = require('../../audit/audit.service');
       expect(auditService.recordEvent).toHaveBeenCalled();
     });
 
@@ -110,8 +110,6 @@ describe('ApprovalWorkflow - 审批工作流', () => {
         title: '测试',
         requiredApprovals: 1,
       });
-
-      const { notificationService } = require('../../mpc/notification.service');
       expect(notificationService.sendNotification).toHaveBeenCalled();
     });
   });

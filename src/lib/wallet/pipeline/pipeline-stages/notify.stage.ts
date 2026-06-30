@@ -24,6 +24,7 @@ import {
   type StageDefinition,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 通知阶段错误
@@ -542,9 +543,19 @@ export function createNotifyStage(config?: NotifyStageConfig): StageDefinition {
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.NOTIFY] = result;
+      if (isLegacyInput(context)) {
+        return legacySuccess({
+          sent: true,
+          notified: true,
+          channels: ['in-app'],
+        });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.NOTIFY] = result;
       return result;
+      });
     },
     skippable: true,
     retryable: true,

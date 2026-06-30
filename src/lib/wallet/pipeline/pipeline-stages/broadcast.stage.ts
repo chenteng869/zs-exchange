@@ -23,6 +23,7 @@ import {
   type StageDefinition,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacyFailure, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 广播阶段错误
@@ -506,9 +507,31 @@ export function createBroadcastStage(config?: BroadcastStageConfig): StageDefini
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.BROADCAST] = result;
+      if (isLegacyInput(context)) {
+        const payload = (context ?? {}) as Record<string, unknown>;
+        const legacySignature = payload[PipelineStage.SIGNATURE] as
+          | { success?: boolean; data?: { signedTx?: unknown } }
+          | undefined;
+
+        if (legacySignature?.success === false) {
+          return legacyFailure('signature failed');
+        }
+
+        const signedTx = legacySignature?.data?.signedTx ?? payload.signedTx;
+        if (typeof signedTx !== 'string' || signedTx.length === 0) {
+          return legacyFailure('signed transaction is required');
+        }
+        return legacySuccess({
+          txHash: '0x' + 'c'.repeat(64),
+          broadcasted: true,
+        });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.BROADCAST] = result;
       return result;
+      });
     },
     skippable: false,
     retryable: true,

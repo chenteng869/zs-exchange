@@ -75,7 +75,18 @@ function align(a: string, b: string): { a: bigint; b: bigint; scale: bigint } {
 /** 加法 a + b。 */
 export function decAdd(a: string, b: string): string {
   const { a: av, b: bv, scale } = align(a, b);
-  return toString(av + bv, scale);
+  const resultScale = scale > 18n ? scale : 18n;
+  const factor = resultScale - scale;
+  const result = toString((av + bv) * TEN ** factor, resultScale);
+  if (scale === 0n && !a.includes('.') && !b.includes('.')) {
+    return result.split('.')[0];
+  }
+  if (result.includes('.')) {
+    const [intPart, fracPart] = result.split('.');
+    const padding = '0'.repeat(18 - fracPart.length);
+    return intPart + '.' + fracPart + padding;
+  }
+  return result + '.000000000000000000';
 }
 
 /** 减法 a - b。 */
@@ -187,7 +198,11 @@ export function decMultipleOf(value: string, step: string): boolean {
 /** 把数值截断为 N 位小数后去掉尾随零，便于规范化存储。 */
 export function decNormalize(value: string, decimals?: number): string {
   const v = decimals !== undefined ? decTruncate(value, decimals) : value;
-  // 去尾随零
-  if (!v.includes('.')) return v;
-  return v.replace(/0+$/, '').replace(/\.$/, '');
+  let trimmed = v.replace(/^-?0+(\d)/, '$1');
+  if (trimmed.includes('.')) {
+    trimmed = trimmed.replace(/0+$/, '').replace(/\.$/, '');
+  }
+  if (trimmed === '') return '0';
+  if (trimmed === '-') return '0';
+  return trimmed;
 }

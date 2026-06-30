@@ -1,0 +1,136 @@
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿Issue ID,Issue Type,Summary,Description,Priority,Assignee,Reporter,Labels,Sprint,Story Points,Epic Link,Component,Due Date
+EPIC-0,Epic,"阶段0: 项目准备 (W1)","立项 / 采购 / 团队组建 / 章程签字",P0,PM,PM,"stage-0,preparation","Sprint 1",,EPIC-0,通用,W1
+EPIC-1,Epic,"阶段1: 基础平台 (W2-W7)","K8s + 9 中间件 + 监控告警",P0,运维,PM,"stage-1,infra","Sprint 2-7",,EPIC-1,基础设施,W7
+EPIC-2,Epic,"阶段2: 核心引擎 (W8-W13)","n8n + OpenClaw + AI + BPM",P0,架构师,PM,"stage-2,engine","Sprint 8-13",,EPIC-2,n8n,W13
+EPIC-3,Epic,"阶段3: 业务模块 (W14-W21)","区块链 + DID + AI 获客 + 后台 + 移动",P0,后端,PM,"stage-3,business","Sprint 14-21",,EPIC-3,区块链,W21
+EPIC-4,Epic,"阶段4: 性能与稳定性 (W22-W25)","压测 / 72h / 灰度 / 调优",P0,SRE,PM,"stage-4,performance","Sprint 22-25",,EPIC-4,性能,W25
+EPIC-5,Epic,"阶段5: 上线运营 (W26+)","生产部署 / 7x24 / 持续迭代",P0,SRE,PM,"stage-5,ops","Sprint 26+",,EPIC-5,部署,W26+
+STORY-0-1,Story,"召开方案评审会","评审 AI 自动化平台 v1.0 方案;产出评审纪要;5+ 决策人签字",P0,PM,PM,"stage-0,review",Sprint 1,0.5,EPIC-0,通用,2026-06-15
+STORY-0-2,Story,"编写立项书 (含预算/范围/风险)","立项书 PDF;预算 157-238 万;18-24 周周期;风险矩阵",P0,PM,PM,"stage-0,charter",Sprint 1,1,EPIC-0,通用,2026-06-17
+STORY-0-3,Story,"团队组建 (8 名工程师到岗)","架构师1/后端3/前端2/测试1/运维1;含 JD 和面试",P0,HR,PM,"stage-0,team",Sprint 1,2,EPIC-0,通用,2026-06-19
+STORY-0-4,Story,"云资源采购 (32 台 ECS)","32 台 ECS / K8s ACK 开通;SSH 可达",P0,运维,PM,"stage-0,cloud",Sprint 1,0.5,EPIC-0,基础设施,2026-06-15
+STORY-0-5,Story,"域名 + SSL 证书申请","3 个域名 + 3 个证书;DNS 解析",P1,运维,PM,"stage-0,ssl",Sprint 1,0.25,EPIC-0,基础设施,2026-06-15
+STORY-0-6,Story,"Git 仓库初始化","GitLab 仓库创建;main/dev 分支保护",P0,架构师,PM,"stage-0,git",Sprint 1,0.25,EPIC-0,基础设施,2026-06-15
+STORY-0-7,Story,"CI/CD 流水线搭建 (Hello World)","GitLab CI + ArgoCD 跑通 hello-world 镜像自动部署",P0,运维,PM,"stage-0,cicd",Sprint 1,1,EPIC-0,部署,2026-06-17
+STORY-0-8,Story,"沟通渠道建立 (飞书群/邮件)","全员加入飞书群;邮件组创建",P2,PM,PM,"stage-0,comm",Sprint 1,0.25,EPIC-0,通用,2026-06-15
+STORY-0-9,Story,"项目章程签字","5+ 关键人签字的章程 PDF",P1,PM,PM,"stage-0,charter",Sprint 1,0.25,EPIC-0,通用,2026-06-19
+STORY-0-10,Story,"启动会 + 第一次站会","任务分工 100% 认领;会议纪要",P1,PM,PM,"stage-0,kickoff",Sprint 1,0.125,EPIC-0,通用,2026-06-19
+STORY-0-11,Story,"需求调研 (10+ 业务部门访谈)","需求池建立;10+ 访谈纪要",P1,PM,PM,"stage-0,research",Sprint 1,1,EPIC-0,通用,2026-06-19
+STORY-0-12,Story,"预算审批与合同签订","合同签订;预算释放",P0,PM,PM,"stage-0,finance",Sprint 1,0.375,EPIC-0,通用,2026-06-17
+STORY-1-1,Story,"K8s 集群初始化 (3 master + 10 worker)","kubectl get nodes 显示 13 节点 Ready",P0,运维,PM,"stage-1,k8s",Sprint 2,2,EPIC-1,基础设施,2026-06-26
+STORY-1-2,Story,"网络插件 (Calico) 部署","NetworkPolicy 生效;Pod 间互通",P0,运维,PM,"stage-1,network",Sprint 2,0.5,EPIC-1,基础设施,2026-06-26
+STORY-1-3,Story,"存储类 (NFS/CSI) 部署","4 套 StorageClass;PVC 动态创建",P0,运维,PM,"stage-1,storage",Sprint 2,1,EPIC-1,基础设施,2026-06-26
+STORY-1-4,Story,"Ingress (Nginx) 部署","https://test.example.com 返回 200",P0,运维,PM,"stage-1,ingress",Sprint 2,0.5,EPIC-1,基础设施,2026-06-26
+STORY-1-5,Story,"镜像仓库 (Harbor) 部署","docker push/pull 测试通过",P0,运维,PM,"stage-1,harbor",Sprint 2,1,EPIC-1,基础设施,2026-06-26
+STORY-1-6,Story,"证书管理 (cert-manager) 部署","证书自动签发;*.example.com 全自动",P1,运维,PM,"stage-1,cert",Sprint 2,0.5,EPIC-1,基础设施,2026-07-03
+STORY-1-7,Story,"GitOps (ArgoCD) 部署","修改 Git 自动同步 K8s",P1,运维,PM,"stage-1,gitops",Sprint 2,1,EPIC-1,基础设施,2026-07-03
+STORY-1-8,Story,"命名空间规划 (dev/staging/prod)","3 个 ns 创建;YAML 提交 Git",P0,运维,PM,"stage-1,ns",Sprint 2,0.25,EPIC-1,基础设施,2026-06-26
+STORY-1-9,Story,"镜像安全扫描 (Trivy) 集成","漏洞扫描失败阻止推送",P1,运维,PM,"stage-1,security",Sprint 2,1,EPIC-1,安全,2026-07-03
+STORY-1-10,Story,"K8s 备份 (Velero) 部署","定时备份 CRD 资源;可恢复",P2,运维,PM,"stage-1,backup",Sprint 2,0.5,EPIC-1,部署,2026-07-03
+STORY-1-11,Story,"PostgreSQL 16 集群 (1主2从+1只读)","主从切换 < 30s;连接池 100+ 并发",P0,运维,PM,"stage-1,pg",Sprint 3,3,EPIC-1,中间件,2026-07-10
+STORY-1-12,Story,"Redis 7 Cluster (3主3从)","cluster info 状态 ok;槽位完整",P0,运维,PM,"stage-1,redis",Sprint 3,2,EPIC-1,中间件,2026-07-10
+STORY-1-13,Story,"MongoDB 7 集群 (1主2从)","分片副本集正常;副本延迟 < 5s",P1,运维,PM,"stage-1,mongo",Sprint 3,2,EPIC-1,中间件,2026-07-10
+STORY-1-14,Story,"Kafka 3.x 集群 (3 broker + ZK)","生产消费测试通过;ISR 完整",P0,运维,PM,"stage-1,kafka",Sprint 3,2,EPIC-1,中间件,2026-07-10
+STORY-1-15,Story,"MinIO 对象存储 (4 节点 EC)","上传/下载测试;纠删码正常",P1,运维,PM,"stage-1,minio",Sprint 3,1,EPIC-1,中间件,2026-07-10
+STORY-1-16,Story,"Milvus 2.x 向量库 (3 节点+etcd)","向量插入/检索;召回率 > 95%",P1,后端,PM,"stage-1,milvus",Sprint 3,2,EPIC-1,中间件,2026-07-17
+STORY-1-17,Story,"ClickHouse OLAP (3 节点)","1 亿行导入;查询 P95 < 1s",P1,后端,PM,"stage-1,clickhouse",Sprint 3,2,EPIC-1,中间件,2026-07-17
+STORY-1-18,Story,"InfluxDB 2 时序库","写入测试;retention policy 配置",P2,运维,PM,"stage-1,influxdb",Sprint 3,0.5,EPIC-1,中间件,2026-07-10
+STORY-1-19,Story,"Hyperledger Fabric 部署 (4 peer + 3 orderer)","chaincode 部署;存证 < 5s",P0,后端,PM,"stage-1,fabric",Sprint 3,4,EPIC-1,区块链,2026-07-17
+STORY-1-20,Story,"Flyway 数据库迁移工具","自动建表;迁移日志可追踪",P1,后端,PM,"stage-1,flyway",Sprint 3,1,EPIC-1,中间件,2026-07-17
+STORY-1-21,Story,"PgBouncer 连接池 (1000+ 并发)","pool_mode=transaction;1000 并发无耗尽",P1,运维,PM,"stage-1,pgbouncer",Sprint 3,0.5,EPIC-1,中间件,2026-07-17
+STORY-1-22,Story,"Prometheus Operator 部署","Prometheus + Alertmanager 抓取 K8s 指标",P0,运维,PM,"stage-1,prometheus",Sprint 4,1,EPIC-1,监控,2026-07-24
+STORY-1-23,Story,"Grafana 部署与 7 个核心仪表板","7 仪表板: 集群/Pod/DB/Kafka/应用/业务/告警",P0,运维,PM,"stage-1,grafana",Sprint 4,0.5,EPIC-1,监控,2026-07-24
+STORY-1-24,Story,"node-exporter 部署 (32 节点)","所有节点 CPU/内存/磁盘/网络指标",P1,运维,PM,"stage-1,exporter",Sprint 4,0.25,EPIC-1,监控,2026-07-24
+STORY-1-25,Story,"kube-state-metrics 部署","Pod/Deployment 状态可视化",P1,运维,PM,"stage-1,ksm",Sprint 4,0.25,EPIC-1,监控,2026-07-24
+STORY-1-26,Story,"中间件 Exporter 集成 (9 个)","PG/Redis/Mongo/Kafka/CH/Milvus/MinIO/Influx/Fabric 全有指标",P0,运维,PM,"stage-1,exporter",Sprint 4,2,EPIC-1,监控,2026-07-31
+STORY-1-27,Story,"日志收集 (Loki + Promtail)","日志聚合;P95 查询 < 2s",P1,运维,PM,"stage-1,loki",Sprint 4,2,EPIC-1,监控,2026-07-31
+STORY-1-28,Story,"ELK 备用日志栈","ES + Kibana 全文检索",P2,运维,PM,"stage-1,elk",Sprint 4,3,EPIC-1,监控,2026-07-31
+STORY-1-29,Story,"告警规则配置 (50+ 规则)","飞书通知测试;P0/P1/P2/P3 分级",P0,运维,PM,"stage-1,alert",Sprint 4,1,EPIC-1,监控,2026-07-31
+STORY-1-30,Story,"On-Call 排班 (7x24)","排班表;5min 内响应",P1,PM,PM,"stage-1,oncall",Sprint 4,0.5,EPIC-1,监控,2026-07-24
+STORY-1-31,Story,"故障注入演练 (Chaos Mesh)","故障演练报告;P0 < 1min 响应",P1,SRE,PM,"stage-1,chaos",Sprint 4,1,EPIC-1,监控,2026-07-31
+STORY-1-32,Story,"链路追踪 (Jaeger) 部署","全链路追踪;5+ 服务 span",P1,运维,PM,"stage-1,jaeger",Sprint 4,0.5,EPIC-1,监控,2026-07-31
+STORY-2-1,Story,"n8n 单机版部署 (Docker)","n8n UI 可访问;简单工作流通过",P0,后端,PM,"stage-2,n8n",Sprint 5,1,EPIC-2,n8n,2026-08-07
+STORY-2-2,Story,"n8n Queue Mode 改造 (Main + Worker)","Webhook 触发;任务入 Redis 队列",P0,后端,PM,"stage-2,n8n",Sprint 5,2,EPIC-2,n8n,2026-08-14
+STORY-2-3,Story,"OpenClaw 单机版启动","Gateway 启动;WebSocket 连通",P0,后端,PM,"stage-2,openclaw",Sprint 5,1,EPIC-2,OpenClaw,2026-08-07
+STORY-2-4,Story,"OpenClaw → n8n 集成 (Function Calling)","智能体可调用 5+ n8n 节点",P0,后端,PM,"stage-2,integration",Sprint 5,2,EPIC-2,OpenClaw,2026-08-14
+STORY-2-5,Story,"AI 模型网关 (FastAPI) 接入 2 模型","GPT-5 + 通义千问;路由生效",P0,后端,PM,"stage-2,ai",Sprint 5,3,EPIC-2,AI网关,2026-08-14
+STORY-2-6,Story,"AI 智能降级测试 (主备切换)","故障自动切备用;P95 < 3s",P0,后端,PM,"stage-2,ai",Sprint 5,1,EPIC-2,AI网关,2026-08-14
+STORY-2-7,Story,"Flowable 单机版部署","BPM UI 可访问;简单流程跑通",P1,后端,PM,"stage-2,bpm",Sprint 5,1,EPIC-2,BPM,2026-08-07
+STORY-2-8,Story,"Hyperledger Fabric PoC 存证 < 5s","链码部署;存证 PoC < 5s",P0,后端,PM,"stage-2,fabric",Sprint 5,2,EPIC-2,区块链,2026-08-14
+STORY-2-9,Story,"API 网关 (Spring Cloud Gateway)","路由/限流/鉴权/熔断四件套",P0,后端,PM,"stage-2,gateway",Sprint 6,2,EPIC-2,基础设施,2026-08-21
+STORY-2-10,Story,"统一鉴权服务 (JWT + OAuth2)","多端登录;P95 < 50ms",P0,后端,PM,"stage-2,auth",Sprint 6,2,EPIC-2,安全,2026-08-21
+STORY-2-11,Story,"OpenClaw x n8n x AI 三方集成","完整调用链;3 服务串联",P0,后端,PM,"stage-2,integration",Sprint 6,3,EPIC-2,OpenClaw,2026-08-28
+STORY-2-12,Story,"n8n x Flowable 集成","BPM 流程可被 n8n 触发",P1,后端,PM,"stage-2,bpm",Sprint 6,2,EPIC-2,BPM,2026-08-28
+STORY-2-13,Story,"统一日志 (TraceID 全链路)","一次请求可追踪 5+ 服务",P0,后端,PM,"stage-2,trace",Sprint 6,2,EPIC-2,监控,2026-08-28
+STORY-2-14,Story,"集成测试用例编写 (100+ 用例)","100+ 用例;100% 通过",P0,测试,PM,"stage-2,test",Sprint 6,3,EPIC-2,通用,2026-08-28
+STORY-2-15,Story,"性能基线测试","P95 < 500ms 基线报告",P1,测试,PM,"stage-2,perf",Sprint 6,2,EPIC-2,性能,2026-08-28
+STORY-2-16,Story,"限流熔断 (Sentinel) 集成","限流 100 QPS;熔断降级",P1,后端,PM,"stage-2,sentinel",Sprint 6,1,EPIC-2,基础设施,2026-08-21
+STORY-2-17,Story,"n8n Worker 扩容到 5 节点","5 worker x 10 并发 = 50+ 并发",P0,后端,PM,"stage-2,n8n",Sprint 7,1,EPIC-2,n8n,2026-09-04
+STORY-2-18,Story,"OpenClaw 性能调优","P95 < 200ms;吞吐 100 QPS",P0,后端,PM,"stage-2,openclaw",Sprint 7,1,EPIC-2,OpenClaw,2026-09-04
+STORY-2-19,Story,"AI 网关缓存优化 (命中率 30%+)","重复请求 0 延迟;命中率 ≥ 30%",P1,后端,PM,"stage-2,ai",Sprint 7,2,EPIC-2,AI网关,2026-09-11
+STORY-2-20,Story,"PG 连接池调优 (1000+ 并发)","无连接耗尽;pool 利用率 < 80%",P0,后端,PM,"stage-2,pg",Sprint 7,1,EPIC-2,中间件,2026-09-04
+STORY-2-21,Story,"Redis Pipeline 批量优化","批量操作 10x 性能提升",P1,后端,PM,"stage-2,redis",Sprint 7,1,EPIC-2,中间件,2026-09-04
+STORY-2-22,Story,"50 并发智能体压测 (k6)","50 并发稳定 1h;P95 < 2s;错误率 < 1%",P0,测试,PM,"stage-2,perf",Sprint 7,2,EPIC-2,性能,2026-09-11
+STORY-2-23,Story,"100 并发极限压测","100 并发不崩;错误率 < 5%",P1,测试,PM,"stage-2,perf",Sprint 7,2,EPIC-2,性能,2026-09-11
+STORY-2-24,Story,"性能调优总结报告","10+ 优化点;量化收益",P1,后端,PM,"stage-2,perf",Sprint 7,0.5,EPIC-2,性能,2026-09-11
+STORY-2-25,Story,"智能体超时与重试调优","超时分级;重试退避策略",P1,后端,PM,"stage-2,openclaw",Sprint 7,1,EPIC-2,OpenClaw,2026-09-11
+STORY-2-26,Story,"JVM 调优 (G1GC)","GC 暂停 < 50ms;堆 < 70%",P2,后端,PM,"stage-2,jvm",Sprint 7,1,EPIC-2,通用,2026-09-11
+STORY-2-27,Story,"慢 SQL 优化 (Top 20)","Top 20 慢 SQL P95 < 100ms",P1,后端,PM,"stage-2,pg",Sprint 7,1,EPIC-2,中间件,2026-09-11
+STORY-2-28,Story,"GC 日志分析与优化","Young GC < 10ms;Full GC 0 触发",P2,后端,PM,"stage-2,jvm",Sprint 7,0.5,EPIC-2,通用,2026-09-11
+STORY-3-1,Story,"存证服务后端 (NestJS)","4 个 API: 存证/验证/查询/列表",P0,后端,PM,"stage-3,blockchain",Sprint 8,4,EPIC-3,区块链,2026-09-25
+STORY-3-2,Story,"凭证预生成优化 (< 1秒)","P95 < 1s;50 并发无延迟",P0,后端,PM,"stage-3,blockchain",Sprint 8,2,EPIC-3,区块链,2026-10-02
+STORY-3-3,Story,"异步上链 Worker (Kafka 消费)","失败重试 3 次;DLQ 兜底",P0,后端,PM,"stage-3,blockchain",Sprint 8,2,EPIC-3,区块链,2026-10-02
+STORY-3-4,Story,"链上验证 API (< 2秒)","验证接口 P95 < 2s",P0,后端,PM,"stage-3,blockchain",Sprint 8,2,EPIC-3,区块链,2026-10-02
+STORY-3-5,Story,"DID 服务后端 (4 API)","创建/查询/验证/吊销 4 API",P0,后端,PM,"stage-3,did",Sprint 8,4,EPIC-3,DID,2026-10-02
+STORY-3-6,Story,"DID 客户端 SDK (NPM)","NPM 包发布;3 种使用方式",P1,前端,PM,"stage-3,did",Sprint 8,2,EPIC-3,DID,2026-10-09
+STORY-3-7,Story,"多端验证 (手机/邮箱/指纹/人脸)","4 种验证全通;识别率 > 99%",P0,后端,PM,"stage-3,did",Sprint 8,3,EPIC-3,DID,2026-10-09
+STORY-3-8,Story,"存证管理 UI (列表/详情/搜索)","Web 页面;列表/详情/搜索/导出",P1,前端,PM,"stage-3,blockchain",Sprint 8,2,EPIC-3,后台,2026-10-09
+STORY-3-9,Story,"存证接口测试 (50+ 用例)","100% 通过;覆盖率 ≥ 80%",P0,测试,PM,"stage-3,blockchain",Sprint 8,2,EPIC-3,区块链,2026-10-09
+STORY-3-10,Story,"链上数据浏览器 (可视化)","交易可追溯;区块可视化",P2,前端,PM,"stage-3,blockchain",Sprint 8,1,EPIC-3,区块链,2026-10-09
+STORY-3-11,Story,"抖音开放平台接入","视频/评论/达人数据采集",P0,后端,PM,"stage-3,acquisition",Sprint 9,3,EPIC-3,获客,2026-10-16
+STORY-3-12,Story,"小红书接入","笔记/评论采集",P1,后端,PM,"stage-3,acquisition",Sprint 9,2,EPIC-3,获客,2026-10-16
+STORY-3-13,Story,"TikTok Research API 接入","海外数据采集",P1,后端,PM,"stage-3,acquisition",Sprint 9,2,EPIC-3,获客,2026-10-16
+STORY-3-14,Story,"Instagram Graph API 接入","帖子/Story 采集",P1,后端,PM,"stage-3,acquisition",Sprint 9,2,EPIC-3,获客,2026-10-16
+STORY-3-15,Story,"YouTube Data API 接入","视频/频道采集",P1,后端,PM,"stage-3,acquisition",Sprint 9,2,EPIC-3,获客,2026-10-16
+STORY-3-16,Story,"Kafka → Flink 流处理 (5分钟延迟)","实时清洗;端到端 < 5min",P0,后端,PM,"stage-3,acquisition",Sprint 9,4,EPIC-3,获客,2026-10-23
+STORY-3-17,Story,"获客看板后端 REST API (50+ 接口)","50+ 接口;OpenAPI 文档",P0,后端,PM,"stage-3,acquisition",Sprint 9,3,EPIC-3,获客,2026-10-23
+STORY-3-18,Story,"获客看板 UI (10+ 图表)","10+ 图表 (ECharts);响应式",P0,前端,PM,"stage-3,acquisition",Sprint 9,4,EPIC-3,后台,2026-10-30
+STORY-3-19,Story,"达人 AI 评估模型 (评分排序)","准确率 > 80%;Top 100 排序",P0,后端,PM,"stage-3,acquisition",Sprint 9,3,EPIC-3,AI网关,2026-10-30
+STORY-3-20,Story,"AI 策略推荐引擎 (Top 5)","5 个策略 + ROI 预测",P0,后端,PM,"stage-3,acquisition",Sprint 9,3,EPIC-3,AI网关,2026-10-30
+STORY-3-21,Story,"多平台内容生成 AI (3 平台文案)","抖音/小红书/视频号 3 平台适配",P1,后端,PM,"stage-3,acquisition",Sprint 9,2,EPIC-3,AI网关,2026-10-30
+STORY-3-22,Story,"Web 管理后台基础 (20+ 页面)","智能体/工作流/BPM 三模块 20 页面",P0,前端,PM,"stage-3,admin",Sprint 10,10,EPIC-3,后台,2026-11-20
+STORY-3-23,Story,"区块链管理 UI (6 页面)","存证/查询/统计/浏览器/节点/凭证",P0,前端,PM,"stage-3,admin",Sprint 10,4,EPIC-3,后台,2026-11-06
+STORY-3-24,Story,"AI 获客管理 UI (8 页面)","看板/达人/策略/内容/投放/ROI 8 页面",P0,前端,PM,"stage-3,admin",Sprint 10,5,EPIC-3,后台,2026-11-13
+STORY-3-25,Story,"系统管理 UI (用户/角色/审计)","6 页面: 用户/角色/权限/审计/通知/配置",P1,前端,PM,"stage-3,admin",Sprint 10,3,EPIC-3,后台,2026-11-06
+STORY-3-26,Story,"数据分析仪表板 (7+ 图表)","7+ 图表 (ECharts);下钻支持",P1,前端,PM,"stage-3,admin",Sprint 10,3,EPIC-3,后台,2026-11-06
+STORY-3-27,Story,"飞书机器人 (10+ 指令)","通知/查询/审批 10+ 指令",P1,后端,PM,"stage-3,bot",Sprint 10,3,EPIC-3,后台,2026-11-13
+STORY-3-28,Story,"钉钉机器人 (10+ 指令)","同飞书 10+ 指令",P2,后端,PM,"stage-3,bot",Sprint 10,2,EPIC-3,后台,2026-11-13
+STORY-3-29,Story,"移动 App (iOS + Android React Native)","20+ 页面;2 端上架",P0,前端,PM,"stage-3,mobile",Sprint 10,10,EPIC-3,移动端,2026-11-20
+STORY-3-30,Story,"微信小程序 (10+ 页面)","简易版管理;10+ 页面;发布",P1,前端,PM,"stage-3,mobile",Sprint 10,5,EPIC-3,移动端,2026-11-20
+STORY-4-1,Story,"单元测试覆盖率提升 (≥ 70%)","Jest/Vitest 覆盖率 ≥ 70%",P0,后端,PM,"stage-4,test",Sprint 11,5,EPIC-4,性能,2026-11-27
+STORY-4-2,Story,"集成测试 (200+ 用例)","200+ 用例;100% 通过",P0,测试,PM,"stage-4,test",Sprint 11,5,EPIC-4,性能,2026-11-27
+STORY-4-3,Story,"E2E 测试 (Playwright 50+ 场景)","50+ 场景;关键流程 100%",P0,测试,PM,"stage-4,test",Sprint 11,5,EPIC-4,性能,2026-12-04
+STORY-4-4,Story,"安全审计 (SAST SonarQube)","0 高危漏洞;中危 < 5",P0,安全,PM,"stage-4,security",Sprint 11,2,EPIC-4,安全,2026-11-27
+STORY-4-5,Story,"渗透测试","渗透测试报告;修复所有中危",P0,安全,PM,"stage-4,security",Sprint 11,3,EPIC-4,安全,2026-12-04
+STORY-4-6,Story,"OWASP Top 10 检查","10 项检查全通过",P0,安全,PM,"stage-4,security",Sprint 11,2,EPIC-4,安全,2026-12-04
+STORY-4-7,Story,"50 并发压测 (复测)","50 并发稳定 1h;零故障",P0,测试,PM,"stage-4,perf",Sprint 12,2,EPIC-4,性能,2026-12-11
+STORY-4-8,Story,"100 并发压测","100 并发 30min 稳定",P0,测试,PM,"stage-4,perf",Sprint 12,2,EPIC-4,性能,2026-12-11
+STORY-4-9,Story,"1000 并发压测 (峰值)","1000 并发系统不崩",P1,测试,PM,"stage-4,perf",Sprint 12,2,EPIC-4,性能,2026-12-18
+STORY-4-10,Story,"72 小时稳定性测试","0 故障;P95 < 500ms;可用性 99.99%",P0,SRE,PM,"stage-4,perf",Sprint 12,9,EPIC-4,性能,2026-12-18
+STORY-4-11,Story,"灰度发布 (10% → 50% → 100%)","无回滚;灰度报告",P0,SRE,PM,"stage-4,release",Sprint 12,3,EPIC-4,部署,2026-12-18
+STORY-4-12,Story,"性能调优 (最终冲刺)","P95 < 500ms;10+ 优化点",P0,后端,PM,"stage-4,perf",Sprint 12,4,EPIC-4,性能,2026-12-25
+STORY-4-13,Story,"项目文档定稿 (用户/运维/API)","3 套文档完成;PDF + 在线",P1,PM,PM,"stage-4,doc",Sprint 12,3,EPIC-4,通用,2026-12-25
+STORY-4-14,Story,"灾备演练 (主备切换)","RTO < 5min;RPO < 1min",P1,SRE,PM,"stage-4,dr",Sprint 12,2,EPIC-4,部署,2026-12-18
+STORY-4-15,Story,"浏览器与设备兼容性测试","Chrome/Safari/Edge + 5 设备",P2,测试,PM,"stage-4,test",Sprint 12,1,EPIC-4,性能,2026-12-18
+STORY-5-1,Story,"生产环境部署 (蓝绿)","生产环境就位;DNS 切换",P0,SRE,PM,"stage-5,deploy",Sprint 13,1,EPIC-5,部署,2027-01-01
+STORY-5-2,Story,"7x24 监控值守 (On-Call 排班)","排班表;5min 响应",P0,SRE,PM,"stage-5,oncall",Sprint 13,持续,EPIC-5,监控,2027-01-01
+STORY-5-3,Story,"故障响应 (MTTR < 30min)","MTTR < 30min;复盘报告",P0,SRE,PM,"stage-5,incident",Sprint 13,持续,EPIC-5,部署,2027-01-01
+STORY-5-4,Story,"月度健康检查 (8h/月)","月度健康报告;KPI 达成",P1,SRE,PM,"stage-5,health",Sprint 13,1,EPIC-5,监控,2027-01-01
+STORY-5-5,Story,"用户培训 (视频+文档)","10+ 培训视频;10+ 用户",P1,产品,PM,"stage-5,training",Sprint 13,2,EPIC-5,通用,2027-01-08
+STORY-5-6,Story,"客服支持 (工单系统)","工单系统;首响 < 1h",P1,客服,PM,"stage-5,support",Sprint 13,持续,EPIC-5,通用,2027-01-01
+STORY-5-7,Story,"持续性能优化 (每周)","每周 1+ 优化项",P2,后端,PM,"stage-5,perf",Sprint 13,持续,EPIC-5,性能,2027-01-01
+STORY-5-8,Story,"新功能开发 (每 2 周)","每 2 周一个迭代版本",P1,后端,PM,"stage-5,feature",Sprint 13,持续,EPIC-5,通用,2027-01-01
+STORY-5-9,Story,"安全更新 (每月)","CVE 24h 修复",P0,安全,PM,"stage-5,security",Sprint 13,持续,EPIC-5,安全,2027-01-01
+STORY-5-10,Story,"数据备份验证 (8h/月)","备份报告;RPO < 5min",P0,运维,PM,"stage-5,backup",Sprint 13,1,EPIC-5,部署,2027-01-01
+STORY-5-11,Story,"客户增长运营 (拉新/留存)","月活增长 20%+",P1,产品,PM,"stage-5,growth",Sprint 13,持续,EPIC-5,获客,2027-01-01
+STORY-5-12,Story,"数据分析报告 (周/月)","周报/月报自动生成",P2,数据,PM,"stage-5,report",Sprint 13,持续,EPIC-5,获客,2027-01-01

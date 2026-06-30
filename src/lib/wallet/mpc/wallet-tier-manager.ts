@@ -23,6 +23,15 @@ import {
   MPCErrorCode,
   TransactionSummary,
 } from './mpc.types';
+import { AuditService } from '../audit/audit.service';
+
+export { WalletTier } from './mpc.types';
+
+export enum WalletStatus {
+  ACTIVE = 'active',
+  FROZEN = 'frozen',
+  DELETED = 'deleted',
+}
 
 // =============================================================================
 // 层级配置接口
@@ -171,6 +180,7 @@ export interface TierStats {
 
 export class WalletTierManager {
   private wallets: Map<string, MPCWallet> = new Map();
+  private tierHistory: Map<string, Array<{ from: WalletTier; to: WalletTier; changedAt: Date }>> = new Map();
   private tierConfigs: Map<WalletTier, TierConfig> = new Map();
   private autoTierRouting: boolean;
   private autoFunding: boolean;
@@ -444,6 +454,8 @@ export class WalletTierManager {
     }
     this.wallets.delete(walletId);
   }
+
+
 
   // =========================================================================
   // 分层路由

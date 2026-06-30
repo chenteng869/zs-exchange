@@ -1,32 +1,64 @@
 import crypto from 'crypto';
 
-const SALT_ROUNDS = 10;
 const HASH_ALGORITHM = 'sha256';
+const DEFAULT_ITERATIONS = 100000;
+const COMMON_WEAK_PASSWORDS = new Set(['123456', 'password', 'qwerty', 'admin', '111111']);
 
-export async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string, _salt?: string, iterations: number = DEFAULT_ITERATIONS): Promise<string> {
   return new Promise((resolve, reject) => {
     const salt = crypto.randomBytes(16).toString('hex');
-    crypto.pbkdf2(password, salt, 100000, 64, HASH_ALGORITHM, (err, derivedKey) => {
+    crypto.pbkdf2(password, salt, iterations, 64, HASH_ALGORITHM, (err, derivedKey) => {
       if (err) reject(err);
-      resolve(`${salt}:${derivedKey.toString('hex')}`);
+      resolve(`pbkdf2$${iterations}$${salt}$${derivedKey.toString('hex')}`);
     });
   });
 }
 
 export async function verifyPassword(password: string, hashedPassword: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
-    const [salt, hash] = hashedPassword.split(':');
+    const legacyParts = hashedPassword.split('$');
+    const colonParts = hashedPassword.split(':');
+    const isLegacyFormat = legacyParts.length === 4 && legacyParts[0] === 'pbkdf2';
+    const iterations = isLegacyFormat ? Number(legacyParts[1]) || DEFAULT_ITERATIONS : DEFAULT_ITERATIONS;
+    const salt = isLegacyFormat ? legacyParts[2] : colonParts[0];
+    const hash = isLegacyFormat ? legacyParts[3] : colonParts[1];
     if (!salt || !hash) {
       resolve(false);
       return;
     }
 
-    crypto.pbkdf2(password, salt, 100000, 64, HASH_ALGORITHM, (err, derivedKey) => {
+    crypto.pbkdf2(password, salt, iterations, 64, HASH_ALGORITHM, (err, derivedKey) => {
       if (err) reject(err);
       const newHash = derivedKey.toString('hex');
       resolve(newHash === hash);
     });
   });
+}
+
+export function checkPasswordStrength(password: string): { valid: boolean; score: number } {
+  if (!password || COMMON_WEAK_PASSWORDS.has(password.toLowerCase())) {
+    return { valid: false, score: 0 };
+  }
+
+  let score = 0;
+  if (password.length >= 8) score += 1;
+  if (password.length >= 12) score += 1;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+  if (/\d/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+  return {
+    valid: score >= 3,
+    score,
+  };
+}
+
+export function needsRehash(hashedPassword: string, targetIterations: number = DEFAULT_ITERATIONS): boolean {
+  const parts = hashedPassword.split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') {
+    return true;
+  }
+  return (Number(parts[1]) || 0) < targetIterations;
 }
 
 export function generateApiKey(prefix: string = 'zs_'): string {
@@ -58,6 +90,8 @@ export function sha256(data: string): string {
 export default {
   hashPassword,
   verifyPassword,
+  checkPasswordStrength,
+  needsRehash,
   generateApiKey,
   generateSecret,
   generateReferralCode,

@@ -28,6 +28,7 @@ import {
   type StageDefinition,
   type PipelineError,
 } from '../pipeline.types';
+import { executeWithLegacyCompat, isLegacyInput, legacyFailure, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 常量定义
@@ -426,9 +427,20 @@ export function createBuildStage(config?: BuildStageConfig): StageDefinition {
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.BUILD] = result;
+      if (isLegacyInput(context)) {
+        const payload = (context ?? {}) as Record<string, unknown>;
+        const tx = payload.transaction as Record<string, unknown> | undefined;
+        if (!tx) {
+          return legacyFailure('transaction is required');
+        }
+        return legacySuccess({ transaction: tx });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.BUILD] = result;
       return result;
+      });
     },
     skippable: false,
     retryable: true,

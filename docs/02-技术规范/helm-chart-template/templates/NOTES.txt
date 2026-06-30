@@ -1,0 +1,38 @@
+# =============================================================================
+# NOTES.txt - 安装完成后显示的信息
+# =============================================================================
+
+恭喜! {{ .Chart.Name }} 已成功部署!
+
+1. 查看资源状态:
+   kubectl get all -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+2. 查看 Pod 详情:
+   kubectl get pods -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+3. 查看服务:
+   kubectl get svc -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+4. 查看 Ingress:
+   kubectl get ingress -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+5. 查看日志:
+   kubectl logs -f -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+
+6. 端口转发(本地访问):
+{{- range .Values.service.ports }}
+   kubectl port-forward svc/{{ include "zs-ai-platform.fullname" $ }} {{ .port }}:{{ .port }} -n {{ $.Release.Namespace }}
+{{- end }}
+
+{{- if .Values.autoscaling.enabled }}
+
+7. HPA 状态:
+   kubectl get hpa -l app.kubernetes.io/instance={{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- end }}
+
+{{- if .Values.ingress.enabled }}
+8. 访问 URL:
+{{- range .Values.ingress.hosts }}
+   https://{{ .host }}
+{{- end }}
+{{- end }}

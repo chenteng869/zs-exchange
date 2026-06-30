@@ -1,0 +1,76 @@
+{
+  "peggedAssets": [
+    {
+      "id": "1",
+      "name": "Tether",
+      "symbol": "USDT",
+      "pegType": "USD",
+      "geckoId": "tether",
+      "price": 0.9998,
+      "circulating": 118500000000
+    },
+    {
+      "id": "2",
+      "name": "USD Coin",
+      "symbol": "USDC",
+      "pegType": "USD",
+      "geckoId": "usd-coin",
+      "price": 1.0001,
+      "circulating": 35400000000
+    },
+    {
+      "id": "3",
+      "name": "Dai",
+      "symbol": "DAI",
+      "pegType": "USD",
+      "geckoId": "dai",
+      "price": 0.9995,
+      "circulating": 5350000000
+    },
+    {
+      "id": "4",
+      "name": "First Digital USD",
+      "symbol": "FDUSD",
+      "pegType": "USD",
+      "geckoId": "first-digital-usd",
+      "price": 0.9985,
+      "circulating": 2800000000
+    },
+    {
+      "id": "5",
+      "name": "Ethena USDe",
+      "symbol": "USDe",
+      "pegType": "USD",
+      "geckoId": "ethena-usde",
+      "price": 1.0015,
+      "circulating": 5900000000
+    },
+    {
+      "id": "9",
+      "name": "USDD",
+      "symbol": "USDD",
+      "pegType": "USD",
+      "geckoId": "usdd",
+      "price": 0.9870,
+      "circulating": 720000000
+    },
+    {
+      "id": "10",
+      "name": "Euro Tether",
+      "symbol": "EURT",
+      "pegType": "EUR",
+      "geckoId": "tether-eurt",
+      "price": 1.0800,
+      "circulating": 195000000
+    },
+    {
+      "id": "12",
+      "name": "Wrapped Bitcoin",
+      "symbol": "WBTC",
+      "pegType": "BTC",
+      "geckoId": "wrapped-bitcoin",
+      "price": 67000,
+      "circulating": 8500000000
+    }
+  ]
+}

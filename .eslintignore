@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+dist/
+www/
+android/
+output/
+vscode-codegraph/
+_trash/
+src/app/_disabled_pages/

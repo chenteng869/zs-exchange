@@ -1,0 +1,31 @@
+{
+  "id": "1",
+  "name": "Tether",
+  "symbol": "USDT",
+  "pegType": "USD",
+  "geckoId": "tether",
+  "price": 0.9998,
+  "circulating": 118500000000,
+  "currentChainBalances": {
+    "Ethereum": 65000000000,
+    "Tron": 28000000000,
+    "BSC": 12000000000,
+    "Arbitrum": 8500000000,
+    "Other": 5000000000,
+    "total": { "amount": 118500000000 }
+  },
+  "circulatingPools": [
+    { "pool": "Curve 3pool", "amount": 3500000000 },
+    { "pool": "Aave V3", "amount": 5800000000 }
+  ],
+  "history": [
+    { "date": 1700000000, "circulating": 110000000000 },
+    { "date": 1700604800, "circulating": 111500000000 },
+    { "date": 1701209600, "circulating": 112800000000 },
+    { "date": 1701814400, "circulating": 114500000000 },
+    { "date": 1702419200, "circulating": 116000000000 },
+    { "date": 1703024000, "circulating": 117200000000 },
+    { "date": 1703628800, "circulating": 118000000000 },
+    { "date": 1704233600, "circulating": 118500000000 }
+  ]
+}

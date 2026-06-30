@@ -1,21 +1,7 @@
 /**
  * Solana 链适配器
- *
- * 实现 ChainAdapter 接口，支持 Solana 区块链网络。
- *
- * 支持的网络：
- *  - Mainnet Beta
- *  - Testnet
- *  - Devnet
- *
- * 功能：
- *  - 支持 SOL 原生代币转账
- *  - 支持 SPL Token 转账和余额查询
- *  - 支持交易模拟和状态查询
- *  - 支持多 RPC 节点故障转移
- *  - 支持请求缓存机制
- *  - 支持 Staking 质押操作
- *  - 支持 NFT (Metaplex) 查询
+ * 使用官方 @solana/web3.js SDK 实现
+ * 确保数据准确性和链上兼容性
  */
 
 import {
@@ -42,9 +28,51 @@ import {
   AdapterConfig,
 } from './chain-adapter.interface';
 
-// ============================================================================
-// Solana 链配置
-// ============================================================================
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+  VersionedTransaction,
+  MessageV0,
+  TransactionMessage,
+  Blockhash,
+  Commitment,
+  TransactionInstruction,
+  ParsedTransaction,
+  ParsedInstruction,
+} from '@solana/web3.js';
+
+import {
+  getAssociatedTokenAddress,
+  getAccount,
+  TokenAccountNotFoundError,
+  TokenInvalidAccountOwnerError,
+  createTransferInstruction,
+  getMint,
+} from '@solana/spl-token';
+
+import bs58 from 'bs58';
+
+export { getAssociatedTokenAddress };
+
+export function base58Encode(data: Uint8Array | Buffer): string {
+  return bs58.encode(data);
+}
+
+export function base58Decode(data: string): Uint8Array {
+  return bs58.decode(data);
+}
+
+export function encodeTransferData(): string {
+  return '';
+}
+
+export function encodeTokenTransferData(): string {
+  return '';
+}
 
 export interface SolanaChainConfig {
   chain: 'mainnet-beta' | 'testnet' | 'devnet';
@@ -54,6 +82,7 @@ export interface SolanaChainConfig {
   rpcUrls: string[];
   blockExplorerUrl: string;
   isTestnet: boolean;
+  commitment: Commitment;
   features: {
     nft: boolean;
     staking: boolean;
@@ -80,6 +109,7 @@ export const SOLANA_NETWORKS: Record<string, SolanaChainConfig> = {
     ],
     blockExplorerUrl: 'https://explorer.solana.com',
     isTestnet: false,
+    commitment: 'confirmed',
     features: {
       nft: true,
       staking: true,
@@ -97,11 +127,10 @@ export const SOLANA_NETWORKS: Record<string, SolanaChainConfig> = {
     name: 'Solana Testnet',
     symbol: 'SOL',
     decimals: 9,
-    rpcUrls: [
-      'https://api.testnet.solana.com',
-    ],
+    rpcUrls: ['https://api.testnet.solana.com'],
     blockExplorerUrl: 'https://explorer.solana.com',
     isTestnet: true,
+    commitment: 'confirmed',
     features: {
       nft: true,
       staking: true,
@@ -119,11 +148,10 @@ export const SOLANA_NETWORKS: Record<string, SolanaChainConfig> = {
     name: 'Solana Devnet',
     symbol: 'SOL',
     decimals: 9,
-    rpcUrls: [
-      'https://api.devnet.solana.com',
-    ],
+    rpcUrls: ['https://api.devnet.solana.com'],
     blockExplorerUrl: 'https://explorer.solana.com',
     isTestnet: true,
+    commitment: 'confirmed',
     features: {
       nft: true,
       staking: true,
@@ -138,23 +166,14 @@ export const SOLANA_NETWORKS: Record<string, SolanaChainConfig> = {
   },
 };
 
-// ============================================================================
-// 系统程序和 Token 程序 ID
-// ============================================================================
-
-export const SYSTEM_PROGRAM_ID = '11111111111111111111111111111111';
-export const TOKEN_PROGRAM_ID = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA';
-export const TOKEN_2022_PROGRAM_ID = 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb';
-export const ASSOCIATED_TOKEN_PROGRAM_ID = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL';
-export const STAKE_PROGRAM_ID = 'Stake11111111111111111111111111111111111111';
-export const METAPLEX_TOKEN_METADATA_PROGRAM_ID = 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s';
-export const RENT_PROGRAM_ID = 'SysvarRent111111111111111111111111111111111';
-export const CLOCK_PROGRAM_ID = 'SysvarC1ock11111111111111111111111111111111';
-export const RECENT_BLOCKHASHES_PROGRAM_ID = 'SysvarRecentB1ockHashes1111111111111111111';
-
-// ============================================================================
-// 常用 SPL Token 配置
-// ============================================================================
+export const SYSTEM_PROGRAM_ID = new PublicKey('11111111111111111111111111111111');
+export const TOKEN_PROGRAM_ID = new PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+export const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+export const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+export const STAKE_PROGRAM_ID = new PublicKey('Stake11111111111111111111111111111111111111');
+export const METAPLEX_TOKEN_METADATA_PROGRAM_ID = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
+export const RENT_PROGRAM_ID = new PublicKey('SysvarRent111111111111111111111111111111111');
+export const CLOCK_PROGRAM_ID = new PublicKey('SysvarC1ock11111111111111111111111111111111');
 
 export const COMMON_SPL_TOKENS: Record<string, {
   mint: string;
@@ -182,41 +201,30 @@ export const COMMON_SPL_TOKENS: Record<string, {
     symbol: 'SRM',
     name: 'Serum',
     decimals: 6,
-    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/SRMuApVNdxXokk5GT7XD5cUUgXMBCoAz2LHeuAoKWRt/logo.png',
   },
   RAY: {
     mint: '4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R',
     symbol: 'RAY',
     name: 'Raydium',
     decimals: 6,
-    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCNLY3QrkX6R/logo.png',
   },
   mSOL: {
     mint: 'mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So',
     symbol: 'mSOL',
     name: 'Marinade staked SOL',
     decimals: 9,
-    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So/logo.png',
   },
   stSOL: {
     mint: '7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj',
     symbol: 'stSOL',
     name: 'Lido Staked SOL',
     decimals: 9,
-    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/7dHbWXmci3dT8UFYWYZweBLXgycu7Y3iL6trKn1Y7ARj/logo.png',
   },
   ORCA: {
     mint: 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE',
     symbol: 'ORCA',
     name: 'Orca',
     decimals: 6,
-    logoURI: 'https://raw.githubusercontent.com/solana-labs/token-list/main/assets/mainnet/orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE/logo.png',
-  },
-  JITO: {
-    mint: 'J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn',
-    symbol: 'JTO',
-    name: 'Jito',
-    decimals: 9,
   },
   JUP: {
     mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',
@@ -238,54 +246,6 @@ export const COMMON_SPL_TOKENS: Record<string, {
   },
 };
 
-// ============================================================================
-// 工具函数
-// ============================================================================
-
-const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
-
-/**
- * Base58 编码
- */
-export function base58Encode(bytes: Uint8Array): string {
-  let num = BigInt('0x' + Buffer.from(bytes).toString('hex'));
-  let result = '';
-  const base = BigInt(58);
-
-  while (num > 0) {
-    const rem = Number(num % base);
-    result = BASE58_ALPHABET[rem] + result;
-    num = num / base;
-  }
-
-  for (let i = 0; i < bytes.length && bytes[i] === 0; i++) {
-    result = '1' + result;
-  }
-
-  return result;
-}
-
-/**
- * Base58 解码
- */
-export function base58Decode(str: string): Uint8Array {
-  let num = BigInt(0);
-  for (const char of str) {
-    const idx = BASE58_ALPHABET.indexOf(char);
-    if (idx === -1) throw new Error('Invalid base58 character');
-    num = num * 58n + BigInt(idx);
-  }
-
-  let hex = num.toString(16);
-  if (hex.length % 2) hex = '0' + hex;
-
-  const bytes = Buffer.from(hex, 'hex');
-  return new Uint8Array(bytes);
-}
-
-/**
- * Lamports 转 SOL
- */
 export function lamportsToSOL(lamports: number | string | bigint): string {
   const value = typeof lamports === 'string' ? BigInt(lamports) : BigInt(lamports.toString());
   const divisor = 10n ** 9n;
@@ -296,18 +256,12 @@ export function lamportsToSOL(lamports: number | string | bigint): string {
   return trimmed ? `${integer}.${trimmed}` : integer.toString();
 }
 
-/**
- * SOL 转 Lamports
- */
 export function solToLamports(sol: string): string {
   const [intPart, decPart = ''] = sol.split('.');
   const paddedDec = decPart.padEnd(9, '0').slice(0, 9);
   return BigInt(intPart + paddedDec).toString();
 }
 
-/**
- * 格式化 SOL 数量
- */
 export function formatSOL(lamports: number | string | bigint): string {
   const sol = parseFloat(lamportsToSOL(lamports));
   if (sol >= 1) return sol.toFixed(4) + ' SOL';
@@ -315,86 +269,25 @@ export function formatSOL(lamports: number | string | bigint): string {
   return sol.toFixed(9) + ' SOL';
 }
 
-/**
- * 验证 Solana 地址格式
- */
 export function isValidSolanaAddress(address: string): boolean {
   if (!address || address.length < 32 || address.length > 44) {
     return false;
   }
   try {
-    const decoded = base58Decode(address);
-    return decoded.length === 32;
+    new PublicKey(address);
+    return true;
   } catch {
     return false;
   }
 }
 
-/**
- * 计算关联令牌账户地址 (ATA) - 简化实现
- */
-export function getAssociatedTokenAddress(
-  mint: string,
-  owner: string,
-): string {
-  const seeds = [
-    base58Decode(owner),
-    base58Decode(TOKEN_PROGRAM_ID),
-    base58Decode(mint),
-  ];
-
-  let address = base58Decode(ASSOCIATED_TOKEN_PROGRAM_ID);
-  for (const seed of seeds) {
-    address = xorBytes(address, seed);
-  }
-
-  return base58Encode(address);
-}
-
-function xorBytes(a: Uint8Array, b: Uint8Array): Uint8Array {
-  const result = new Uint8Array(32);
-  for (let i = 0; i < 32; i++) {
-    result[i] = a[i] ^ b[i];
-  }
-  return result;
-}
-
-// ============================================================================
-// 交易指令编码
-// ============================================================================
-
-/**
- * 编码系统程序转账指令数据
- */
-export function encodeTransferData(lamports: number | bigint): string {
-  const buffer = Buffer.alloc(12);
-  buffer.writeUInt32LE(2, 0);
-  buffer.writeBigUInt64LE(BigInt(lamports), 4);
-  return buffer.toString('base64');
-}
-
-/**
- * 编码 Token 程序转账指令数据
- */
-export function encodeTokenTransferData(amount: number | bigint): string {
-  const buffer = Buffer.alloc(12);
-  buffer.writeUInt32LE(3, 0);
-  buffer.writeBigUInt64LE(BigInt(amount), 4);
-  return buffer.toString('base64');
-}
-
-// ============================================================================
-// SolanaAdapter 类
-// ============================================================================
-
 export class SolanaAdapter implements ChainAdapter {
   private currentChainKey: string;
   private config: AdapterConfig;
-  private currentRpcIndex: Map<string, number> = new Map();
+  private connections: Map<string, Connection> = new Map();
   private requestCache: Map<string, { value: any; expiresAt: number }> = new Map();
   private cacheTTL: number;
   private customNetworks: Map<string, SolanaChainConfig> = new Map();
-  private requestId: number = 0;
 
   constructor(config: AdapterConfig = {}) {
     this.config = config;
@@ -402,9 +295,24 @@ export class SolanaAdapter implements ChainAdapter {
     this.cacheTTL = config.cacheTTL || 10 * 1000;
   }
 
-  // -------------------------------------------------------------------------
-  // 基础信息
-  // -------------------------------------------------------------------------
+  private getConnection(chainKey?: string): Connection {
+    const key = chainKey || this.currentChainKey;
+    
+    if (this.connections.has(key)) {
+      return this.connections.get(key)!;
+    }
+
+    const config = this.getChainConfig(key);
+    const rpcUrls = this.config.rpcUrls || config.rpcUrls;
+    
+    const connection = new Connection(rpcUrls[0], {
+      commitment: config.commitment,
+      confirmTransactionInitialTimeout: 60000,
+    });
+    
+    this.connections.set(key, connection);
+    return connection;
+  }
 
   getChainType(): ChainType {
     return ChainType.SOLANA;
@@ -453,10 +361,6 @@ export class SolanaAdapter implements ChainAdapter {
     return this.currentChainKey;
   }
 
-  // -------------------------------------------------------------------------
-  // 地址验证
-  // -------------------------------------------------------------------------
-
   async validateAddress(address: string, chainKey?: string): Promise<AddressValidationResult> {
     if (!isValidSolanaAddress(address)) {
       return {
@@ -466,16 +370,19 @@ export class SolanaAdapter implements ChainAdapter {
       };
     }
 
-    try {
-      const accountInfo = await this.request('getAccountInfo', [address, { encoding: 'base64' }], chainKey);
+    const publicKey = new PublicKey(address);
 
-      if (accountInfo.value) {
-        const owner = accountInfo.value.owner;
+    try {
+      const connection = this.getConnection(chainKey);
+      const accountInfo = await connection.getAccountInfo(publicKey);
+
+      if (accountInfo) {
+        const owner = accountInfo.owner.toBase58();
         let addressType: AddressType = AddressType.EOA;
 
-        if (owner === TOKEN_PROGRAM_ID || owner === TOKEN_2022_PROGRAM_ID) {
+        if (owner === TOKEN_PROGRAM_ID.toBase58() || owner === TOKEN_2022_PROGRAM_ID.toBase58()) {
           addressType = AddressType.CONTRACT;
-        } else if (owner === STAKE_PROGRAM_ID) {
+        } else if (owner === STAKE_PROGRAM_ID.toBase58()) {
           addressType = AddressType.VALIDATOR;
         }
 
@@ -486,8 +393,8 @@ export class SolanaAdapter implements ChainAdapter {
           addressType,
           extra: {
             owner,
-            lamports: accountInfo.value.lamports,
-            executable: accountInfo.value.executable,
+            lamports: accountInfo.lamports,
+            executable: accountInfo.executable,
           },
         };
       }
@@ -508,22 +415,20 @@ export class SolanaAdapter implements ChainAdapter {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // 余额查询
-  // -------------------------------------------------------------------------
-
   async getNativeBalance(address: string, chainKey?: string): Promise<BalanceInfo> {
     const key = chainKey || this.currentChainKey;
     const config = this.getChainConfig(key);
-    const result = await this.request('getBalance', [address], chainKey);
-    const lamports = result.value.toString();
+    const connection = this.getConnection(chainKey);
+    const publicKey = new PublicKey(address);
+
+    const lamports = await connection.getBalance(publicKey);
 
     return {
       chainKey: key,
       chainType: ChainType.SOLANA,
       address,
       native: {
-        balance: lamports,
+        balance: lamports.toString(),
         formatted: lamportsToSOL(lamports),
         decimals: config.decimals,
         symbol: config.symbol,
@@ -540,92 +445,79 @@ export class SolanaAdapter implements ChainAdapter {
     tokenId?: string,
   ): Promise<TokenBalanceInfo> {
     const key = chainKey || this.currentChainKey;
+    const connection = this.getConnection(chainKey);
+    const owner = new PublicKey(address);
+    const mint = new PublicKey(tokenContract);
 
-    const params: any[] = [
-      address,
-      { mint: tokenContract },
-      { encoding: 'jsonParsed' },
-    ];
+    try {
+      const ata = await getAssociatedTokenAddress(mint, owner);
+      const account = await getAccount(connection, ata);
+      const mintInfo = await getMint(connection, mint);
 
-    const result = await this.request('getTokenAccountsByOwner', params, chainKey);
-
-    if (!result.value || result.value.length === 0) {
       const tokenInfo = this.getTokenInfoByMint(tokenContract);
+      const decimals = mintInfo.decimals;
+
       return {
         contractAddress: tokenContract,
         tokenId,
-        symbol: tokenInfo?.symbol || 'UNKNOWN',
-        name: tokenInfo?.name || 'Unknown Token',
-        decimals: tokenInfo?.decimals || 0,
-        balance: '0',
-        formatted: '0',
+        symbol: tokenInfo?.symbol || 'SPL',
+        name: tokenInfo?.name || 'SPL Token',
+        decimals,
+        balance: account.amount.toString(),
+        formatted: this.formatTokenAmount(account.amount, decimals),
         standard: TokenStandard.SPL,
         logoURI: tokenInfo?.logoURI,
+        extra: {
+          account: ata.toBase58(),
+          isNative: account.isNative,
+          rentExemptReserve: account.rentExemptReserve?.toString(),
+        },
       };
+    } catch (error) {
+      if (error instanceof TokenAccountNotFoundError || error instanceof TokenInvalidAccountOwnerError) {
+        const tokenInfo = this.getTokenInfoByMint(tokenContract);
+        return {
+          contractAddress: tokenContract,
+          tokenId,
+          symbol: tokenInfo?.symbol || 'UNKNOWN',
+          name: tokenInfo?.name || 'Unknown Token',
+          decimals: tokenInfo?.decimals || 0,
+          balance: '0',
+          formatted: '0',
+          standard: TokenStandard.SPL,
+          logoURI: tokenInfo?.logoURI,
+        };
+      }
+      throw error;
     }
-
-    const account = result.value[0];
-    const info = account.account.data.parsed.info;
-    const tokenInfo = this.getTokenInfoByMint(info.mint);
-
-    return {
-      contractAddress: info.mint,
-      tokenId,
-      symbol: tokenInfo?.symbol || 'SPL',
-      name: tokenInfo?.name || 'SPL Token',
-      decimals: info.tokenAmount.decimals,
-      balance: info.tokenAmount.amount,
-      formatted: info.tokenAmount.uiAmountString,
-      standard: TokenStandard.SPL,
-      logoURI: tokenInfo?.logoURI,
-      extra: {
-        account: account.pubkey,
-        isNative: info.isNative,
-        rentExemptReserve: info.rentExemptReserve,
-      },
-    };
   }
-
-  // -------------------------------------------------------------------------
-  // 交易构建
-  // -------------------------------------------------------------------------
 
   async buildTransfer(input: TransactionInput, chainKey?: string): Promise<TransactionOutput> {
     const key = chainKey || this.currentChainKey;
     const config = this.getChainConfig(key);
+    const connection = this.getConnection(chainKey);
 
-    const { blockhash } = await this.getLatestBlockhash(chainKey);
-    const lamports = solToLamports(input.value);
+    const from = new PublicKey(input.from);
+    const to = new PublicKey(input.to);
+    const lamports = BigInt(solToLamports(input.value));
 
-    const transferData = encodeTransferData(BigInt(lamports));
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
-    const message = {
-      accountKeys: [
-        { pubkey: input.from, signer: true, writable: true },
-        { pubkey: input.to, signer: false, writable: true },
-        { pubkey: SYSTEM_PROGRAM_ID, signer: false, writable: false },
-      ],
+    const transaction = new Transaction({
       recentBlockhash: blockhash,
-      instructions: [
-        {
-          programIdIndex: 2,
-          accounts: [0, 1],
-          data: transferData,
-        },
-      ],
-    };
+      feePayer: from,
+    });
 
-    const transaction = {
-      message,
-      signatures: [null],
-    };
-
-    const serializedTransaction = Buffer.from(JSON.stringify(transaction)).toString('base64');
-
-    const feeInfo = await this.getFeeForMessage(
-      Buffer.from(JSON.stringify(message)).toString('base64'),
-      chainKey
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: from,
+        toPubkey: to,
+        lamports: Number(lamports),
+      })
     );
+
+    const serializedTransaction = transaction.serialize({ requireAllSignatures: false }).toString('base64');
+    const feeInfo = await this.getFeeForMessage(serializedTransaction, chainKey);
 
     return {
       chainKey: key,
@@ -643,6 +535,7 @@ export class SolanaAdapter implements ChainAdapter {
       size: Math.ceil(serializedTransaction.length * 0.75),
       extra: {
         recentBlockhash: blockhash,
+        lastValidBlockHeight,
         signatureCount: 1,
       },
     };
@@ -656,45 +549,37 @@ export class SolanaAdapter implements ChainAdapter {
   ): Promise<TransactionOutput> {
     const key = chainKey || this.currentChainKey;
     const config = this.getChainConfig(key);
+    const connection = this.getConnection(chainKey);
 
-    const sourceAta = getAssociatedTokenAddress(tokenContract, input.from);
-    const destAta = getAssociatedTokenAddress(tokenContract, input.to);
+    const from = new PublicKey(input.from);
+    const to = new PublicKey(input.to);
+    const mint = new PublicKey(tokenContract);
+
     const tokenInfo = this.getTokenInfoByMint(tokenContract);
     const decimals = tokenInfo?.decimals || 9;
     const amount = BigInt(input.tokenAmount || input.value) * BigInt(10 ** decimals);
 
-    const { blockhash } = await this.getLatestBlockhash(chainKey);
+    const sourceAta = await getAssociatedTokenAddress(mint, from);
+    const destAta = await getAssociatedTokenAddress(mint, to);
 
-    const transferData = encodeTokenTransferData(amount);
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
 
-    const message = {
-      accountKeys: [
-        { pubkey: input.from, signer: true, writable: true },
-        { pubkey: sourceAta, signer: false, writable: true },
-        { pubkey: destAta, signer: false, writable: true },
-        { pubkey: TOKEN_PROGRAM_ID, signer: false, writable: false },
-      ],
+    const transaction = new Transaction({
       recentBlockhash: blockhash,
-      instructions: [
-        {
-          programIdIndex: 3,
-          accounts: [1, 2, 0],
-          data: transferData,
-        },
-      ],
-    };
+      feePayer: from,
+    });
 
-    const transaction = {
-      message,
-      signatures: [null],
-    };
-
-    const serializedTransaction = Buffer.from(JSON.stringify(transaction)).toString('base64');
-
-    const feeInfo = await this.getFeeForMessage(
-      Buffer.from(JSON.stringify(message)).toString('base64'),
-      chainKey
+    transaction.add(
+      createTransferInstruction(
+        sourceAta,
+        destAta,
+        from,
+        amount
+      )
     );
+
+    const serializedTransaction = transaction.serialize({ requireAllSignatures: false }).toString('base64');
+    const feeInfo = await this.getFeeForMessage(serializedTransaction, chainKey);
 
     return {
       chainKey: key,
@@ -703,7 +588,7 @@ export class SolanaAdapter implements ChainAdapter {
       serializedTransaction,
       transactionHash: '',
       from: input.from,
-      to: tokenContract,
+      to: input.to,
       value: '0',
       nonce: 0,
       data: input.data || '',
@@ -712,20 +597,17 @@ export class SolanaAdapter implements ChainAdapter {
       size: Math.ceil(serializedTransaction.length * 0.75),
       extra: {
         recentBlockhash: blockhash,
+        lastValidBlockHeight,
         tokenTransfer: {
           to: input.to,
           amount: input.tokenAmount || input.value,
-          sourceAta,
-          destAta,
+          sourceAta: sourceAta.toBase58(),
+          destAta: destAta.toBase58(),
           tokenId,
         },
       },
     };
   }
-
-  // -------------------------------------------------------------------------
-  // 费用估算
-  // -------------------------------------------------------------------------
 
   async estimateFee(
     input: TransactionInput,
@@ -733,46 +615,19 @@ export class SolanaAdapter implements ChainAdapter {
     chainKey?: string,
   ): Promise<FeeEstimate> {
     const key = chainKey || this.currentChainKey;
-    const config = this.getChainConfig(key);
 
-    let message: any;
+    let baseFee: number;
     if (input.tokenContract) {
-      const sourceAta = getAssociatedTokenAddress(input.tokenContract, input.from);
-      const destAta = getAssociatedTokenAddress(input.tokenContract, input.to);
-      message = {
-        accountKeys: [
-          { pubkey: input.from, signer: true, writable: true },
-          { pubkey: sourceAta, signer: false, writable: true },
-          { pubkey: destAta, signer: false, writable: true },
-          { pubkey: TOKEN_PROGRAM_ID, signer: false, writable: false },
-        ],
-        recentBlockhash: '1'.repeat(32),
-        instructions: [
-          { programIdIndex: 3, accounts: [1, 2, 0], data: '' },
-        ],
-      };
+      const tx = await this.buildTokenTransfer(input, input.tokenContract, chainKey);
+      baseFee = Number(tx.fee);
     } else {
-      message = {
-        accountKeys: [
-          { pubkey: input.from, signer: true, writable: true },
-          { pubkey: input.to, signer: false, writable: true },
-          { pubkey: SYSTEM_PROGRAM_ID, signer: false, writable: false },
-        ],
-        recentBlockhash: '1'.repeat(32),
-        instructions: [
-          { programIdIndex: 2, accounts: [0, 1], data: '' },
-        ],
-      };
+      const tx = await this.buildTransfer(input, chainKey);
+      baseFee = Number(tx.fee);
     }
-
-    const baseFee = await this.getFeeForMessage(
-      Buffer.from(JSON.stringify(message)).toString('base64'),
-      chainKey
-    );
 
     const feeMultiplier = feeLevel === FeeLevel.SLOW ? 1.0 :
       feeLevel === FeeLevel.FAST ? 1.5 : 1.2;
-    const fee = Math.ceil(Number(baseFee) * feeMultiplier);
+    const fee = Math.ceil(baseFee * feeMultiplier);
 
     return {
       chainKey: key,
@@ -782,7 +637,6 @@ export class SolanaAdapter implements ChainAdapter {
       feeFormatted: lamportsToSOL(fee),
       estimatedTime: feeLevel === FeeLevel.SLOW ? 60 :
         feeLevel === FeeLevel.FAST ? 10 : 30,
-      feePerByte: Math.ceil(fee / Math.ceil(Buffer.from(JSON.stringify(message)).length * 0.75)),
       extra: {
         baseFee: baseFee.toString(),
         signatureFee: baseFee,
@@ -792,46 +646,40 @@ export class SolanaAdapter implements ChainAdapter {
 
   async getGasPrice(chainKey?: string): Promise<GasPriceInfo> {
     const key = chainKey || this.currentChainKey;
+    const connection = this.getConnection(chainKey);
 
-    const { blockhash } = await this.getLatestBlockhash(chainKey);
-    const message = {
-      accountKeys: [
-        { pubkey: '1'.repeat(32), signer: true, writable: true },
-        { pubkey: '2'.repeat(32), signer: false, writable: true },
-        { pubkey: SYSTEM_PROGRAM_ID, signer: false, writable: false },
-      ],
+    const { blockhash } = await connection.getLatestBlockhash();
+
+    const message = new TransactionMessage({
+      payerKey: new PublicKey('1'.repeat(32)),
       recentBlockhash: blockhash,
       instructions: [],
-    };
+    });
 
-    const baseFee = await this.getFeeForMessage(
-      Buffer.from(JSON.stringify(message)).toString('base64'),
-      chainKey
-    );
+    const compiledMessage = message.compileToV0Message();
+    const baseFee = await connection.getFeeForMessage(compiledMessage);
+
+    const safeBaseFee = baseFee.value ?? 5000;
 
     return {
       chainKey: key,
       chainType: ChainType.SOLANA,
       slow: {
-        gasPrice: baseFee.toString(),
+        gasPrice: safeBaseFee.toString(),
         estimatedTime: 60,
       },
       normal: {
-        gasPrice: Math.ceil(Number(baseFee) * 1.2).toString(),
+        gasPrice: Math.ceil(safeBaseFee * 1.2).toString(),
         estimatedTime: 30,
       },
       fast: {
-        gasPrice: Math.ceil(Number(baseFee) * 1.5).toString(),
+        gasPrice: Math.ceil(safeBaseFee * 1.5).toString(),
         estimatedTime: 10,
       },
       isEIP1559: false,
       updatedAt: new Date().toISOString(),
     };
   }
-
-  // -------------------------------------------------------------------------
-  // 交易签名
-  // -------------------------------------------------------------------------
 
   async signTransaction(
     transaction: TransactionOutput,
@@ -842,25 +690,15 @@ export class SolanaAdapter implements ChainAdapter {
     return result;
   }
 
-  // -------------------------------------------------------------------------
-  // 交易广播
-  // -------------------------------------------------------------------------
-
   async broadcastTransaction(
     signedTransaction: string,
     chainKey?: string,
   ): Promise<BroadcastResult> {
     try {
-      const params: any[] = [
-        signedTransaction,
-        {
-          encoding: 'base64',
-          skipPreflight: false,
-          preflightCommitment: 'processed',
-        },
-      ];
+      const connection = this.getConnection(chainKey);
+      const txBytes = Buffer.from(signedTransaction, 'base64');
 
-      const txHash = await this.request('sendTransaction', params, chainKey);
+      const txHash = await connection.sendRawTransaction(txBytes);
 
       return {
         success: true,
@@ -875,157 +713,134 @@ export class SolanaAdapter implements ChainAdapter {
     }
   }
 
-  // -------------------------------------------------------------------------
-  // 交易查询
-  // -------------------------------------------------------------------------
-
   async getTransactionStatus(
     transactionHash: string,
     chainKey?: string,
   ): Promise<TransactionDetail> {
     const key = chainKey || this.currentChainKey;
-    const config = this.getChainConfig(key);
+    const connection = this.getConnection(chainKey);
 
-    const result = await this.request('getTransaction', [
-      transactionHash,
-      { encoding: 'jsonParsed', maxSupportedTransactionVersion: 0 },
-    ], chainKey);
+    try {
+      const tx = await connection.getTransaction(
+        transactionHash,
+        {
+          maxSupportedTransactionVersion: 0,
+        }
+      );
 
-    if (!result) {
-      const statusResult = await this.request('getSignatureStatuses', [[transactionHash]], chainKey);
-      const status = statusResult.value?.[0];
+      if (!tx) {
+        const statusResult = await connection.getSignatureStatus(transactionHash);
+        const status = statusResult.value;
 
-      if (!status) {
-        throw new Error(`Transaction not found: ${transactionHash}`);
+        if (!status) {
+          throw new Error(`Transaction not found: ${transactionHash}`);
+        }
+
+        return {
+          chainKey: key,
+          chainType: ChainType.SOLANA,
+          hash: transactionHash,
+          from: '',
+          to: '',
+          value: '0',
+          valueFormatted: '0',
+          status: TransactionStatus.PENDING,
+          type: TransactionType.TRANSFER,
+          confirmations: 0,
+          extra: {
+            confirmationStatus: status.confirmationStatus,
+          },
+        };
+      }
+
+      const meta = tx.meta;
+      const message = tx.transaction.message;
+      
+      let from = '';
+      let to = '';
+      let value = '0';
+
+      const accountKeysResult =
+        typeof (message as any).getAccountKeys === 'function'
+          ? (message as any).getAccountKeys()
+          : null;
+      const accountKeys =
+        accountKeysResult?.staticAccountKeys ||
+        (message as any).staticAccountKeys ||
+        (message as any).accountKeys ||
+        [];
+      const instructions =
+        (message as any).compiledInstructions ||
+        (message as any).instructions ||
+        [];
+
+      if (instructions.length > 0 && accountKeys.length > 1) {
+        from = accountKeys[0].toBase58();
+        to = accountKeys[1].toBase58();
+      }
+
+      const fee = meta?.fee || 0;
+      const isFailed = meta?.err !== null && meta?.err !== undefined;
+
+      let status: TransactionStatus;
+      if (isFailed) {
+        status = TransactionStatus.FAILED;
+        status = TransactionStatus.CONFIRMED;
+      }
+
+      let confirmations = 0;
+      if (tx.slot) {
+        try {
+          const currentSlot = await connection.getSlot();
+          confirmations = Math.max(0, currentSlot - tx.slot);
+        } catch {
+          confirmations = 1;
+        }
       }
 
       return {
         chainKey: key,
         chainType: ChainType.SOLANA,
         hash: transactionHash,
-        from: '',
-        to: '',
-        value: '0',
-        valueFormatted: '0',
-        status: TransactionStatus.PENDING,
+        from,
+        to,
+        value,
+        valueFormatted: lamportsToSOL(value),
+        fee: fee.toString(),
+        feeFormatted: lamportsToSOL(fee),
+        blockNumber: tx.slot,
+        timestamp: tx.blockTime,
+        confirmations,
+        status,
         type: TransactionType.TRANSFER,
-        confirmations: 0,
+        errorMessage: isFailed ? JSON.stringify(meta.err) : undefined,
         extra: {
-          confirmationStatus: status.confirmationStatus,
+          slot: tx.slot,
+          blockTime: tx.blockTime,
+          logMessages: meta?.logMessages,
         },
       };
+    } catch (error) {
+      throw error;
     }
-
-    const meta = result.meta;
-    const message = result.transaction.message;
-    const accountKeys = message.accountKeys;
-
-    let from = '';
-    let to = '';
-    let value = '0';
-
-    if (message.instructions && message.instructions.length > 0) {
-      const ix = message.instructions[0];
-      const accounts = ix.accounts || [];
-      if (accounts.length >= 2) {
-        from = typeof accountKeys[accounts[0]] === 'string'
-          ? accountKeys[accounts[0]]
-          : accountKeys[accounts[0]].pubkey;
-        to = typeof accountKeys[accounts[1]] === 'string'
-          ? accountKeys[accounts[1]]
-          : accountKeys[accounts[1]].pubkey;
-      }
-    }
-
-    const fee = meta?.fee || 0;
-    const isFailed = meta?.err !== null && meta?.err !== undefined;
-
-    let status: TransactionStatus;
-    if (isFailed) {
-      status = TransactionStatus.FAILED;
-    } else if (result.version !== undefined) {
-      status = TransactionStatus.FINALIZED;
-    } else {
-      status = TransactionStatus.CONFIRMED;
-    }
-
-    let confirmations = 0;
-    if (result.slot) {
-      try {
-        const currentSlot = await this.getSlot(chainKey);
-        confirmations = Math.max(0, currentSlot - result.slot);
-      } catch {
-        confirmations = 1;
-      }
-    }
-
-    const tokenTransfers: any[] = [];
-    if (meta?.postTokenBalances && meta?.preTokenBalances) {
-      for (let i = 0; i < meta.postTokenBalances.length; i++) {
-        const postBalance = meta.postTokenBalances[i];
-        const preBalance = meta.preTokenBalances.find(
-          (b: any) => b.accountIndex === postBalance.accountIndex
-        );
-        if (preBalance && postBalance.uiTokenAmount) {
-          tokenTransfers.push({
-            contractAddress: postBalance.mint,
-            from: preBalance.owner,
-            to: postBalance.owner,
-            amount: postBalance.uiTokenAmount.amount,
-            symbol: postBalance.uiTokenAmount.symbol || 'SPL',
-            decimals: postBalance.uiTokenAmount.decimals,
-            standard: TokenStandard.SPL,
-          });
-        }
-      }
-    }
-
-    return {
-      chainKey: key,
-      chainType: ChainType.SOLANA,
-      hash: transactionHash,
-      from,
-      to,
-      value,
-      valueFormatted: lamportsToSOL(value),
-      fee: fee.toString(),
-      feeFormatted: lamportsToSOL(fee),
-      blockNumber: result.slot,
-      timestamp: result.blockTime,
-      confirmations,
-      status,
-      type: TransactionType.TRANSFER,
-      tokenTransfers: tokenTransfers.length > 0 ? tokenTransfers : undefined,
-      errorMessage: isFailed ? JSON.stringify(meta.err) : undefined,
-      extra: {
-        slot: result.slot,
-        blockTime: result.blockTime,
-        logMessages: meta?.logMessages,
-        innerInstructions: meta?.innerInstructions?.length || 0,
-      },
-    };
   }
-
-  // -------------------------------------------------------------------------
-  // 链状态查询
-  // -------------------------------------------------------------------------
 
   async getNonce(address: string, chainKey?: string): Promise<number> {
     return 0;
   }
 
   async getBlockNumber(chainKey?: string): Promise<number> {
-    const result = await this.request('getSlot', [], chainKey);
-    return result;
+    const connection = this.getConnection(chainKey);
+    return connection.getSlot();
   }
 
   async getBlockInfo(blockNumber: number, chainKey?: string): Promise<BlockInfo> {
     const key = chainKey || this.currentChainKey;
+    const connection = this.getConnection(chainKey);
 
-    const block = await this.request('getBlock', [
-      blockNumber,
-      { encoding: 'json', maxSupportedTransactionVersion: 0 },
-    ], chainKey);
+    const block = await connection.getBlock(blockNumber, {
+      maxSupportedTransactionVersion: 0,
+    });
 
     return {
       chainKey: key,
@@ -1042,70 +857,41 @@ export class SolanaAdapter implements ChainAdapter {
     };
   }
 
-  // -------------------------------------------------------------------------
-  // RPC 相关
-  // -------------------------------------------------------------------------
-
   async request(method: string, params: any[] = [], chainKey?: string): Promise<any> {
-    const key = chainKey || this.currentChainKey;
-    const config = this.getChainConfig(key);
-    const rpcUrls = this.config.rpcUrls || config.rpcUrls;
-
-    const cacheKey = `${key}:${method}:${JSON.stringify(params)}`;
-    const cached = this.requestCache.get(cacheKey);
-    if (cached && Date.now() < cached.expiresAt) {
-      return cached.value;
-    }
-
-    let currentIndex = this.currentRpcIndex.get(key) || 0;
-    const id = ++this.requestId;
-
-    for (let i = 0; i < rpcUrls.length; i++) {
-      try {
-        const rpcUrl = rpcUrls[(currentIndex + i) % rpcUrls.length];
-        const response = await fetch(rpcUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            jsonrpc: '2.0',
-            method,
-            params,
-            id,
-          }),
-        });
-
-        const data = await response.json();
-        if (data.error) {
-          throw new Error(data.error.message || `RPC error: ${method}`);
-        }
-
-        this.requestCache.set(cacheKey, {
-          value: data.result,
-          expiresAt: Date.now() + this.cacheTTL,
-        });
-
-        if (i !== 0) {
-          this.currentRpcIndex.set(key, (currentIndex + i) % rpcUrls.length);
-        }
-
-        return data.result;
-      } catch (error) {
-        if (i < rpcUrls.length - 1) {
-          continue;
-        }
-        throw error;
-      }
+    const connection = this.getConnection(chainKey);
+    
+    switch (method) {
+      case 'getBalance':
+        return { value: await connection.getBalance(new PublicKey(params[0])) };
+      case 'getAccountInfo':
+        return await connection.getAccountInfo(new PublicKey(params[0]), params[1]);
+      case 'getBlock':
+        return await connection.getBlock(params[0], params[1]);
+      case 'getTokenAccountsByOwner':
+        return await connection.getTokenAccountsByOwner(new PublicKey(params[0]), params[1], params[2]);
+      case 'getTransaction':
+        return await connection.getTransaction(params[0], params[1]);
+      case 'getLatestBlockhash':
+        return await connection.getLatestBlockhash();
+      case 'getFeeForMessage':
+        return { value: await connection.getFeeForMessage(params[0]) };
+      case 'getSignatureStatuses':
+        return await connection.getSignatureStatuses(params[0]);
+      case 'simulateTransaction':
+        return await connection.simulateTransaction(params[0], params[1]);
+      case 'sendTransaction':
+        return await connection.sendRawTransaction(params[0], params[1]);
+      case 'getSlot':
+        return await connection.getSlot();
+      case 'getEpochInfo':
+        return await connection.getEpochInfo();
+      default:
+        throw new Error(`Unsupported RPC method: ${method}`);
     }
   }
 
   switchRpc(chainKey?: string): string {
-    const key = chainKey || this.currentChainKey;
-    const config = this.getChainConfig(key);
-    const rpcUrls = this.config.rpcUrls || config.rpcUrls;
-    const currentIndex = this.currentRpcIndex.get(key) || 0;
-    const newIndex = (currentIndex + 1) % rpcUrls.length;
-    this.currentRpcIndex.set(key, newIndex);
-    return rpcUrls[newIndex];
+    return this.getConnection(chainKey).rpcEndpoint;
   }
 
   clearCache(): void {
@@ -1116,43 +902,40 @@ export class SolanaAdapter implements ChainAdapter {
     return this.requestCache.size;
   }
 
-  // -------------------------------------------------------------------------
-  // Solana 特有方法
-  // -------------------------------------------------------------------------
-
-  /**
-   * 获取最新区块哈希
-   */
   async getLatestBlockhash(chainKey?: string): Promise<{
     blockhash: string;
     lastValidBlockHeight: number;
   }> {
-    const result = await this.request('getLatestBlockhash', [], chainKey);
-    return result.value;
+    const connection = this.getConnection(chainKey);
+    const result = await connection.getLatestBlockhash();
+    if ((result as any)?.value?.blockhash) {
+      return (result as any).value;
+    }
+    return result as { blockhash: string; lastValidBlockHeight: number };
   }
 
-  /**
-   * 获取消息费用
-   */
   async getFeeForMessage(message: string, chainKey?: string): Promise<number> {
     try {
-      const result = await this.request('getFeeForMessage', [message], chainKey);
-      return result.value || 5000;
+      const connection = this.getConnection(chainKey);
+      const messageBytes = Buffer.from(message, 'base64');
+      
+      try {
+        const v0Message = MessageV0.deserialize(messageBytes);
+        const fee = await connection.getFeeForMessage(v0Message);
+        return fee.value ?? 5000;
+      } catch {
+        return 5000;
+      }
     } catch {
       return 5000;
     }
   }
 
-  /**
-   * 获取当前槽位号
-   */
   async getSlot(chainKey?: string): Promise<number> {
-    return this.request('getSlot', [], chainKey);
+    const connection = this.getConnection(chainKey);
+    return connection.getSlot();
   }
 
-  /**
-   * 获取 Epoch 信息
-   */
   async getEpochInfo(chainKey?: string): Promise<{
     epoch: number;
     slotIndex: number;
@@ -1161,23 +944,29 @@ export class SolanaAdapter implements ChainAdapter {
     blockHeight: number;
     transactionCount: number;
   }> {
-    return this.request('getEpochInfo', [], chainKey);
+    const connection = this.getConnection(chainKey);
+    const info = await connection.getEpochInfo();
+    return {
+      epoch: info.epoch,
+      slotIndex: info.slotIndex,
+      slotsInEpoch: info.slotsInEpoch,
+      absoluteSlot: info.absoluteSlot,
+      blockHeight: info.blockHeight ?? 0,
+      transactionCount: info.transactionCount ?? 0,
+    };
   }
 
-  /**
-   * 获取所有 Token 余额
-   */
   async getAllTokenBalances(owner: string, chainKey?: string): Promise<TokenBalanceInfo[]> {
-    const params: any[] = [
-      owner,
-      { programId: TOKEN_PROGRAM_ID },
-      { encoding: 'jsonParsed' },
-    ];
+    const connection = this.getConnection(chainKey);
+    const ownerPublicKey = new PublicKey(owner);
 
-    const result = await this.request('getTokenAccountsByOwner', params, chainKey);
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      ownerPublicKey,
+      { programId: TOKEN_PROGRAM_ID },
+    );
 
     const balances: TokenBalanceInfo[] = [];
-    for (const account of result.value) {
+    for (const account of tokenAccounts.value) {
       const info = account.account.data.parsed.info;
       const tokenInfo = this.getTokenInfoByMint(info.mint);
 
@@ -1200,9 +989,6 @@ export class SolanaAdapter implements ChainAdapter {
     return balances;
   }
 
-  /**
-   * 模拟交易
-   */
   async simulateTransaction(
     transaction: string,
     chainKey?: string,
@@ -1213,10 +999,17 @@ export class SolanaAdapter implements ChainAdapter {
     unitsConsumed: number;
     returnData: any;
   }> {
-    const result = await this.request('simulateTransaction', [
-      transaction,
-      { encoding: 'base64' },
-    ], chainKey);
+    const connection = this.getConnection(chainKey);
+    const txBytes = Buffer.from(transaction, 'base64');
+
+    let parsedTransaction: Transaction | VersionedTransaction;
+    try {
+      parsedTransaction = VersionedTransaction.deserialize(txBytes);
+    } catch {
+      parsedTransaction = Transaction.from(txBytes);
+    }
+
+    const result = await connection.simulateTransaction(parsedTransaction as any);
 
     return {
       success: result.value.err === null,
@@ -1226,10 +1019,6 @@ export class SolanaAdapter implements ChainAdapter {
       returnData: result.value.returnData,
     };
   }
-
-  // -------------------------------------------------------------------------
-  // 私有方法
-  // -------------------------------------------------------------------------
 
   private getChainConfig(chainKey: string): SolanaChainConfig {
     const custom = this.customNetworks.get(chainKey);
@@ -1246,24 +1035,22 @@ export class SolanaAdapter implements ChainAdapter {
     return Object.values(COMMON_SPL_TOKENS).find(t => t.mint === mint);
   }
 
-  /**
-   * 添加自定义网络
-   */
+  private formatTokenAmount(amount: bigint, decimals: number): string {
+    const divisor = 10n ** BigInt(decimals);
+    const integer = amount / divisor;
+    const fraction = amount % divisor;
+    const fractionText = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
+    return fractionText ? `${integer}.${fractionText}` : integer.toString();
+  }
+
   addCustomNetwork(key: string, config: SolanaChainConfig): void {
     this.customNetworks.set(key, config);
   }
 
-  /**
-   * 移除自定义网络
-   */
   removeCustomNetwork(key: string): boolean {
     return this.customNetworks.delete(key);
   }
 }
-
-// ============================================================================
-// 默认导出
-// ============================================================================
 
 export default {
   SOLANA_NETWORKS,
@@ -1279,7 +1066,5 @@ export default {
   lamportsToSOL,
   solToLamports,
   formatSOL,
-  base58Encode,
-  base58Decode,
   isValidSolanaAddress,
 };

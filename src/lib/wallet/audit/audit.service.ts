@@ -49,6 +49,24 @@ export interface AuditServiceConfig {
   flushInterval?: number;
   evidenceChainBlockSize?: number;
   evidenceChainAnchorInterval?: number;
+  retentionDays?: number;
+}
+
+export enum AuditEventType {
+  WALLET_CREATED = 'wallet_created',
+  TRANSACTION_SIGNED = 'transaction_signed',
+  KEY_EXPORTED = 'key_exported',
+  USER_LOGIN = 'user_login',
+  RISK_ALERT = 'risk_alert',
+  APPROVAL_GRANTED = 'approval_granted',
+}
+
+export enum AuditEntityType {
+  WALLET = 'wallet',
+  TRANSACTION = 'transaction',
+  KEY = 'key',
+  USER = 'user',
+  APPROVAL = 'approval',
 }
 
 // ============================================================================
@@ -102,6 +120,7 @@ export interface AuditOperationOptions {
 // ============================================================================
 
 export class AuditService {
+  readonly serviceName = 'AuditService';
   private config: Required<AuditServiceConfig>;
   private logger: AuditLogger;
   private evidenceChain: EvidenceChain;
@@ -114,6 +133,7 @@ export class AuditService {
   private anchorTimer: ReturnType<typeof setInterval> | null = null;
   private onLogCallbacks: Array<(log: AuditLogEntry) => void> = [];
   private onErrorCallbacks: Array<(error: Error) => void> = [];
+  private legacyInitialized = false;
 
   // ========================================================================
   // 构造函数
@@ -130,6 +150,7 @@ export class AuditService {
       flushInterval: 5000,
       evidenceChainBlockSize: 50,
       evidenceChainAnchorInterval: 3600000,
+      retentionDays: 90,
       ...config,
     };
 
@@ -146,6 +167,109 @@ export class AuditService {
     this.retentionManager = new RetentionManager();
 
     this.queryService = new AuditQueryService();
+  }
+
+  get isInitialized(): boolean {
+    return this.legacyInitialized;
+  }
+
+  /**
+   * 兼容旧版轻量审计接口，供历史单测与调用方使用。
+   */
+  async initialize(): Promise<void> {
+    this.legacyInitialized = true;
+  }
+
+  async recordEvent(input: {
+    eventType: AuditEventType;
+    entityType: AuditEntityType;
+    entityId: string;
+    userId: string;
+    data?: unknown;
+  }): Promise<Record<string, unknown>> {
+    if (!this.legacyInitialized) {
+      throw new Error('AuditService is not initialized');
+    }
+
+    const { auditStorage } = require('./audit-storage');
+    const { evidenceChain } = require('./evidence-chain');
+
+    const event: Record<string, unknown> = {
+      eventId: this.generateId(),
+      eventType: input.eventType,
+      entityType: input.entityType,
+      entityId: input.entityId,
+      userId: input.userId,
+      timestamp: Date.now(),
+      data: input.data,
+    };
+
+    if (this.config.enableEvidenceChain) {
+      event.proof = await evidenceChain.generateProof(event);
+    }
+
+    await auditStorage.saveEvent(event);
+    return event;
+  }
+
+  async queryEvents(filter: Record<string, unknown>): Promise<{ items: unknown[]; total: number }> {
+    const { auditStorage } = require('./audit-storage');
+    return auditStorage.queryEvents(filter);
+  }
+
+  async getEvent(eventId: string): Promise<unknown> {
+    const { auditStorage } = require('./audit-storage');
+    return auditStorage.getEvent(eventId);
+  }
+
+  async getEventCount(filter: Record<string, unknown>): Promise<number> {
+    const { auditStorage } = require('./audit-storage');
+    return auditStorage.getEventCount(filter);
+  }
+
+  async getStatsByType(filter: Record<string, unknown>): Promise<Record<string, number>> {
+    const result = await this.queryEvents(filter);
+    return result.items.reduce<Record<string, number>>((stats, item) => {
+      const eventType = String((item as { eventType?: string }).eventType || 'unknown');
+      stats[eventType] = (stats[eventType] || 0) + 1;
+      return stats;
+    }, {});
+  }
+
+  async verifyEventIntegrity(eventId: string): Promise<boolean> {
+    const { evidenceChain } = require('./evidence-chain');
+    const event = await this.getEvent(eventId);
+    return evidenceChain.verifyProof(event);
+  }
+
+  async exportCSV(filter: Record<string, unknown>): Promise<string> {
+    const result = await this.queryEvents(filter);
+    const items = result.items as Array<Record<string, unknown>>;
+    if (items.length === 0) {
+      return 'eventId,eventType,entityType,entityId,userId,timestamp';
+    }
+
+    const header = ['eventId', 'eventType', 'entityType', 'entityId', 'userId', 'timestamp'];
+    const rows = items.map((item) =>
+      header.map((key) => JSON.stringify(item[key] ?? '')).join(','),
+    );
+    return [header.join(','), ...rows].join('\n');
+  }
+
+  async exportJSON(filter: Record<string, unknown>): Promise<string> {
+    const result = await this.queryEvents(filter);
+    return JSON.stringify(result);
+  }
+
+  getConfig(): AuditServiceConfig {
+    return { ...this.config };
+  }
+
+  updateConfig(nextConfig: AuditServiceConfig): void {
+    this.config = {
+      ...this.config,
+      ...nextConfig,
+    };
   }
 
   // ========================================================================
@@ -728,5 +852,7 @@ export class AuditService {
 // ============================================================================
 // 默认导出
 // ============================================================================
+
+export const auditService = new AuditService();
 
 export default AuditService;

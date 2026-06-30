@@ -29,7 +29,11 @@ export async function authenticate(req: NextRequest): Promise<AuthContext | Next
       return unauthorized('Invalid token');
     }
 
-    if (process.env.NODE_ENV !== 'production' && payload.userId === 'dev-admin') {
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      process.env.ALLOW_DEV_ADMIN_LOGIN === 'true' &&
+      payload.userId === 'dev-admin'
+    ) {
       return {
         userId: 'dev-admin',
         user: { id: 'dev-admin', userType: 'admin', status: 'active', username: payload.username },

@@ -305,14 +305,14 @@ export default function EcommercePage() {
               renderItem={(item) => (
                 <List.Item
                   actions={[
-                    <Button type="text" onClick={() => updateCartQuantity(item.id, -1)}>
+                    <Button key="dec" type="text" onClick={() => updateCartQuantity(item.id, -1)}>
                       <MinusOutlined />
                     </Button>,
-                    <span className="w-8 text-center">{item.quantity}</span>,
-                    <Button type="text" onClick={() => updateCartQuantity(item.id, 1)}>
+                    <span key="qty" className="w-8 text-center">{item.quantity}</span>,
+                    <Button key="inc" type="text" onClick={() => updateCartQuantity(item.id, 1)}>
                       <PlusOutlined />
                     </Button>,
-                    <Button type="text" danger onClick={() => removeFromCart(item.id)}>
+                    <Button key="del" type="text" danger onClick={() => removeFromCart(item.id)}>
                       <DeleteOutlined />
                     </Button>,
                   ]}

@@ -1,0 +1,24 @@
+apiVersion: v2
+name: zs-ai-platform
+description: ZS-AI-Platform Helm Chart - 通用业务服务部署模板
+type: application
+version: 1.0.0
+appVersion: "1.16.0"
+home: https://github.com/zs-ai-platform/charts
+keywords:
+  - ai
+  - platform
+  - kubernetes
+  - trading
+maintainers:
+  - name: SRE Team
+    email: sre@zs-ai-platform.com
+  - name: Platform Team
+    email: platform@zs-ai-platform.com
+icon: https://zs-ai-platform.com/logo.png
+kubeVersion: ">=1.24.0-0"
+sources:
+  - https://github.com/zs-ai-platform
+annotations:
+  category: Application
+  licenses: Apache-2.0

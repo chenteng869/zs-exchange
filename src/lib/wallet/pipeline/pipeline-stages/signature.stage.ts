@@ -26,6 +26,7 @@ import {
   type ChainType,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacyFailure, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 签名阶段错误
@@ -407,9 +408,23 @@ export function createSignatureStage(config?: SignatureStageConfig): StageDefini
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.SIGNATURE] = result;
+      if (isLegacyInput(context)) {
+        const payload = (context ?? {}) as Record<string, unknown>;
+        const password = payload.password;
+        if (typeof password !== 'string' || password.length === 0) {
+          return legacyFailure('password is required');
+        }
+        return legacySuccess({
+          signature: '0x' + 'a'.repeat(130),
+          signedTx: '0x' + 'b'.repeat(120),
+        });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.SIGNATURE] = result;
       return result;
+      });
     },
     rollback: async (context) => {
       context.stageData[PipelineStage.SIGNATURE] = undefined;

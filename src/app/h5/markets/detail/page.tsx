@@ -3,7 +3,7 @@
 /**
  * H5 行情详情页（K线 + 深度 + 成交）
  */
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ChevronDown, Star, Share2, Bell, TrendingUp, TrendingDown } from 'lucide-react';
@@ -110,7 +110,7 @@ function scaleBarHeight(bar: KlineBar, bars: KlineBar[]) {
   return Math.max(20, Math.min(150, (ownRange / range) * 150));
 }
 
-export default function H5MarketDetailPage() {
+function H5MarketDetailPageInner() {
   const searchParams = useSearchParams();
   const [tf, setTf] = useState('1H');
   const [ticker, setTicker] = useState<MarketTicker | null>(null);
@@ -416,6 +416,14 @@ export default function H5MarketDetailPage() {
 
       <div style={{ height: 20 }} />
     </div>
+  );
+}
+
+export default function H5MarketDetailPage() {
+  return (
+    <Suspense fallback={<div style={{ padding: 16, color: '#7B89B8' }}>加载中...</div>}>
+      <H5MarketDetailPageInner />
+    </Suspense>
   );
 }
 

@@ -480,7 +480,7 @@ export default function CopyTradingPage() {
                 rowKey="date"
                 size="small"
                 pagination={false}
-                title={() => <span><TeamOutlined /> 主交易员 "{selectedCopy.masterTrader}" 近期表现</span>}
+                title={() => <span><TeamOutlined /> 主交易员 &quot;{selectedCopy.masterTrader}&quot; 近期表现</span>}
                 columns={[
                   { title: '日期', dataIndex: 'date', width: 110 },
                   { title: '交易数', dataIndex: 'trades', width: 80 },

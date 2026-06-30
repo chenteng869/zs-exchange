@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="720" viewBox="0 0 1180 720" role="img" aria-labelledby="title desc">
+  <title id="title">ZS Exchange Solana Integration Architecture</title>
+  <desc id="desc">Architecture diagram for Solana integration in the project.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7fbff"/>
+      <stop offset="100%" stop-color="#eef7f1"/>
+    </linearGradient>
+    <style>
+      .title{font:700 28px Arial,sans-serif;fill:#162033}
+      .subtitle{font:400 14px Arial,sans-serif;fill:#5d6678}
+      .box{fill:#fff;stroke:#cdd8e7;stroke-width:1.5;rx:10}
+      .box2{fill:#f6fffb;stroke:#93dbc7;stroke-width:1.5;rx:10}
+      .box3{fill:#fff8ef;stroke:#f0c487;stroke-width:1.5;rx:10}
+      .head{font:700 17px Arial,sans-serif;fill:#1c2b3f}
+      .text{font:400 13px Arial,sans-serif;fill:#334155}
+      .small{font:400 12px Arial,sans-serif;fill:#667085}
+      .arrow{stroke:#60758f;stroke-width:2;fill:none;marker-end:url(#arrow)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#60758f"/>
+    </marker>
+  </defs>
+  <rect width="1180" height="720" fill="url(#bg)"/>
+  <text x="50" y="54" class="title">ZS Exchange - Solana Integration Architecture</text>
+  <text x="50" y="80" class="subtitle">Scope: SDK, wallet adapter, API routes, DID anchor, H5 and admin business entry points</text>
+
+  <rect x="50" y="120" width="220" height="130" class="box"/>
+  <text x="72" y="152" class="head">Frontend Entries</text>
+  <text x="72" y="182" class="text">H5 wallet deposit</text>
+  <text x="72" y="205" class="text">Admin assets / NFT / Quant</text>
+  <text x="72" y="228" class="text">DApp / WalletConnect</text>
+
+  <rect x="350" y="105" width="240" height="160" class="box2"/>
+  <text x="372" y="138" class="head">Next.js API</text>
+  <text x="372" y="170" class="text">/api/v1/solana/*</text>
+  <text x="372" y="193" class="text">/api/v1/did/solana/*</text>
+  <text x="372" y="216" class="text">Protected by requireAuth</text>
+  <text x="372" y="239" class="small">Public test probe</text>
+
+  <rect x="690" y="95" width="260" height="190" class="box"/>
+  <text x="712" y="130" class="head">SolanaAdapter</text>
+  <text x="712" y="162" class="text">SOL / SPL balances</text>
+  <text x="712" y="185" class="text">Transfer build / fee estimate</text>
+  <text x="712" y="208" class="text">Block / transaction / epoch</text>
+  <text x="712" y="231" class="text">RPC proxy / simulation</text>
+  <text x="712" y="254" class="small">@solana/web3.js + @solana/spl-token</text>
+
+  <rect x="350" y="340" width="240" height="160" class="box3"/>
+  <text x="372" y="374" class="head">KeyService / Signer</text>
+  <text x="372" y="406" class="text">m/44'/501'/0'/0/i</text>
+  <text x="372" y="429" class="text">Solana address derivation</text>
+  <text x="372" y="452" class="text">Transaction signing entry</text>
+  <text x="372" y="475" class="small">Key format must be aligned</text>
+
+  <rect x="690" y="360" width="260" height="160" class="box3"/>
+  <text x="712" y="394" class="head">DID Solana</text>
+  <text x="712" y="426" class="text">did:sol:&lt;publicKey&gt;</text>
+  <text x="712" y="449" class="text">DID Document resolve</text>
+  <text x="712" y="472" class="text">Memo Anchor</text>
+  <text x="712" y="495" class="small">simulate / real on-chain</text>
+
+  <rect x="1000" y="205" width="130" height="210" class="box2"/>
+  <text x="1020" y="240" class="head">Solana RPC</text>
+  <text x="1020" y="272" class="text">Mainnet</text>
+  <text x="1020" y="295" class="text">Devnet</text>
+  <text x="1020" y="318" class="text">Testnet</text>
+  <text x="1020" y="352" class="small">Explorer</text>
+  <text x="1020" y="375" class="small">SPL Token</text>
+  <text x="1020" y="398" class="small">Memo Program</text>
+
+  <path d="M270 185 L350 185" class="arrow"/>
+  <path d="M590 185 L690 185" class="arrow"/>
+  <path d="M950 190 L1000 280" class="arrow"/>
+  <path d="M470 265 L470 340" class="arrow"/>
+  <path d="M590 420 L690 420" class="arrow"/>
+  <path d="M950 440 L1000 350" class="arrow"/>
+
+  <rect x="50" y="570" width="1080" height="85" fill="#162033" rx="14"/>
+  <text x="76" y="605" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#ffffff">Current readout</text>
+  <text x="76" y="633" font-family="Arial,sans-serif" font-size="14" fill="#d7e3f3">Solana foundation exists. Next: real signing, RPC config, SPL transfer completeness, DID auth, Token/ICO index APIs.</text>
+</svg>

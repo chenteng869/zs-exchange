@@ -41,6 +41,7 @@ model CoreUser {
 
   sessions            CoreSession[]
   apiKeys             CoreApiKey[]
+  dids                CoreUserDid[]
   profiles            CoreUserProfile[]
   addresses           CoreUserAddress[]
   notifications       CoreNotification[]
@@ -52,6 +53,7 @@ model CoreSession {
   userId       String     @db.Uuid
   token        String     @unique @db.VarChar(512)
   refreshToken String     @unique @db.VarChar(512)
+  status       String     @default("active") @db.VarChar(20)
   expiresAt    DateTime   @db.Timestamptz
   ipAddress    String?    @db.VarChar(50)
   userAgent    String?    @db.VarChar(512)
@@ -59,6 +61,32 @@ model CoreSession {
   updatedAt    DateTime   @default(now()) @updatedAt @db.Timestamptz
 
   user         CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CoreUserDid {
+  id               String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String     @db.Uuid
+  did              String     @unique @db.VarChar(255)
+  method           String     @db.VarChar(32)
+  chainType        String     @default("solana") @db.VarChar(32)
+  chainId          String     @default("devnet") @db.VarChar(64)
+  publicKey        String     @db.VarChar(255)
+  keyRef           String?    @db.VarChar(255)
+  document         Json       @db.JsonB
+  anchorStatus     String     @default("pending") @db.VarChar(32)
+  anchorTxHash     String?    @db.VarChar(255)
+  anchorBlockNo    BigInt?
+  anchorTimestamp  DateTime?  @db.Timestamptz
+  lastAnchoredAt   DateTime?  @db.Timestamptz
+  createdAt        DateTime   @default(now()) @db.Timestamptz
+  updatedAt        DateTime   @default(now()) @updatedAt @db.Timestamptz
+
+  user             CoreUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([method, chainType, chainId])
+  @@index([anchorStatus])
+  @@map("core_user_dids")
 }
 
 model CoreApiKey {
@@ -411,6 +439,26 @@ model WalletInternalTransfer {
   status              String     @default("pending") @db.VarChar(20)
   createdAt           DateTime   @default(now()) @db.Timestamptz
   completedAt         DateTime?  @db.Timestamptz
+}
+
+model WalletAddressBook {
+  id                  String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String            @db.Uuid
+  chainType           TransferChainType
+  chainId             String            @db.VarChar(64)
+  assetSymbol         String            @db.VarChar(64)
+  contractAddress     String?           @db.VarChar(255)
+  address             String            @db.VarChar(255)
+  label               String            @db.VarChar(100)
+  isBlacklisted       Boolean           @default(false)
+  createdAt           DateTime          @default(now()) @db.Timestamptz
+  updatedAt           DateTime          @updatedAt @db.Timestamptz
+
+  @@unique([userId, chainType, chainId, address])
+  @@index([userId])
+  @@index([chainType, chainId])
+  @@index([address])
+  @@map("wallet_address_books")
 }
 
 enum TransferChainType {
@@ -1205,6 +1253,76 @@ model DefiReward {
   referenceId         String?    @db.VarChar(100)
   referenceType       String?    @db.VarChar(50)
   createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// 手续费收入分配池：按周期把平台真实交易手续费收入的一部分计提出来，
+// 按质押权重分给质押用户。totalWeight/poolAmount 在结算时一次性写入，不可变更。
+model DefiFeeRevenuePool {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  periodStart         DateTime   @db.Timestamptz
+  periodEnd           DateTime   @db.Timestamptz
+  currency            String     @db.VarChar(20)
+  totalFeeRevenue     Decimal    @default(0) @db.Decimal(36, 18)
+  shareRatio          Decimal    @default(0) @db.Decimal(5, 4)
+  poolAmount          Decimal    @default(0) @db.Decimal(36, 18)
+  totalWeight         Decimal    @default(0) @db.Decimal(36, 18)
+  distributedAmount   Decimal    @default(0) @db.Decimal(36, 18)
+  status              String     @default("pending") @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+  distributedAt       DateTime?  @db.Timestamptz
+
+  distributions       DefiStakingRewardDistribution[]
+
+  @@index([periodStart, periodEnd])
+}
+
+// 单笔质押在某个分配周期里实际分得的金额，weight = amount * 质押时长权重
+model DefiStakingRewardDistribution {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  revenuePoolId       String     @db.Uuid
+  stakingId           String     @db.Uuid
+  userId              String     @db.Uuid
+  weight              Decimal    @db.Decimal(36, 18)
+  amount              Decimal    @db.Decimal(36, 18)
+  currency            String     @db.VarChar(20)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+
+  revenuePool         DefiFeeRevenuePool @relation(fields: [revenuePoolId], references: [id])
+  staking             DefiStaking @relation(fields: [stakingId], references: [id])
+
+  @@index([userId])
+  @@index([stakingId])
+}
+
+// ============================================================
+// points Schema - 会员积分（不可提现/不可转账/不参与拉新返佣）
+// ============================================================
+
+model PointsAccount {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @unique @db.Uuid
+  balance             Decimal    @default(0) @db.Decimal(20, 4)
+  lifetimeEarned      Decimal    @default(0) @db.Decimal(20, 4)
+  lifetimeSpent       Decimal    @default(0) @db.Decimal(20, 4)
+  updatedAt           DateTime   @default(now()) @updatedAt @db.Timestamptz
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+}
+
+// direction: earn | spend；bizType: trade | staking | fee_discount | feature_unlock | admin_adjust
+model PointsLedger {
+  id                  String     @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId              String     @db.Uuid
+  direction           String     @db.VarChar(10)
+  bizType             String     @db.VarChar(30)
+  bizNo               String?    @db.VarChar(64)
+  amount              Decimal    @db.Decimal(20, 4)
+  balanceBefore       Decimal    @db.Decimal(20, 4)
+  balanceAfter        Decimal    @db.Decimal(20, 4)
+  remark              String?    @db.VarChar(255)
+  createdAt           DateTime   @default(now()) @db.Timestamptz
+
+  @@index([userId])
+  @@index([bizType, bizNo])
 }
 
 // ============================================================
@@ -2551,4 +2669,202 @@ model ExchangeApiKey {
   @@index([provider])
   @@index([status])
   @@map("exchange_api_keys")
+}
+
+// ============================================================
+// spot Schema - 现货交易/订单/成交/账本
+// ============================================================
+
+enum SpotMarketStatus {
+  trading
+  pending
+  suspended
+  delisted
+}
+
+enum SpotOrderSide {
+  buy
+  sell
+}
+
+enum SpotOrderType {
+  limit
+  market
+  stop_limit
+  stop_market
+}
+
+enum SpotOrderStatus {
+  pending
+  open
+  partially_filled
+  filled
+  canceled
+  expired
+  failed
+}
+
+enum SpotOrderTimeInForce {
+  GTC
+  IOC
+  FOK
+  GTD
+}
+
+enum SpotTradeRole {
+  maker
+  taker
+}
+
+enum SpotAccountLedgerType {
+  trade
+  fee
+  transfer_in
+  transfer_out
+  adjustment
+}
+
+model SpotMarket {
+  id                BigInt           @id @default(autoincrement())
+  marketSymbol      String           @unique @db.VarChar(32)
+  baseAsset         String           @db.VarChar(32)
+  quoteAsset        String           @db.VarChar(32)
+  pricePrecision    Int              @default(2)
+  quantityPrecision Int              @default(8)
+  minQuantity       Decimal          @default(0) @db.Decimal(36, 18)
+  minNotional       Decimal          @default(0) @db.Decimal(36, 18)
+  maxQuantity       Decimal          @default(0) @db.Decimal(36, 18)
+  maxNotional       Decimal          @default(0) @db.Decimal(36, 18)
+  makerFeeRate      Decimal          @default(0.001) @db.Decimal(18, 8)
+  takerFeeRate      Decimal          @default(0.001) @db.Decimal(18, 8)
+  priceTickSize     Decimal          @default(0.00000001) @db.Decimal(36, 18)
+  status            SpotMarketStatus @default(trading)
+  createdAt         DateTime         @default(now()) @db.Timestamptz
+  updatedAt         DateTime         @default(now()) @updatedAt @db.Timestamptz
+
+  orders            SpotOrder[]
+  trades            SpotTrade[]
+
+  @@index([baseAsset, quoteAsset])
+  @@index([status])
+  @@map("spot_markets")
+}
+
+model SpotAccount {
+  id           String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String    @db.Uuid
+  asset        String    @db.VarChar(32)
+  balance      Decimal   @default(0) @db.Decimal(36, 18)
+  available    Decimal   @default(0) @db.Decimal(36, 18)
+  frozen       Decimal   @default(0) @db.Decimal(36, 18)
+  status       String    @default("active") @db.VarChar(32)
+  createdAt    DateTime  @default(now()) @db.Timestamptz
+  updatedAt    DateTime  @default(now()) @updatedAt @db.Timestamptz
+
+  orders       SpotOrder[]
+  ledgers      SpotAccountLedger[]
+
+  @@unique([userId, asset], map: "uk_spot_user_asset")
+  @@index([userId])
+  @@index([asset])
+  @@index([status])
+  @@map("spot_accounts")
+}
+
+model SpotAccountLedger {
+  id             String                @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  ledgerNo       String                @unique @db.VarChar(64)
+  userId         String                @db.Uuid
+  accountId      String                @db.Uuid
+  asset          String                @db.VarChar(32)
+  type           SpotAccountLedgerType
+  direction      String                @db.VarChar(16)
+  amount         Decimal               @db.Decimal(36, 18)
+  balanceBefore  Decimal               @db.Decimal(36, 18)
+  balanceAfter   Decimal               @db.Decimal(36, 18)
+  referenceId    String?               @db.VarChar(100)
+  referenceType  String?               @db.VarChar(50)
+  remark         String?               @db.VarChar(500)
+  createdAt      DateTime              @default(now()) @db.Timestamptz
+
+  account        SpotAccount           @relation(fields: [accountId], references: [id])
+
+  @@index([userId])
+  @@index([accountId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("spot_account_ledgers")
+}
+
+model SpotOrder {
+  id                String               @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  orderNo           String               @unique @db.VarChar(64)
+  userId            String               @db.Uuid
+  accountId         String               @db.Uuid
+  marketId          BigInt               @db.BigInt
+  marketSymbol      String               @db.VarChar(32)
+  side              SpotOrderSide
+  orderType         SpotOrderType
+  price             Decimal              @default(0) @db.Decimal(36, 18)
+  quantity          Decimal              @db.Decimal(36, 18)
+  filledQuantity    Decimal              @default(0) @db.Decimal(36, 18)
+  remainingQuantity Decimal              @default(0) @db.Decimal(36, 18)
+  executedValue     Decimal              @default(0) @db.Decimal(36, 18)
+  fee               Decimal              @default(0) @db.Decimal(36, 18)
+  feeCurrency       String?              @db.VarChar(32)
+  timeInForce       SpotOrderTimeInForce @default(GTC)
+  stopPrice         Decimal?             @db.Decimal(36, 18)
+  status            SpotOrderStatus      @default(pending)
+  clientOrderId     String?              @db.VarChar(100)
+  source            String               @default("web") @db.VarChar(32)
+  createdAt         DateTime             @default(now()) @db.Timestamptz
+  updatedAt         DateTime             @default(now()) @updatedAt @db.Timestamptz
+  canceledAt        DateTime?            @db.Timestamptz
+  expiredAt         DateTime?            @db.Timestamptz
+
+  account           SpotAccount @relation(fields: [accountId], references: [id])
+  market            SpotMarket  @relation(fields: [marketId], references: [id])
+  trades            SpotTrade[]
+
+  @@index([orderNo])
+  @@index([userId])
+  @@index([accountId])
+  @@index([marketId])
+  @@index([marketSymbol])
+  @@index([status])
+  @@index([createdAt])
+  @@map("spot_orders")
+}
+
+model SpotTrade {
+  id                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tradeNo           String        @unique @db.VarChar(64)
+  orderId           String        @db.Uuid
+  counterOrderId    String        @db.Uuid
+  userId            String        @db.Uuid
+  counterUserId     String        @db.Uuid
+  marketId          BigInt        @db.BigInt
+  marketSymbol      String        @db.VarChar(32)
+  side              SpotOrderSide
+  price             Decimal       @db.Decimal(36, 18)
+  quantity          Decimal       @db.Decimal(36, 18)
+  value             Decimal       @db.Decimal(36, 18)
+  fee               Decimal       @default(0) @db.Decimal(36, 18)
+  feeCurrency       String        @db.VarChar(32)
+  role              SpotTradeRole
+  makerOrderNo      String?       @db.VarChar(64)
+  takerOrderNo      String?       @db.VarChar(64)
+  tradeTime         DateTime      @default(now()) @db.Timestamptz
+
+  order             SpotOrder @relation(fields: [orderId], references: [id])
+  market            SpotMarket @relation(fields: [marketId], references: [id])
+
+  @@index([tradeNo])
+  @@index([orderId])
+  @@index([counterOrderId])
+  @@index([userId])
+  @@index([marketId])
+  @@index([marketSymbol])
+  @@index([tradeTime])
+  @@map("spot_trades")
 }

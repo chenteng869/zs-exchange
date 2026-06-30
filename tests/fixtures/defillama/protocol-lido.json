@@ -1,0 +1,34 @@
+{
+  "id": "1",
+  "name": "Lido",
+  "slug": "lido",
+  "chain": ["Ethereum"],
+  "category": "Liquid Staking",
+  "tvl": 32450000000,
+  "change_1d": 0.5,
+  "change_7d": 3.2,
+  "mcap": 2400000000,
+  "logo": "https://icons.llama.fi/lido.png",
+  "url": "https://lido.fi",
+  "description": "Liquid staking for Ethereum and other assets",
+  "currentChainTvls": {
+    "Ethereum": 31800000000,
+    "Polygon": 480000000,
+    "Solana": 165000000,
+    "Other": 5000000
+  },
+  "tvl": [
+    { "date": 1700000000, "totalLiquidityUSD": 30000000000 },
+    { "date": 1700086400, "totalLiquidityUSD": 30150000000 },
+    { "date": 1700172800, "totalLiquidityUSD": 30500000000 },
+    { "date": 1700259200, "totalLiquidityUSD": 30900000000 },
+    { "date": 1700345600, "totalLiquidityUSD": 31200000000 },
+    { "date": 1700432000, "totalLiquidityUSD": 31550000000 },
+    { "date": 1700518400, "totalLiquidityUSD": 31800000000 },
+    { "date": 1700604800, "totalLiquidityUSD": 32000000000 },
+    { "date": 1700691200, "totalLiquidityUSD": 32200000000 },
+    { "date": 1700777600, "totalLiquidityUSD": 32450000000 }
+  ],
+  "raiseAmount": 0,
+  "audits": "2"
+}

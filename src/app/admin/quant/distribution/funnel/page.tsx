@@ -598,7 +598,7 @@ export default function DistributionFunnelPage() {
                     <div>
                       <div className="font-semibold mb-1">即时优化建议</div>
                       <ul className="text-sm text-gray-600 space-y-1 ml-4">
-                        <li>• 针对"{selectedStage.dropOffReasons[0] || '主要瓶颈'}"问题，建议A/B测试新流程</li>
+                        <li>• 针对&quot;{selectedStage.dropOffReasons[0] || '主要瓶颈'}&quot;问题，建议A/B测试新流程</li>
                         <li>• 该阶段转化率{selectedStage.conversionRate >= 40 ? '高于' : '低于'}行业平均水平{(selectedStage.conversionRate * 1.2).toFixed(1)}%</li>
                         <li>• 推荐投放渠道：{Object.entries(selectedStage.sourceBreakdown).sort((a, b) => b[1] - a[1])[0][0]}效果最佳</li>
                       </ul>

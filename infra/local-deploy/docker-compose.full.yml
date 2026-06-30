@@ -1,0 +1,173 @@
+# =============================================================================
+# ZS Exchange - 完整部署（监控/存证/对象存储）
+# 启动：docker compose --env-file .env -f docker-compose.full.yml up -d
+# 内存需求：3 GB
+# =============================================================================
+
+version: "3.9"
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - zs_net
+
+services:
+  # ============================================================
+  # 1. Kafka 3 - 事件流（KRaft 模式，免 ZK）
+  # ============================================================
+  kafka:
+    <<: *common
+    image: bitnami/kafka:3.7
+    container_name: zs_kafka
+    environment:
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: broker,controller
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+      KAFKA_KRAFT_CLUSTER_ID: zs_cluster_2026
+    ports:
+      - "${KAFKA_PORT}:9092"
+    volumes:
+      - ./data/kafka:/bitnami/kafka
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+
+  # ============================================================
+  # 2. MinIO - 对象存储（替代 S3）
+  # ============================================================
+  minio:
+    <<: *common
+    image: minio/minio:latest
+    container_name: zs_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: zs_admin
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "${MINIO_PORT}:9000"
+      - "${MINIO_CONSOLE_PORT}:9001"
+    volumes:
+      - ./data/minio:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+
+  # ============================================================
+  # 3. Prometheus - 监控
+  # ============================================================
+  prometheus:
+    <<: *common
+    image: prom/prometheus:v2.54.0
+    container_name: zs_prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ./conf/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./data/prometheus:/prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+
+  # ============================================================
+  # 4. Grafana - 可视化
+  # ============================================================
+  grafana:
+    <<: *common
+    image: grafana/grafana:11.2.0
+    container_name: zs_grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: dev_grafana_2026
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    volumes:
+      - ./data/grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+
+  # ============================================================
+  # 5. Hyperledger Fabric - 区块链存证（精简版）
+  # ============================================================
+  fabric-peer:
+    <<: *common
+    image: hyperledger/fabric-peer:2.5
+    container_name: zs_fabric_peer
+    environment:
+      CORE_VM_ENDPOINT: unix:///host/var/run/docker.sock
+      CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE: zs_net
+      FABRIC_LOGGING_SPEC: INFO
+      CORE_PEER_TLS_ENABLED: "false"
+      CORE_PEER_GOSSIP_USE_LEADERELECTION: "true"
+      CORE_PEER_GOSSIP_ORGLEADER: "true"
+      CORE_PEER_ID: peer0.zs
+      CORE_PEER_ADDRESS: peer0.zs:7051
+      CORE_PEER_LISTENADDRESS: 0.0.0.0:7051
+      CORE_PEER_CHAINCODEADDRESS: 0.0.0.0:7052
+      CORE_PEER_LOCALMSPID: ZSOrg
+    ports:
+      - "${FABRIC_PEER_PORT}:7051"
+    volumes:
+      - /var/run/docker.sock:/host/var/run/docker.sock
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+
+  fabric-orderer:
+    <<: *common
+    image: hyperledger/fabric-orderer:2.5
+    container_name: zs_fabric_orderer
+    environment:
+      ORDERER_GENERAL_LOGLEVEL: INFO
+      ORDERER_GENERAL_LISTENADDRESS: 0.0.0.0
+      ORDERER_GENERAL_GENESISMETHOD: file
+      ORDERER_GENERAL_GENESISFILE: /var/hyperledger/orderer/genesis.block
+      ORDERER_GENERAL_LOCALMSPID: OrdererMSP
+      ORDERER_GENERAL_LISTENPORT: 7050
+    ports:
+      - "${FABRIC_ORDERER_PORT}:7050"
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+
+networks:
+  zs_net:
+    external: true
+    name: zs_net

@@ -81,8 +81,7 @@ const ANNOUNCEMENTS = [
   },
 ];
 
-/* ==================== 活动类型图标映射 ====================
-// eslint-disable-next-line @typescript-eslint/no-explicit-any */
+/* ==================== 活动类型图标映射 ==================== */
 function getActivityIcon(type: string) {
   const iconMap: Record<string, { icon: React.ReactNode; color: string }> = {
     buy: { icon: <BarChart3 size={16} />, color: 'text-blue-400' },
@@ -238,7 +237,7 @@ export default function DashboardPage() {
                       borderRadius: '12px',
                       fontSize: '13px',
                     }}
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    // eslint-disable-next-line
                     formatter={(value: any) => [`${value}%`, '占比']}
                   />
                 </PieChart>

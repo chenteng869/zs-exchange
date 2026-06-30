@@ -1,0 +1,155 @@
+# =============================================================================
+# ZS Exchange - 4 大业务引擎（可选启动）
+# 启动：docker compose --env-file .env -f docker-compose.engines.yml up -d
+# 内存需求：3 GB
+# =============================================================================
+
+version: "3.9"
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - zs_net
+
+services:
+  # ============================================================
+  # 1. OpenClaw - 智能体引擎（端口 18789）
+  # ============================================================
+  openclaw:
+    <<: *common
+    image: alpine:3.19
+    container_name: zs_openclaw
+    command: ["sleep", "infinity"]
+    ports:
+      - "${OPENCLAW_PORT}:18789"
+    environment:
+      OPENCLAW_GATEWAY_PORT: "18789"
+      OPENCLAW_LOG_LEVEL: "info"
+      OPENCLAW_API_KEY: "dev_openclaw_key_2026"
+    volumes:
+      - ./data/openclaw:/root/.openclaw
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+    healthcheck:
+      test: ["CMD", "echo", "OpenClaw placeholder"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # ============================================================
+  # 2. Flowable BPM - 流程引擎（端口 8080）
+  # ============================================================
+  flowable:
+    <<: *common
+    image: flowable/flowable-rest:6.8.0
+    container_name: zs_flowable
+    environment:
+      FLOWABLE_COMMON_APP_IDM-ADMIN_USER: admin
+      FLOWABLE_COMMON_APP_IDM-ADMIN_PASSWORD: dev_flowable_2026
+      FLOWABLE_DATASOURCE_URL: jdbc:postgresql://postgres:5432/flowable_db
+      FLOWABLE_DATASOURCE_USERNAME: zs_admin
+      FLOWABLE_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      JAVA_OPTS: "-Xmx768m -Xms256m"
+    ports:
+      - "${FLOWABLE_PORT}:8080"
+    depends_on:
+      - flowable-db-init
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+
+  flowable-db-init:
+    image: postgres:16-alpine
+    container_name: zs_flowable_init
+    networks:
+      - zs_net
+    depends_on:
+      - postgres
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    entrypoint:
+      - sh
+      - -c
+      - |
+        psql -h postgres -U zs_admin -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'flowable_db'" | grep -q 1 || \
+        psql -h postgres -U zs_admin -d postgres -c "CREATE DATABASE flowable_db"
+    restart: "no"
+
+  # ============================================================
+  # 3. MongoDB 7 - 文档数据库（业务用）
+  # ============================================================
+  mongodb:
+    <<: *common
+    image: mongo:7
+    container_name: zs_mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: zs_admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: zs_exchange
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - ./data/mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 256m
+
+  # ============================================================
+  # 4. AI Gateway - 多模型 AI 网关（Python FastAPI）
+  # ============================================================
+  ai-gateway:
+    <<: *common
+    image: python:3.11-slim
+    container_name: zs_ai_gateway
+    working_dir: /app
+    command: >
+      sh -c "pip install --no-cache-dir fastapi uvicorn[standard] pydantic httpx 2>/dev/null &&
+             echo 'from fastapi import FastAPI
+             import uvicorn
+             app = FastAPI(title=\"ZS AI Gateway\")
+             @app.get(\"/health\")
+             async def health():
+                 return {\"status\": \"ok\", \"models\": [\"gpt-4\", \"claude-3\", \"qwen-max\"]}
+             @app.post(\"/v1/chat\")
+             async def chat(req: dict):
+                 return {\"response\": \"[dev-mock] AI Gateway 在本地虚拟环境中运行\", \"model\": req.get(\"model\", \"gpt-4\")}
+             if __name__ == \"__main__\":
+                 uvicorn.run(app, host=\"0.0.0.0\", port=8000)' > /app/main.py &&
+             python /app/main.py"
+    ports:
+      - "${AI_GATEWAY_PORT}:8000"
+    environment:
+      OPENAI_API_KEY: dev_openai_key
+      ANTHROPIC_API_KEY: dev_anthropic_key
+      QWEN_API_KEY: dev_qwen_key
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+        reservations:
+          memory: 128m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  zs_net:
+    external: true
+    name: zs_net

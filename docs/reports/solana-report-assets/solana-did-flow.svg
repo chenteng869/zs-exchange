@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="620" viewBox="0 0 1180 620" role="img" aria-labelledby="title desc">
+  <title id="title">Solana DID Anchor Flow</title>
+  <desc id="desc">Flow diagram for creating, resolving and anchoring Solana DID.</desc>
+  <defs>
+    <style>
+      .title{font:700 28px Arial,sans-serif;fill:#111827}
+      .sub{font:400 14px Arial,sans-serif;fill:#667085}
+      .step{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5;rx:12}
+      .chain{fill:#eff6ff;stroke:#60a5fa;stroke-width:1.5;rx:12}
+      .risk{fill:#fff7ed;stroke:#fb923c;stroke-width:1.5;rx:12}
+      .head{font:700 16px Arial,sans-serif;fill:#172033}
+      .text{font:400 13px Arial,sans-serif;fill:#475569}
+      .arrow{stroke:#64748b;stroke-width:2;fill:none;marker-end:url(#arrow)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+    </marker>
+  </defs>
+  <rect width="1180" height="620" fill="#fbfdff"/>
+  <text x="50" y="55" class="title">Solana DID Create / Resolve / Anchor Flow</text>
+  <text x="50" y="82" class="sub">Implemented by DidSolService and /api/v1/did/solana/* routes</text>
+
+  <rect x="60" y="145" width="190" height="105" class="step"/>
+  <text x="82" y="178" class="head">1. Create</text>
+  <text x="82" y="205" class="text">Keypair.generate()</text>
+  <text x="82" y="228" class="text">did:sol:publicKey</text>
+
+  <rect x="305" y="145" width="210" height="105" class="step"/>
+  <text x="327" y="178" class="head">2. DID Document</text>
+  <text x="327" y="205" class="text">Ed25519VerificationKey2020</text>
+  <text x="327" y="228" class="text">blockchainAccountId</text>
+
+  <rect x="575" y="145" width="190" height="105" class="step"/>
+  <text x="597" y="178" class="head">3. Resolve</text>
+  <text x="597" y="205" class="text">parse did:sol</text>
+  <text x="597" y="228" class="text">rebuild document</text>
+
+  <rect x="825" y="145" width="250" height="105" class="chain"/>
+  <text x="847" y="178" class="head">4. Anchor</text>
+  <text x="847" y="205" class="text">createMemoInstruction()</text>
+  <text x="847" y="228" class="text">sendRawTransaction()</text>
+
+  <path d="M250 198 L305 198" class="arrow"/>
+  <path d="M515 198 L575 198" class="arrow"/>
+  <path d="M765 198 L825 198" class="arrow"/>
+
+  <rect x="170" y="330" width="230" height="110" class="risk"/>
+  <text x="192" y="364" class="head">Simulation mode</text>
+  <text x="192" y="392" class="text">simulate=true</text>
+  <text x="192" y="415" class="text">mock txHash / slot</text>
+
+  <rect x="475" y="330" width="260" height="110" class="chain"/>
+  <text x="497" y="364" class="head">Real on-chain</text>
+  <text x="497" y="392" class="text">SOL balance &gt;= 0.001</text>
+  <text x="497" y="415" class="text">Memo stores document summary</text>
+
+  <rect x="810" y="330" width="230" height="110" class="step"/>
+  <text x="832" y="364" class="head">Explorer</text>
+  <text x="832" y="392" class="text">address URL</text>
+  <text x="832" y="415" class="text">tx URL</text>
+
+  <path d="M950 250 C950 300 925 310 925 330" class="arrow"/>
+  <path d="M825 220 C650 285 605 300 605 330" class="arrow"/>
+  <path d="M825 210 C420 280 285 300 285 330" class="arrow"/>
+  <path d="M735 385 L810 385" class="arrow"/>
+
+  <rect x="60" y="500" width="1015" height="70" fill="#111827" rx="14"/>
+  <text x="88" y="532" font-family="Arial,sans-serif" font-size="16" font-weight="700" fill="#ffffff">Production hardening</text>
+  <text x="88" y="558" font-family="Arial,sans-serif" font-size="14" fill="#d1d5db">DID create must not expose private keys long-term. Real anchor needs auth, risk control, balance checks, audit logs and retry policy.</text>
+</svg>

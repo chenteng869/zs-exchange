@@ -1,0 +1,54 @@
+{
+  "status": "success",
+  "data": [
+    {
+      "geckoId": "ethereum",
+      "tvl": 65400000000,
+      "tokenSymbol": "ETH",
+      "name": "Ethereum",
+      "chainId": 1
+    },
+    {
+      "geckoId": "arbitrum",
+      "tvl": 3120000000,
+      "tokenSymbol": "ARB",
+      "name": "Arbitrum",
+      "chainId": 42161
+    },
+    {
+      "geckoId": "polygon-ecosystem-token",
+      "tvl": 1850000000,
+      "tokenSymbol": "POL",
+      "name": "Polygon",
+      "chainId": 137
+    },
+    {
+      "geckoId": "binancecoin",
+      "tvl": 1400000000,
+      "tokenSymbol": "BNB",
+      "name": "BSC",
+      "chainId": 56
+    },
+    {
+      "geckoId": "optimism",
+      "tvl": 920000000,
+      "tokenSymbol": "OP",
+      "name": "Optimism",
+      "chainId": 10
+    },
+    {
+      "geckoId": "avalanche-2",
+      "tvl": 750000000,
+      "tokenSymbol": "AVAX",
+      "name": "Avalanche",
+      "chainId": 43114
+    },
+    {
+      "geckoId": "base",
+      "tvl": 2650000000,
+      "tokenSymbol": "ETH",
+      "name": "Base",
+      "chainId": 8453
+    }
+  ]
+}

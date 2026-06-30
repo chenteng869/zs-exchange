@@ -150,6 +150,8 @@ export enum SignerNodeStatus {
 export interface MPCWallet {
   /** 钱包唯一标识 */
   id: string;
+  /** 兼容字段：钱包唯一标识 */
+  walletId?: string;
   /** 用户 ID */
   userId: string;
   /** 钱包层级 */
@@ -171,9 +173,11 @@ export interface MPCWallet {
   /** 审批流程 ID（可选，自定义审批流） */
   approvalFlowId?: string;
   /** 钱包状态 */
-  status: 'active' | 'frozen' | 'closed';
+  status: 'active' | 'frozen' | 'closed' | 'deleted';
   /** 钱包标签/备注 */
   label?: string;
+  /** 兼容字段：钱包名称 */
+  name?: string;
   /** 创建时间 */
   createdAt: Date;
   /** 更新时间 */

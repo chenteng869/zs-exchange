@@ -416,7 +416,7 @@ export default function SettingsPage() {
                     <div>
                       <div className="font-medium">当前值评估</div>
                       <div className="text-sm text-gray-600 mt-1">
-                        参数 "{selectedSetting.settingKey}" 的当前设置处于{' '}
+                        参数 &quot;{selectedSetting.settingKey}&quot; 的当前设置处于{' '}
                         <span className="font-semibold text-green-600">合理范围</span>，
                         建议保持现状或根据市场波动微调。
                       </div>

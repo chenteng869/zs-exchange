@@ -556,6 +556,8 @@ export interface PipelineStats {
   successRate: number;
   lastHourCount: number;
   lastDayCount: number;
+  byStatus?: Partial<Record<PipelineStatus, number>>;
+  concurrent?: number;
 }
 
 // =============================================================================

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     case 'contribute':
       return withAdminAuth(req, () => contribute(req));
     case 'use':
-      return withAdminAuth(req, () => useFund(req));
+      return withAdminAuth(req, () => consumeFund(req));
     default:
       return badRequest('Invalid action');
   }
@@ -147,7 +147,7 @@ async function contribute(req: NextRequest) {
   }
 }
 
-async function useFund(req: NextRequest) {
+async function consumeFund(req: NextRequest) {
   try {
     const body = await req.json();
     const { symbol, amount, reason } = body;

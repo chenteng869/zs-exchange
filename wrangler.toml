@@ -1,0 +1,9 @@
+name = "zs-exchange"
+main = ".next/serverless/pages-manifest.json"
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[env.production]
+  node_compat = true

@@ -8,12 +8,12 @@ export async function GET(req: NextRequest) {
     const params = req.nextUrl.searchParams;
     const page = Math.max(1, parseInt(params.get('page') || '1'));
     const pageSize = Math.min(100, parseInt(params.get('pageSize') || '20'));
-    const module = params.get('module') || '';
+    const moduleName = params.get('module') || '';
     const action = params.get('action') || '';
     const status = params.get('status') || '';
 
     const where: any = {};
-    if (module) where.module = module;
+    if (moduleName) where.module = moduleName;
     if (action) where.action = action;
     if (status) where.status = status;
 
@@ -53,9 +53,9 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withAdminAuth(req, async (admin) => {
     const body = await req.json();
-    const { module, action, details, status = 'success', targetId, targetType } = body;
+    const { module: moduleName, action, details, status = 'success', targetId, targetType } = body;
 
-    if (!module || !action) {
+    if (!moduleName || !action) {
       const { badRequest } = await import('@/lib/api/response');
       return badRequest('module and action required');
     }
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
         operatorId: (admin as any).id ?? 'system',
         operatorName: (admin as any).username ?? 'admin',
         operatorRole: (admin as any).role ?? 'admin',
-        module,
+        module: moduleName,
         action,
         details: details ?? null,
         status,

@@ -1,0 +1,16 @@
+# Generic MCP 配置文件（直接传 path）
+#
+# 适用场景:
+#   1. 任何支持 MCP 协议的 IDE
+#   2. 命令行直接启动
+#   3. CI/CD 集成
+
+{
+  "mcpServers": {
+    "codegraph": {
+      "command": "codegraph",
+      "args": ["serve", "--mcp", "--path", "<PROJECT_ROOT>"],
+      "description": "CodeGraph MCP Server - 解决工作目录问题"
+    }
+  }
+}

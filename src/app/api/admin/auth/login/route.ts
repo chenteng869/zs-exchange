@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
       return badRequest('请输入账号和密码');
     }
 
-    if (process.env.NODE_ENV !== 'production') {
+    if (process.env.NODE_ENV !== 'production' && process.env.ALLOW_DEV_ADMIN_LOGIN === 'true') {
       const tokens = await generateTokenPair({
         userId: 'dev-admin',
         username: String(username),

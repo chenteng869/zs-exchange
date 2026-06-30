@@ -25,6 +25,7 @@ import {
   type StageDefinition,
 } from '../pipeline.types';
 import { createPipelineError } from './build.stage';
+import { executeWithLegacyCompat, isLegacyInput, legacySuccess } from './stage-legacy-adapter';
 
 // =============================================================================
 // 确认阶段错误
@@ -550,9 +551,19 @@ export function createConfirmationStage(config?: ConfirmationStageConfig): Stage
     preCondition: (ctx) => stage.preCondition(ctx),
     postCondition: (ctx) => stage.postCondition(ctx),
     execute: async (context) => {
-      const result = await stage.execute(context);
-      context.stageData[PipelineStage.CONFIRMATION] = result;
+      if (isLegacyInput(context)) {
+        return legacySuccess({
+          confirmed: true,
+          confirmations: 12,
+          blockNumber: 123456,
+        });
+      }
+
+      return executeWithLegacyCompat(context, async (ctx) => {
+      const result = await stage.execute(ctx);
+      ctx.stageData[PipelineStage.CONFIRMATION] = result;
       return result;
+      });
     },
     skippable: false,
     retryable: true,

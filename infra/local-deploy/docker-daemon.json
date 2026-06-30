@@ -1,0 +1,16 @@
+{
+  "registry-mirrors": [
+    "https://docker.1ms.run",
+    "https://docker.xuanyuan.me",
+    "https://docker.m.daocloud.io"
+  ],
+  "builder": {
+    "gc": {
+      "enabled": true,
+      "defaultKeepStorage": "20GB"
+    }
+  },
+  "features": {
+    "buildkit": true
+  }
+}

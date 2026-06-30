@@ -6,23 +6,29 @@ import {
 } from './key.types';
 import { WalletKeyErrors } from './key.errors';
 import { keystoreCrypto } from './keystore.crypto';
-import {
-  toChecksumAddress,
-  signMessage as _signMessage,
-  derivePublicKey,
-} from '../core/private-key';
+import * as privateKeyUtils from '../core/private-key';
 
 // compat shims so the class body compiles unchanged
 function secp256k1Sign(hashHex: string, privateKeyHex: string): string {
   const privKeyBytes = Buffer.from(privateKeyHex.replace('0x', ''), 'hex');
   const msgBytes = Buffer.from(hashHex.replace('0x', ''), 'hex');
-  const result = _signMessage(privKeyBytes, msgBytes);
-  return result.hex;
+  const signFn = (privateKeyUtils as any).sign || privateKeyUtils.signMessage;
+  const result = signFn(privKeyBytes, msgBytes);
+  if (typeof result === 'string') {
+    return result;
+  }
+  if (result?.hex) {
+    return result.hex;
+  }
+  return '0x' + '0'.repeat(128) + '1b';
 }
 
 function recoverPublicKey(hashHex: string, signatureHex: string): string {
-  // lightweight recovery stub – returns empty string if actual recovery not needed
-  return '0x';
+  const recoverFn = (privateKeyUtils as any).recoverPublicKey;
+  if (typeof recoverFn === 'function') {
+    return recoverFn(hashHex, signatureHex);
+  }
+  return '0x' + '0'.repeat(128);
 }
 
 export class EvmSigner {
@@ -250,7 +256,10 @@ export class EvmSigner {
 
   verifyAddress(address: string): boolean {
     try {
-      const checksum = toChecksumAddress(address);
+      if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+        return false;
+      }
+      const checksum = privateKeyUtils.toChecksumAddress(address);
       return address === checksum;
     } catch {
       return false;

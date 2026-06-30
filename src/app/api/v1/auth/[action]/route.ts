@@ -5,8 +5,10 @@ import { hashPassword, verifyPassword, generateReferralCode } from '@/lib/auth/p
 import { generateTokenPair, verifyRefreshToken } from '@/lib/auth/jwt';
 import { sessionRepository } from '@/repositories/session.repository';
 import { auditLoginLogRepository } from '@/repositories/audit.repository';
+import { userDidRepository } from '@/repositories/user-did.repository';
 import { withRateLimit } from '@/lib/api/middleware';
 import { getClientIp, getUserAgent } from '@/lib/api/auth';
+import { DidSolService } from '@/modules/did-identity/core/methods/did-sol.service';
 
 export async function POST(req: NextRequest, { params }: { params: { action: string } }) {
   const action = params.action;
@@ -69,6 +71,8 @@ async function handleRegister(req: NextRequest): Promise<NextResponse> {
       depositEnabled: true,
     } as any);
 
+    const didIdentity = await provisionRegistrationDid(user.id);
+
     const tokens = await generateTokenPair({
       userId: user.id,
       username: user.username,
@@ -95,12 +99,63 @@ async function handleRegister(req: NextRequest): Promise<NextResponse> {
         referralCode: user.referralCode,
         createdAt: user.createdAt,
       },
+      did: didIdentity,
       ...tokens,
     });
   } catch (e: any) {
     console.error('[Register Error]', e);
     return internalError(e.message || 'Registration failed');
   }
+}
+
+async function provisionRegistrationDid(userId: string) {
+  try {
+    const existing = await userDidRepository.findByUserId(userId);
+    if (existing) {
+      return toDidResponse(existing);
+    }
+
+    const cluster = process.env.DID_SOLANA_CLUSTER || 'devnet';
+    const solService = new DidSolService({ cluster: cluster as any });
+    const result = await solService.create();
+    const keyRef = `did-sol:${result.keyPair.publicKey}`;
+
+    const record = await userDidRepository.create({
+      userId,
+      did: result.did,
+      method: 'did:sol',
+      chainType: 'solana',
+      chainId: cluster,
+      publicKey: result.keyPair.publicKey,
+      keyRef,
+      document: result.document,
+      anchorStatus: 'pending',
+    });
+
+    return toDidResponse(record);
+  } catch (error) {
+    console.error('[DID Provisioning Error]', error);
+    if (process.env.NODE_ENV === 'production') {
+      throw error;
+    }
+    return {
+      status: 'failed',
+      message: 'DID provisioning failed in non-production mode',
+    };
+  }
+}
+
+function toDidResponse(record: any) {
+  return {
+    did: record.did,
+    method: record.method,
+    chainType: record.chainType,
+    chainId: record.chainId,
+    publicKey: record.publicKey,
+    keyRef: record.keyRef,
+    anchorStatus: record.anchorStatus,
+    anchorTxHash: record.anchorTxHash,
+  };
 }
 
 async function handleLogin(req: NextRequest): Promise<NextResponse> {

@@ -71,6 +71,17 @@ export interface FundingConfig {
   maxAdjustmentPerPeriod: number;
 }
 
+/** 兼容旧版测试/调用方的配置字段 */
+interface LegacyFundingConfig {
+  symbol: string;
+  fundingIntervalHours: number;
+  baseRate: number;
+  interestRate: number;
+  premiumRate: number;
+  maxFundingRate: number;
+  minFundingRate: number;
+}
+
 /** 溢价指数采样点 */
 export interface PremiumSample {
   timestamp: number;
@@ -234,7 +245,7 @@ export function calculateInterestComponent(
 // ============================================================================
 
 export class AdvancedFundingEngine {
-  private readonly config: FundingConfig;
+  private config: FundingConfig;
   private readonly emitter = new EventEmitter();
 
   private readonly premiumSamples = new Map<string, PremiumSample[]>();
@@ -246,8 +257,27 @@ export class AdvancedFundingEngine {
 
   private lastPremiumSampleTime = new Map<string, number>();
 
-  constructor(config: Partial<FundingConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+  // Legacy compatibility state
+  private readonly legacySymbol: string;
+  private legacyBaseRate: string;
+  private legacyPremiumIndex: string;
+  private legacyLastFundingRate: string | null = null;
+  private legacyLastSettlementTime = 0;
+
+  constructor(config: Partial<FundingConfig> & Partial<LegacyFundingConfig> = {}) {
+    const mapped: Partial<FundingConfig> = { ...config };
+
+    if (typeof config.fundingIntervalHours === 'number') {
+      mapped.intervalHours = config.fundingIntervalHours;
+    }
+
+    this.config = { ...DEFAULT_CONFIG, ...mapped };
+
+    this.legacySymbol = config.symbol || '__legacy__';
+    this.legacyBaseRate = String(config.baseRate ?? 0);
+    this.legacyPremiumIndex = '0';
+
+    this.predictedRates.set(this.legacySymbol, this.legacyBaseRate);
   }
 
   // -------------------------------------------------------------------------
@@ -383,6 +413,7 @@ export class AdvancedFundingEngine {
   /**
    * 计算资金费率（夹紧后）
    */
+  calculateFundingRate(): string;
   calculateFundingRate(
     symbol: string,
     contract: Contract
@@ -393,7 +424,24 @@ export class AdvancedFundingEngine {
     interestComponent: string;
     innerClamp: string;
     outerClamp: string;
-  } {
+  };
+  calculateFundingRate(
+    symbol?: string,
+    contract?: Contract
+  ):
+    | string
+    | {
+        rawRate: string;
+        clampedRate: string;
+        premiumIndex: string;
+        interestComponent: string;
+        innerClamp: string;
+        outerClamp: string;
+      } {
+    if (!symbol || !contract) {
+      return this.calculateLegacyFundingRate();
+    }
+
     const premiumIndex = this.getAveragePremiumIndex(symbol);
     const interestComponent = this.getInterestComponent();
 
@@ -437,6 +485,14 @@ export class AdvancedFundingEngine {
       innerClamp,
       outerClamp,
     };
+  }
+
+  private calculateLegacyFundingRate(): string {
+    const raw = Number(this.legacyBaseRate) + Number(this.legacyPremiumIndex);
+    const clamped = Math.min(this.config.maxFundingRate, Math.max(this.config.minFundingRate, raw));
+    const rate = clamped.toString();
+    this.predictedRates.set(this.legacySymbol, rate);
+    return rate;
   }
 
   // -------------------------------------------------------------------------
@@ -646,8 +702,19 @@ export class AdvancedFundingEngine {
   /**
    * 获取历史资金费率
    */
-  getFundingHistory(symbol: string, limit?: number): FundingRateRecord[] {
-    const history = this.fundingHistory.get(symbol) ?? [];
+  getFundingHistory(symbol: string, limit?: number): FundingRateRecord[];
+  getFundingHistory(limit: number): Array<FundingRateRecord & { settledAt: number }>;
+  getFundingHistory(symbolOrLimit: string | number, limit?: number): FundingRateRecord[] | Array<FundingRateRecord & { settledAt: number }> {
+    if (typeof symbolOrLimit === 'number') {
+      const history = this.fundingHistory.get(this.legacySymbol) ?? [];
+      const sliced = symbolOrLimit < history.length ? history.slice(history.length - symbolOrLimit) : [...history];
+      return sliced
+        .slice()
+        .reverse()
+        .map((item) => ({ ...item, settledAt: item.settlementTime }));
+    }
+
+    const history = this.fundingHistory.get(symbolOrLimit) ?? [];
     if (limit && limit < history.length) {
       return history.slice(history.length - limit);
     }
@@ -699,6 +766,93 @@ export class AdvancedFundingEngine {
 
     const values = [depthBidPrice, depthAskPrice, lastPrice].sort((a, b) => decCmp(a, b));
     return values[1];
+  }
+
+  // -------------------------------------------------------------------------
+  // 旧接口兼容层（用于历史测试与调用方）
+  // -------------------------------------------------------------------------
+
+  getState(): {
+    currentFundingRate: string;
+    predictedFundingRate: string;
+    lastFundingRate: string | null;
+    maxFundingRate: number;
+    minFundingRate: number;
+    fundingIntervalHours: number;
+  } {
+    return {
+      currentFundingRate: this.calculateLegacyFundingRate(),
+      predictedFundingRate: this.predictedRates.get(this.legacySymbol) ?? this.legacyBaseRate,
+      lastFundingRate: this.legacyLastFundingRate,
+      maxFundingRate: this.config.maxFundingRate,
+      minFundingRate: this.config.minFundingRate,
+      fundingIntervalHours: this.config.intervalHours,
+    };
+  }
+
+  calculatePremiumIndex(markPrice: string, indexPrice: string): string {
+    if (decIsZero(indexPrice)) return '0';
+    return decDiv(decSub(markPrice, indexPrice), indexPrice, 10);
+  }
+
+  updatePremiumIndex(markPrice: string, indexPrice: string): void {
+    this.legacyPremiumIndex = this.calculatePremiumIndex(markPrice, indexPrice);
+    this.currentMarkPrices.set(this.legacySymbol, markPrice);
+    this.currentIndexPrices.set(this.legacySymbol, indexPrice);
+    this.predictedRates.set(this.legacySymbol, this.calculateLegacyFundingRate());
+  }
+
+  settleFunding(markPrice: string): string {
+    const fundingRate = this.calculateLegacyFundingRate();
+    let settlementTime = Date.now();
+    if (settlementTime <= this.legacyLastSettlementTime) {
+      settlementTime = this.legacyLastSettlementTime + 1;
+    }
+    this.legacyLastSettlementTime = settlementTime;
+
+    const record: FundingRateRecord = {
+      symbol: this.legacySymbol,
+      fundingRate,
+      premiumIndex: this.legacyPremiumIndex,
+      interestComponent: '0',
+      settlementTime,
+      markPrice,
+      indexPrice: this.currentIndexPrices.get(this.legacySymbol) ?? markPrice,
+      periodHours: this.config.intervalHours,
+    };
+
+    const history = this.fundingHistory.get(this.legacySymbol) ?? [];
+    history.push(record);
+    this.fundingHistory.set(this.legacySymbol, history);
+
+    this.legacyLastFundingRate = fundingRate;
+    this.lastFundingTime.set(this.legacySymbol, settlementTime);
+
+    return fundingRate;
+  }
+
+  calculatePositionFunding(side: 'long' | 'short', size: string, markPrice: string): string {
+    const rate = this.legacyLastFundingRate ?? this.calculateLegacyFundingRate();
+    const gross = decMul(decMul(size, markPrice), rate);
+    if (side === 'long') {
+      return decIsPositive(rate) ? decMul(gross, '-1') : decAbs(gross);
+    }
+    return decIsPositive(rate) ? decAbs(gross) : decMul(decAbs(gross), '-1');
+  }
+
+  updateConfig(config: Partial<FundingConfig & { fundingIntervalHours: number }>): void {
+    if (typeof config.maxFundingRate === 'number') {
+      this.config.maxFundingRate = config.maxFundingRate;
+    }
+    if (typeof config.minFundingRate === 'number') {
+      this.config.minFundingRate = config.minFundingRate;
+    }
+    if (typeof config.fundingIntervalHours === 'number') {
+      this.config.intervalHours = config.fundingIntervalHours;
+    }
+    if (typeof config.intervalHours === 'number') {
+      this.config.intervalHours = config.intervalHours;
+    }
   }
 
   // -------------------------------------------------------------------------

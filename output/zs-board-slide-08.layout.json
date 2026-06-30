@@ -1,0 +1,903 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/yfvxjg",
+    "id": "yfvxjg",
+    "slide": 8,
+    "layoutId": "83c8b155-47c3-4fa3-9790-af231455b785",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "a0864161-26fc-4e00-a6a3-5e1272069b70",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "83c8b155-47c3-4fa3-9790-af231455b785",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "a0864161-26fc-4e00-a6a3-5e1272069b70",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "a0864161-26fc-4e00-a6a3-5e1272069b70",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0rqd4vmt",
+      "id": "1",
+      "bbox": [
+        52,
+        34,
+        360,
+        24
+      ],
+      "geometry": "rect",
+      "text": "ZS Exchange 交付报备",
+      "textPreview": "ZS Exchange 交付报备",
+      "resolvedFontSize": 16,
+      "resolvedTextStyle": {
+        "fontSize": 16,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "ZS Exchange 交付报备"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "ZS Exchange 交付报备",
+          "resolvedTextStyle": {
+            "fontSize": 16,
+            "color": "#5B6475",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "ZS Exchange 交付报备",
+              "fontSize": 16,
+              "color": "#5B6475",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/b6xkf6dc",
+      "id": "2",
+      "bbox": [
+        52,
+        68,
+        900,
+        54
+      ],
+      "geometry": "rect",
+      "text": "商业价值：从交易平台到 Web3 资产入口",
+      "textPreview": "商业价值：从交易平台到 Web3 资产入口",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#111827",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "商业价值：从交易平台到 Web3 资产入口"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "商业价值：从交易平台到 Web3 资产入口",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#111827",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "商业价值：从交易平台到 Web3 资产入口",
+              "fontSize": 38,
+              "color": "#111827",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/il0rqd4v",
+      "id": "3",
+      "bbox": [
+        52,
+        130,
+        1176,
+        2
+      ],
+      "geometry": "rect",
+      "fillColor": "#111827",
+      "lineColor": "#111827",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/t47y1kre",
+      "id": "4",
+      "bbox": [
+        80,
+        190,
+        500,
+        145
+      ],
+      "geometry": "rect",
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD5E1",
+      "lineWidth": 1
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0je9cvix",
+      "id": "5",
+      "bbox": [
+        108,
+        218,
+        350,
+        34
+      ],
+      "geometry": "rect",
+      "text": "交易基础设施",
+      "textPreview": "交易基础设施",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "fontSize": 26,
+        "typeface": "+mn-lt",
+        "color": "#2563EB",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "交易基础设施"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "交易基础设施",
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "color": "#2563EB",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "交易基础设施",
+              "fontSize": 26,
+              "color": "#2563EB",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/byhgn29g",
+      "id": "6",
+      "bbox": [
+        108,
+        266,
+        425,
+        46
+      ],
+      "geometry": "rect",
+      "text": "行情、订单、撮合、钱包、充提构成交易所基础盘。",
+      "textPreview": "行情、订单、撮合、钱包、充提构成交易所基础盘。",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "行情、订单、撮合、钱包、充提构成交易所基础盘"
+          },
+          {
+            "index": 2,
+            "text": "。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "行情、订单、撮合、钱包、充提构成交易所基础盘。",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#5B6475",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "行情、订单、撮合、钱包、充提构成交易所基础盘。",
+              "fontSize": 18,
+              "color": "#5B6475",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/idonyd0z",
+      "id": "7",
+      "bbox": [
+        660,
+        190,
+        500,
+        145
+      ],
+      "geometry": "rect",
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD5E1",
+      "lineWidth": 1
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p0bi9s36",
+      "id": "8",
+      "bbox": [
+        688,
+        218,
+        350,
+        34
+      ],
+      "geometry": "rect",
+      "text": "合规身份能力",
+      "textPreview": "合规身份能力",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "fontSize": 26,
+        "typeface": "+mn-lt",
+        "color": "#16A34A",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "合规身份能力"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "合规身份能力",
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "color": "#16A34A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "合规身份能力",
+              "fontSize": 26,
+              "color": "#16A34A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 9,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0fepkzup",
+      "id": "9",
+      "bbox": [
+        688,
+        266,
+        425,
+        46
+      ],
+      "geometry": "rect",
+      "text": "DID、VC、KYC、审计日志为机构合作与合规扩展打基础。",
+      "textPreview": "DID、VC、KYC、审计日志为机构合作与合规扩展打基础。",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "DID、VC、KYC、审计日志为机构合作与合规扩展打"
+          },
+          {
+            "index": 2,
+            "text": "基础。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "DID、VC、KYC、审计日志为机构合作与合规扩展打基础。",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#5B6475",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "DID、VC、KYC、审计日志为机构合作与合规扩展打基础。",
+              "fontSize": 18,
+              "color": "#5B6475",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 10,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/itgfmlkj",
+      "id": "10",
+      "bbox": [
+        80,
+        390,
+        500,
+        145
+      ],
+      "geometry": "rect",
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD5E1",
+      "lineWidth": 1
+    },
+    {
+      "order": 11,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ed8bat4",
+      "id": "11",
+      "bbox": [
+        108,
+        418,
+        350,
+        34
+      ],
+      "geometry": "rect",
+      "text": "Web3 资产入口",
+      "textPreview": "Web3 资产入口",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "fontSize": 26,
+        "typeface": "+mn-lt",
+        "color": "#7C3AED",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Web3 资产入口"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Web3 资产入口",
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "color": "#7C3AED",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Web3 资产入口",
+              "fontSize": 26,
+              "color": "#7C3AED",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 12,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0z61032l",
+      "id": "12",
+      "bbox": [
+        108,
+        466,
+        425,
+        46
+      ],
+      "geometry": "rect",
+      "text": "Web3 钱包、DApp 浏览器、WalletConnect 构成用户资产入口。",
+      "textPreview": "Web3 钱包、DApp 浏览器、WalletConnect 构成用户资产入口。",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Web3 钱包、DApp 浏览器、WalletConnect"
+          },
+          {
+            "index": 2,
+            "text": "构成用户资产入口。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Web3 钱包、DApp 浏览器、WalletConnect 构成用户资产入口。",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#5B6475",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Web3 钱包、DApp 浏览器、WalletConnect 构成用户资产入口。",
+              "fontSize": 18,
+              "color": "#5B6475",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 13,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/pkzupwb2",
+      "id": "13",
+      "bbox": [
+        660,
+        390,
+        500,
+        145
+      ],
+      "geometry": "rect",
+      "fillColor": "#FFFFFF",
+      "lineColor": "#CBD5E1",
+      "lineWidth": 1
+    },
+    {
+      "order": 14,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/ih4byhgn",
+      "id": "14",
+      "bbox": [
+        688,
+        418,
+        350,
+        34
+      ],
+      "geometry": "rect",
+      "text": "业务扩展空间",
+      "textPreview": "业务扩展空间",
+      "resolvedFontSize": 26,
+      "resolvedTextStyle": {
+        "fontSize": 26,
+        "typeface": "+mn-lt",
+        "color": "#F97316",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "业务扩展空间"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "业务扩展空间",
+          "resolvedTextStyle": {
+            "fontSize": 26,
+            "color": "#F97316",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "业务扩展空间",
+              "fontSize": 26,
+              "color": "#F97316",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 15,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/72x4nap4",
+      "id": "15",
+      "bbox": [
+        688,
+        466,
+        425,
+        46
+      ],
+      "geometry": "rect",
+      "text": "DeFi、NFT、电商、福建老酒链上权益为多业务线预留接口。",
+      "textPreview": "DeFi、NFT、电商、福建老酒链上权益为多业务线预留接口。",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "DeFi、NFT、电商、福建老酒链上权益为多业务线预"
+          },
+          {
+            "index": 2,
+            "text": "留接口。"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "DeFi、NFT、电商、福建老酒链上权益为多业务线预留接口。",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#5B6475",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "DeFi、NFT、电商、福建老酒链上权益为多业务线预留接口。",
+              "fontSize": 18,
+              "color": "#5B6475",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 16,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/0nuxc3yl",
+      "id": "16",
+      "bbox": [
+        52,
+        676,
+        500,
+        22
+      ],
+      "geometry": "rect",
+      "text": "董事局报备 / 技术团队交接 · 2026-06-30",
+      "textPreview": "董事局报备 / 技术团队交接 · 2026-06-30",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "董事局报备 / 技术团队交接 · 2026-06-30"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "董事局报备 / 技术团队交接 · 2026-06-30",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#5B6475",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "董事局报备 / 技术团队交接 · 2026-06-30",
+              "fontSize": 12,
+              "color": "#5B6475",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 17,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/p8nqxs72",
+      "id": "17",
+      "bbox": [
+        1180,
+        676,
+        50,
+        22
+      ],
+      "geometry": "rect",
+      "text": "08",
+      "textPreview": "08",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#5B6475",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "08"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "08",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#5B6475",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "08",
+              "fontSize": 12,
+              "color": "#5B6475",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

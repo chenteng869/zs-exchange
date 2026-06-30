@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi, mock } from 'vitest';
 import { WalletTierManager, WalletTier, WalletStatus } from '../../mpc/wallet-tier-manager';
 import { ChainType } from '../../mpc/mpc.types';
+import { auditService } from '../../audit/audit.service';
 
 vi.mock('../../audit/audit.service', () => ({
   auditService: {
@@ -160,7 +161,6 @@ describe('WalletTierManager - 冷热钱包管理器', () => {
 
     it('层级变更应该记录审计日志', async () => {
       await walletTierManager.changeTier(testWalletId, WalletTier.COLD);
-      const { auditService } = require('../../audit/audit.service');
       expect(auditService.recordEvent).toHaveBeenCalled();
     });
 

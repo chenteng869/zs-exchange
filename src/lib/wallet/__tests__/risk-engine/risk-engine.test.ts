@@ -41,8 +41,8 @@ vi.mock('../../risk-engine/risk-scoring/device-scorer', () => ({
 vi.mock('../../risk-engine/risk-decision.engine', () => ({
   riskDecisionEngine: {
     decide: vi.fn().mockReturnValue({
-      action: RiskAction.ALLOW,
-      level: RiskLevel.LOW,
+      action: 'allow',
+      level: 'low',
     }),
   },
 }));

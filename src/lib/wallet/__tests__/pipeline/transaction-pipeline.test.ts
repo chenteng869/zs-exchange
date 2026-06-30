@@ -4,7 +4,7 @@ import { PipelineStage, PipelineStatus } from '../../pipeline/pipeline.types';
 
 vi.mock('../../pipeline/pipeline-stages/build.stage', () => ({
   createBuildStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.BUILD,
+    stage: 'build',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { transaction: { to: '0x' + 'a'.repeat(40), value: '1000' } },
@@ -14,7 +14,7 @@ vi.mock('../../pipeline/pipeline-stages/build.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/simulate.stage', () => ({
   createSimulateStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.SIMULATE,
+    stage: 'simulate',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { simulated: true, gasUsed: '21000' },
@@ -24,7 +24,7 @@ vi.mock('../../pipeline/pipeline-stages/simulate.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/risk-check.stage', () => ({
   createRiskCheckStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.RISK_CHECK,
+    stage: 'risk_check',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { riskScore: 0, riskLevel: 'low', action: 'allow' },
@@ -34,7 +34,7 @@ vi.mock('../../pipeline/pipeline-stages/risk-check.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/balance-check.stage', () => ({
   createBalanceCheckStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.BALANCE_CHECK,
+    stage: 'balance_check',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { balance: '1000000', sufficient: true },
@@ -44,7 +44,7 @@ vi.mock('../../pipeline/pipeline-stages/balance-check.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/signature.stage', () => ({
   createSignatureStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.SIGNATURE,
+    stage: 'signature',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { signature: '0x' + 's'.repeat(130), signedTx: '0x' + 't'.repeat(100) },
@@ -54,7 +54,7 @@ vi.mock('../../pipeline/pipeline-stages/signature.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/broadcast.stage', () => ({
   createBroadcastStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.BROADCAST,
+    stage: 'broadcast',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { txHash: '0x' + 'h'.repeat(64) },
@@ -64,7 +64,7 @@ vi.mock('../../pipeline/pipeline-stages/broadcast.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/confirmation.stage', () => ({
   createConfirmationStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.CONFIRMATION,
+    stage: 'confirmation',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { confirmed: true, blockNumber: 12345678, confirmations: 1 },
@@ -74,7 +74,7 @@ vi.mock('../../pipeline/pipeline-stages/confirmation.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/audit.stage', () => ({
   createAuditStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.AUDIT,
+    stage: 'audit',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { auditLogId: 'audit_123' },
@@ -84,7 +84,7 @@ vi.mock('../../pipeline/pipeline-stages/audit.stage', () => ({
 
 vi.mock('../../pipeline/pipeline-stages/notify.stage', () => ({
   createNotifyStage: vi.fn().mockReturnValue({
-    stage: PipelineStage.NOTIFY,
+    stage: 'notify',
     execute: vi.fn().mockResolvedValue({
       success: true,
       data: { notified: true },

@@ -58,7 +58,7 @@ async function getLiquidationStats(req: NextRequest) {
 
   try {
     const result = await liquidationService.list({ symbol, page, pageSize });
-    const totalAmount = result.list.reduce((sum: number, liq: any) => {
+    const totalAmount = result.items.reduce((sum: number, liq: any) => {
       return sum + parseFloat(liq.positionQty?.toString() || '0');
     }, 0);
 
@@ -67,7 +67,7 @@ async function getLiquidationStats(req: NextRequest) {
       stats: {
         totalCount: result.total,
         totalPositionSize: totalAmount.toFixed(4),
-        adlTriggeredCount: result.list.filter((l: any) => l.adlTriggered).length,
+        adlTriggeredCount: result.items.filter((l: any) => l.adlTriggered).length,
       },
     });
   } catch (e: any) {

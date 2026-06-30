@@ -1,0 +1,22 @@
+{{- if .Values.prometheusRule.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+    {{- with .Values.prometheusRule.additionalLabels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.prometheusRule.release }}
+    release: {{ .Values.prometheusRule.release | quote }}
+    {{- end }}
+  {{- if .Values.prometheusRule.namespace }}
+  namespace: {{ .Values.prometheusRule.namespace }}
+  {{- end }}
+spec:
+  groups:
+    - name: {{ include "zs-ai-platform.fullname" . }}.rules
+      rules:
+        {{- toYaml .Values.prometheusRule.rules | nindent 8 }}
+{{- end }}

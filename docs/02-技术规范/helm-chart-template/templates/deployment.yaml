@@ -1,0 +1,163 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  revisionHistoryLimit: 10
+  strategy:
+    type: {{ .Values.updateStrategy.type }}
+    {{- if eq .Values.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxSurge: {{ .Values.updateStrategy.rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .Values.updateStrategy.rollingUpdate.maxUnavailable }}
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "zs-ai-platform.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        # Rollme - forces pod restart on config change
+        rollme: {{ randAlphaNum 5 | quote }}
+        # Prometheus scrape annotations
+        prometheus.io/scrape: "true"
+        prometheus.io/port: {{ (index .Values.containerPorts 0).containerPort | quote }}
+        prometheus.io/path: "/metrics"
+        # Checksum annotations
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "zs-ai-platform.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "zs-ai-platform.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automount }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- if .Values.hostNetwork }}
+      hostNetwork: true
+      dnsPolicy: {{ .Values.dnsPolicy }}
+      {{- end }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- with .Values.hostAliases }}
+      hostAliases:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ include "zs-ai-platform.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.command }}
+          command:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.args }}
+          args:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- with .Values.containerPorts }}
+          ports:
+            {{- range . }}
+            - name: {{ .name }}
+              containerPort: {{ .containerPort }}
+              protocol: {{ .protocol | default "TCP" }}
+            {{- end }}
+          {{- end }}
+          {{- with .Values.env }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.envFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- if .Values.livenessProbe }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.readinessProbe }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          {{- end }}
+          {{- if .Values.startupProbe }}
+          startupProbe:
+            {{- toYaml .Values.startupProbe | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if .Values.persistence.enabled }}
+          volumeMounts:
+            - name: data
+              mountPath: {{ .Values.persistence.mountPath | default "/data" }}
+              {{- if .Values.persistence.subPath }}
+              subPath: {{ .Values.persistence.subPath | quote }}
+              {{- end }}
+              readOnly: {{ .Values.persistence.readOnly }}
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /home/app/.cache
+          {{- end }}
+          {{- with .Values.volumeMounts }}
+          volumeMounts:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- if .Values.persistence.enabled }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "zs-ai-platform.fullname" . }}-data
+          {{- end }}
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
+      {{- end }}
+      {{- with .Values.volumes }}
+      volumes:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

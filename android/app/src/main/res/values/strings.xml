@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ZS Exchange</string>
+    <string name="title_activity_main">ZS Exchange</string>
+    <string name="package_name">com.zhongsa.exchange</string>
+    <string name="custom_url_scheme">com.zhongsa.exchange</string>
+</resources>

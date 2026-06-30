@@ -20,7 +20,8 @@ import {
   type PipelineResult,
   type PipelineConfig,
 } from './pipeline.types';
-import { TransactionPipeline, createTransactionPipeline } from './transaction-pipeline';
+import { EventEmitter } from 'events';
+import { TransactionPipeline } from './transaction-pipeline';
 
 // =============================================================================
 // 队列项
@@ -46,6 +47,16 @@ interface RunningPipeline {
   startTime: number;
   timeoutMs?: number;
   timeoutTimer?: ReturnType<typeof setTimeout>;
+}
+
+interface PipelineSummary {
+  pipelineId: string;
+  walletId?: string;
+  userId?: string;
+  status: PipelineStatus;
+  addedAt?: string;
+  updatedAt?: string;
+  priority?: number;
 }
 
 // =============================================================================
@@ -78,9 +89,11 @@ export class PipelineManager {
   private config: Required<PipelineManagerConfig>;
   private runningPipelines: Map<string, RunningPipeline> = new Map();
   private completedPipelines: Map<string, { context: PipelineContext; completedAt: number }> = new Map();
+  private history: Array<{ context: PipelineContext; completedAt: number }> = [];
   private queue: QueueItem[] = [];
   private isProcessing = false;
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private readonly emitter = new EventEmitter();
 
   constructor(config: PipelineManagerConfig = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -168,7 +181,7 @@ export class PipelineManager {
     const running = this.runningPipelines.get(pipelineId);
     if (!running) return false;
 
-    const cancelled = running.pipeline.abort();
+    const cancelled = running.pipeline.abort?.() ?? (running.pipeline as { cancel?: () => boolean }).cancel?.() ?? false;
     if (cancelled && running.timeoutTimer) {
       clearTimeout(running.timeoutTimer);
     }
@@ -192,6 +205,135 @@ export class PipelineManager {
     return count;
   }
 
+  /**
+   * 列出流水线（运行中、队列中、已完成）
+   */
+  listPipelines(filters: {
+    walletId?: string;
+    userId?: string;
+    status?: PipelineStatus;
+    page?: number;
+    pageSize?: number;
+  } = {}): PipelineSummary[] {
+    const items: PipelineSummary[] = [];
+
+    for (const [pipelineId, running] of this.runningPipelines) {
+      items.push({
+        pipelineId,
+        walletId: running.context.request.walletId,
+        userId: running.context.request.userId,
+        status: running.context.status,
+        updatedAt: running.context.updatedAt,
+      });
+    }
+
+    for (const queued of this.queue) {
+      items.push({
+        pipelineId: queued.id,
+        walletId: queued.request.walletId,
+        userId: queued.request.userId,
+        status: PipelineStatus.PENDING,
+        addedAt: queued.addedAt,
+        priority: queued.priority,
+      });
+    }
+
+    for (const [pipelineId, { context, completedAt }] of this.completedPipelines) {
+      items.push({
+        pipelineId,
+        walletId: context.request.walletId,
+        userId: context.request.userId,
+        status: context.status,
+        updatedAt: new Date(completedAt).toISOString(),
+      });
+    }
+
+    const filtered = items.filter((item) => {
+      if (filters.walletId && item.walletId !== filters.walletId) return false;
+      if (filters.userId && item.userId !== filters.userId) return false;
+      if (filters.status && item.status !== filters.status) return false;
+      return true;
+    });
+
+    const page = Math.max(filters.page ?? 1, 1);
+    const pageSize = Math.max(filters.pageSize ?? (filtered.length || 1), 1);
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }
+
+  /**
+   * 注册事件监听器
+   */
+  on(event: string, listener: (...args: unknown[]) => void): this {
+    this.emitter.on(event, listener);
+    return this;
+  }
+
+  /**
+   * 移除事件监听器
+   */
+  off(event: string, listener: (...args: unknown[]) => void): this {
+    this.emitter.off(event, listener);
+    return this;
+  }
+
+  /**
+   * 重试流水线
+   */
+  async retry(pipelineId: string): Promise<PipelineResult> {
+    const context = this.getPipelineContext(pipelineId);
+    if (!context) {
+      return {
+        pipelineId,
+        status: PipelineStatus.RETRYING,
+        request: { id: pipelineId } as TransactionRequest,
+        totalRetries: 0,
+        stageDurations: {} as Record<PipelineStatus, number>,
+      } as PipelineResult;
+    }
+
+    return this.execute(context.request, { timeoutMs: context.timeoutMs });
+  }
+
+  /**
+   * 获取历史记录
+   */
+  getHistory(filters: { walletId?: string; userId?: string } = {}): Array<{ pipelineId: string; walletId?: string; userId?: string; status: PipelineStatus; completedAt: number }> {
+    return this.history
+      .map((item) => ({
+        pipelineId: item.context.pipelineId,
+        walletId: item.context.request.walletId,
+        userId: item.context.request.userId,
+        status: item.context.status,
+        completedAt: item.completedAt,
+      }))
+      .filter((item) => {
+        if (filters.walletId && item.walletId !== filters.walletId) return false;
+        if (filters.userId && item.userId !== filters.userId) return false;
+        return true;
+      });
+  }
+
+  /**
+   * 清除历史记录
+   */
+  clearHistory(walletId?: string): void {
+    if (!walletId) {
+      this.history = [];
+      return;
+    }
+
+    this.history = this.history.filter((item) => item.context.request.walletId !== walletId);
+  }
+
+  /**
+   * 销毁管理器
+   */
+  destroy(): void {
+    this.shutdown();
+    this.emitter.removeAllListeners();
+  }
+
   // -------------------------------------------------------------------------
   // 公共方法 - 查询
   // -------------------------------------------------------------------------
@@ -202,7 +344,7 @@ export class PipelineManager {
   getPipelineStatus(pipelineId: string): PipelineStatus | null {
     const running = this.runningPipelines.get(pipelineId);
     if (running) {
-      return running.pipeline.getStatus();
+      return running.context.status;
     }
 
     const completed = this.completedPipelines.get(pipelineId);
@@ -224,7 +366,7 @@ export class PipelineManager {
   getPipelineContext(pipelineId: string): PipelineContext | null {
     const running = this.runningPipelines.get(pipelineId);
     if (running) {
-      return running.pipeline.getContext();
+      return running.context;
     }
 
     const completed = this.completedPipelines.get(pipelineId);
@@ -244,7 +386,7 @@ export class PipelineManager {
     for (const [id, running] of this.runningPipelines) {
       result.push({
         pipelineId: id,
-        status: running.pipeline.getStatus(),
+        status: running.context.status,
         startTime: new Date(running.startTime).toISOString(),
       });
     }
@@ -320,6 +462,14 @@ export class PipelineManager {
       successRate,
       lastHourCount,
       lastDayCount,
+      byStatus: {
+        [PipelineStatus.COMPLETED]: completed,
+        [PipelineStatus.FAILED]: failed,
+        [PipelineStatus.ROLLED_BACK]: rolledBack,
+        [PipelineStatus.RUNNING]: this.runningPipelines.size,
+        [PipelineStatus.PENDING]: this.queue.length,
+      },
+      concurrent: this.runningPipelines.size,
     };
   }
 
@@ -417,38 +567,33 @@ export class PipelineManager {
     request: TransactionRequest,
     config?: PipelineConfig,
   ): Promise<PipelineResult> {
-    const pipeline = createTransactionPipeline(config);
-    const pipelineId = 'temp';
+    const pipeline = new TransactionPipeline(config);
+    const pipelineId = (request as { id?: string }).id || `txp_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const context = this.createPipelineContext(pipelineId, request, config);
+    const running: RunningPipeline = {
+      pipeline,
+      context,
+      startTime: Date.now(),
+      timeoutMs: config?.timeoutMs || this.config.globalTimeoutMs,
+    };
+
+    this.runningPipelines.set(pipelineId, running);
 
     try {
       const resultPromise = pipeline.execute(request);
-      const actualPipelineId = pipeline.getPipelineId()!;
-
-      const running: RunningPipeline = {
-        pipeline,
-        context: pipeline.getContext()!,
-        startTime: Date.now(),
-        timeoutMs: config?.timeoutMs || this.config.globalTimeoutMs,
-      };
-
-      this.runningPipelines.set(actualPipelineId, running);
-
       if (running.timeoutMs && running.timeoutMs > 0) {
         running.timeoutTimer = setTimeout(() => {
-          this.handleTimeout(actualPipelineId);
+          this.handleTimeout(pipelineId);
         }, running.timeoutMs);
       }
 
       const result = await resultPromise;
 
-      this.onPipelineComplete(actualPipelineId, result);
+      this.onPipelineComplete(pipelineId, result);
 
       return result;
     } catch (error) {
-      const actualPipelineId = pipeline.getPipelineId();
-      if (actualPipelineId) {
-        this.onPipelineError(actualPipelineId, error as Error);
-      }
+      this.onPipelineError(pipelineId, error as Error);
       throw error;
     }
   }
@@ -464,15 +609,19 @@ export class PipelineManager {
       clearTimeout(running.timeoutTimer);
     }
 
-    const context = running.pipeline.getContext();
-    if (context) {
-      this.completedPipelines.set(pipelineId, {
-        context,
-        completedAt: Date.now(),
-      });
-    }
+    const completedAt = Date.now();
+    running.context.status = result.status;
+    running.context.updatedAt = result.completedAt || new Date(completedAt).toISOString();
+    running.context.completedAt = result.completedAt;
+    running.context.totalDurationMs = result.totalDurationMs;
+    this.completedPipelines.set(pipelineId, {
+      context: running.context,
+      completedAt,
+    });
+    this.history.push({ context: running.context, completedAt });
 
     this.runningPipelines.delete(pipelineId);
+    this.emitter.emit('complete', result);
     this.processQueue();
   }
 
@@ -487,15 +636,22 @@ export class PipelineManager {
       clearTimeout(running.timeoutTimer);
     }
 
-    const context = running.pipeline.getContext();
-    if (context) {
-      this.completedPipelines.set(pipelineId, {
-        context,
-        completedAt: Date.now(),
-      });
-    }
+    const completedAt = Date.now();
+    running.context.status = PipelineStatus.FAILED;
+    running.context.error = {
+      code: 'PIPELINE_ERROR',
+      message: error.message,
+      timestamp: new Date().toISOString(),
+      recoverable: true,
+    };
+    this.completedPipelines.set(pipelineId, {
+      context: running.context,
+      completedAt,
+    });
+    this.history.push({ context: running.context, completedAt });
 
     this.runningPipelines.delete(pipelineId);
+    this.emitter.emit('error', error);
     this.processQueue();
   }
 
@@ -506,24 +662,24 @@ export class PipelineManager {
     const running = this.runningPipelines.get(pipelineId);
     if (!running) return;
 
-    running.pipeline.abort();
+    running.pipeline.abort?.();
+    (running.pipeline as { cancel?: () => boolean }).cancel?.();
 
-    const context = running.pipeline.getContext();
-    if (context) {
-      context.status = PipelineStatus.TIMEOUT;
-      context.error = {
-        code: 'TIMEOUT',
-        message: `流水线执行超时（${running.timeoutMs}ms）`,
-        stage: context.currentStage,
-        timestamp: new Date().toISOString(),
-        recoverable: false,
-      };
+    const completedAt = Date.now();
+    running.context.status = PipelineStatus.TIMEOUT;
+    running.context.error = {
+      code: 'TIMEOUT',
+      message: `流水线执行超时（${running.timeoutMs}ms）`,
+      stage: running.context.currentStage,
+      timestamp: new Date().toISOString(),
+      recoverable: false,
+    };
 
-      this.completedPipelines.set(pipelineId, {
-        context,
-        completedAt: Date.now(),
-      });
-    }
+    this.completedPipelines.set(pipelineId, {
+      context: running.context,
+      completedAt,
+    });
+    this.history.push({ context: running.context, completedAt });
 
     this.runningPipelines.delete(pipelineId);
     this.processQueue();
@@ -576,6 +732,29 @@ export class PipelineManager {
 
     this.cancelAll();
     this.clearQueue();
+  }
+
+  private createPipelineContext(
+    pipelineId: string,
+    request: TransactionRequest,
+    config?: PipelineConfig,
+  ): PipelineContext {
+    const now = new Date().toISOString();
+    return {
+      pipelineId,
+      status: PipelineStatus.RUNNING,
+      request,
+      stageData: {},
+      stageMetadata: {} as PipelineContext['stageMetadata'],
+      createdAt: now,
+      updatedAt: now,
+      startedAt: now,
+      skippedStages: [],
+      rollbackHistory: [],
+      retryCount: 0,
+      maxRetries: config?.maxRetries ?? 3,
+      timeoutMs: config?.timeoutMs || this.config.globalTimeoutMs,
+    };
   }
 
   // -------------------------------------------------------------------------

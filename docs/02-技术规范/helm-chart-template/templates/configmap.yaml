@@ -1,0 +1,35 @@
+{{- if .Values.configMap.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}-env
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.configMap.data }}
+  {{ $key }}: |-
+    {{- $value | nindent 4 }}
+  {{- end }}
+{{- end }}
+
+{{- if .Values.secret.enabled -}}
+{{- if not .Values.secret.existingSecret }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "zs-ai-platform.fullname" . }}-secret
+  labels:
+    {{- include "zs-ai-platform.labels" . | nindent 4 }}
+type: Opaque
+stringData:
+  {{- range $key, $value := .Values.secret.stringData }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- if .Values.secret.data }}
+data:
+  {{- range $key, $value := .Values.secret.data }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

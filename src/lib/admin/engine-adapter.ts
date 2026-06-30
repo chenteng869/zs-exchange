@@ -94,7 +94,7 @@ async function checkEngineHealth(engine: AutomationEngineId, healthUrl: string):
   }
 }
 
-async function useRealEngine(engine: AutomationEngineId): Promise<boolean> {
+async function shouldUseRealEngine(engine: AutomationEngineId): Promise<boolean> {
   const mode = getEngineMode();
   if (mode === 'mock') return false;
   if (mode === 'real') return true;
@@ -596,7 +596,7 @@ export async function executeEngineAction(
 
   logger.info(`[EngineAdapter] 执行 ${engine}:${action}`, input);
 
-  const shouldUseReal = await useRealEngine(engine);
+  const shouldUseReal = await shouldUseRealEngine(engine);
 
   let result: EngineActionResult;
 
@@ -659,7 +659,7 @@ export async function checkAllEnginesHealth(): Promise<Record<AutomationEngineId
 
   await Promise.all(
     engines.map(async (engine) => {
-      const healthy = await useRealEngine(engine);
+      const healthy = await shouldUseRealEngine(engine);
       result[engine] = { healthy, mode };
     })
   );

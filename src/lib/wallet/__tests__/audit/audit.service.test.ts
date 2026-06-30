@@ -66,7 +66,7 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.saveEvent).toHaveBeenCalled();
+      expect(auditStorage.saveEvent.mock.calls.length).toBeGreaterThan(0);
     });
 
     it('记录的事件应该包含事件类型', async () => {
@@ -78,7 +78,7 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      const savedEvent = auditStorage.saveEvent.mock.calls[0][0];
+      const savedEvent = auditStorage.saveEvent.mock.calls.at(-1)[0];
       expect(savedEvent.eventType).toBe(AuditEventType.TRANSACTION_SIGNED);
     });
 
@@ -92,7 +92,7 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      const savedEvent = auditStorage.saveEvent.mock.calls[0][0];
+      const savedEvent = auditStorage.saveEvent.mock.calls.at(-1)[0];
       expect(savedEvent.timestamp).toBeGreaterThanOrEqual(beforeTime);
     });
 
@@ -105,7 +105,7 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      const savedEvent = auditStorage.saveEvent.mock.calls[0][0];
+      const savedEvent = auditStorage.saveEvent.mock.calls.at(-1)[0];
       expect(savedEvent.eventId).toBeDefined();
       expect(savedEvent.eventId.length).toBeGreaterThan(0);
     });
@@ -121,7 +121,7 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      const savedEvent = auditStorage.saveEvent.mock.calls[0][0];
+      const savedEvent = auditStorage.saveEvent.mock.calls.at(-1)[0];
       expect(savedEvent.data).toEqual(testData);
     });
 
@@ -134,7 +134,7 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { evidenceChain } = require('../../audit/evidence-chain');
-      expect(evidenceChain.generateProof).toHaveBeenCalled();
+      expect(evidenceChain.generateProof.mock.calls.length).toBeGreaterThan(0);
     });
   });
 
@@ -231,11 +231,9 @@ describe('AuditService - 审计服务', () => {
 
       expect(result).toBeDefined();
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.queryEvents).toHaveBeenCalledWith(
-        expect.objectContaining({
-          eventType: AuditEventType.TRANSACTION_SIGNED,
-        })
-      );
+      expect(auditStorage.queryEvents.mock.calls.at(-1)[0]).toEqual(expect.objectContaining({
+        eventType: AuditEventType.TRANSACTION_SIGNED,
+      }));
     });
 
     it('应该支持按实体类型筛选', async () => {
@@ -245,11 +243,9 @@ describe('AuditService - 审计服务', () => {
 
       expect(result).toBeDefined();
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.queryEvents).toHaveBeenCalledWith(
-        expect.objectContaining({
-          entityType: AuditEntityType.WALLET,
-        })
-      );
+      expect(auditStorage.queryEvents.mock.calls.at(-1)[0]).toEqual(expect.objectContaining({
+        entityType: AuditEntityType.WALLET,
+      }));
     });
 
     it('应该支持按用户 ID 筛选', async () => {
@@ -258,11 +254,9 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.queryEvents).toHaveBeenCalledWith(
-        expect.objectContaining({
-          userId: testUserId,
-        })
-      );
+      expect(auditStorage.queryEvents.mock.calls.at(-1)[0]).toEqual(expect.objectContaining({
+        userId: testUserId,
+      }));
     });
 
     it('应该支持按时间范围筛选', async () => {
@@ -275,12 +269,10 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.queryEvents).toHaveBeenCalledWith(
-        expect.objectContaining({
-          startTime,
-          endTime,
-        })
-      );
+      expect(auditStorage.queryEvents.mock.calls.at(-1)[0]).toEqual(expect.objectContaining({
+        startTime,
+        endTime,
+      }));
     });
 
     it('应该支持分页', async () => {
@@ -290,12 +282,10 @@ describe('AuditService - 审计服务', () => {
       });
 
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.queryEvents).toHaveBeenCalledWith(
-        expect.objectContaining({
-          page: 1,
-          pageSize: 20,
-        })
-      );
+      expect(auditStorage.queryEvents.mock.calls.at(-1)[0]).toEqual(expect.objectContaining({
+        page: 1,
+        pageSize: 20,
+      }));
     });
 
     it('应该返回总数', async () => {
@@ -320,7 +310,7 @@ describe('AuditService - 审计服务', () => {
       const result = await auditService.getEvent(eventId);
 
       const { auditStorage } = require('../../audit/audit-storage');
-      expect(auditStorage.getEvent).toHaveBeenCalledWith(eventId);
+      expect(auditStorage.getEvent.mock.calls.at(-1)[0]).toBe(eventId);
     });
   });
 
@@ -365,7 +355,7 @@ describe('AuditService - 审计服务', () => {
       const eventId = 'event-test-001';
       await auditService.verifyEventIntegrity(eventId);
 
-      expect(evidenceChain.verifyProof).toHaveBeenCalled();
+      expect(evidenceChain.verifyProof.mock.calls.length).toBeGreaterThan(0);
     });
   });
 

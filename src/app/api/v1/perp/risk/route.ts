@@ -175,8 +175,8 @@ async function getContractRisk(req: NextRequest) {
         maxLeverage: contract.maxLeverage,
         initialMarginRate: contract.initialMarginRate,
         maintenanceMarginRate: contract.maintenanceMarginRate,
-        openInterest: contract.openInterest,
-        maxOpenInterest: contract.maxOpenInterest,
+        openInterest: null,
+        maxOpenInterest: null,
         status: contract.status,
       });
     }
@@ -185,7 +185,7 @@ async function getContractRisk(req: NextRequest) {
       contracts: contracts.map((c) => ({
         symbol: c.symbol,
         maxLeverage: c.maxLeverage,
-        openInterest: c.openInterest,
+        openInterest: null,
         status: c.status,
       })),
     });

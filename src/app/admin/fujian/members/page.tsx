@@ -988,7 +988,7 @@ export default function FujianMembersPage() {
                           renderItem={(item: any) => (
                             <List.Item
                               actions={[
-                                <span className="font-semibold text-gray-800">¥{item.amount}</span>,
+                                <span key="amount" className="font-semibold text-gray-800">¥{item.amount}</span>,
                               ]}
                             >
                               <List.Item.Meta
@@ -1025,7 +1025,7 @@ export default function FujianMembersPage() {
                           renderItem={(item: any) => (
                             <List.Item
                               actions={[
-                                <span className={item.amount > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
+                                <span key="delta" className={item.amount > 0 ? 'text-green-600 font-semibold' : 'text-red-600 font-semibold'}>
                                   {item.amount > 0 ? '+' : ''}{item.amount}
                                 </span>,
                               ]}

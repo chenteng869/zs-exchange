@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, vi, mock } from 'vitest';
 import { ComplianceReport, ReportType, ReportFormat, ComplianceStatus } from '../../audit/compliance-report';
+import { auditService } from '../../audit/audit.service';
 
 vi.mock('../../audit/audit.service', () => ({
   auditService: {
@@ -116,7 +117,6 @@ describe('ComplianceReport - 合规报表', () => {
 
   describe('报表数据', () => {
     beforeEach(() => {
-      const { auditService } = require('../../audit/audit.service');
       auditService.queryEvents.mockResolvedValue({
         items: [
           { eventId: '1', eventType: 'transaction_signed', timestamp: Date.now() },

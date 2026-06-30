@@ -101,7 +101,7 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
                     <MobileDropdownItem
                       key={item.label}
                       label={item.label}
-                      children={item.children}
+                      items={item.children}
                       pathname={pathname}
                       onClose={onClose}
                     />
@@ -170,12 +170,12 @@ export default function MobileNav({ isOpen, onClose }: MobileNavProps) {
 /** Mobile Dropdown Submenu */
 function MobileDropdownItem({
   label,
-  children,
+  items,
   pathname,
   onClose,
 }: {
   label: string;
-  children: { label: string; href: string }[];
+  items: { label: string; href: string }[];
   pathname: string;
   onClose: () => void;
 }) {
@@ -203,7 +203,7 @@ function MobileDropdownItem({
             className="overflow-hidden"
           >
             <div className="pl-4 pr-2 pb-1 space-y-0.5">
-              {children.map((child) => (
+              {items.map((child) => (
                 <Link
                   key={child.label}
                   href={child.href}

@@ -40,7 +40,7 @@ const SECRET_BYTES = 20;
  */
 export const generateTOTPSecret = (bytes: number = SECRET_BYTES): string => {
   // 引入 randomBytes 内部使用
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const { randomBytes } = require('./crypto') as typeof import('./crypto');
   return base32Encode(randomBytes(bytes));
 };
@@ -173,7 +173,7 @@ export const generateBackupCodes = (
   count: number = BACKUP_CODE_COUNT,
   length: number = BACKUP_CODE_LENGTH
 ): string[] => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const { randomBytes } = require('./crypto') as typeof import('./crypto');
   // 去除 0/1/O/I/L 等易混淆字符
   const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -198,7 +198,7 @@ export const generateBackupCodes = (
  * 计算备份码的 SHA-256 哈希（用于存储与验证）
  */
 export const hashBackupCode = async (code: string): Promise<string> => {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  // eslint-disable-next-line
   const { sha256, bytesToHex, stringToBytes } = require('./crypto') as typeof import('./crypto');
   const normalized = code.replace(/-/g, '').toUpperCase();
   const hash = await sha256(stringToBytes(normalized));

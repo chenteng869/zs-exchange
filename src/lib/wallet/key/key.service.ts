@@ -42,6 +42,8 @@ import { keyRiskService, KeyRiskContext } from './key-risk.service';
 import { generateMnemonic, validateMnemonic, mnemonicToSeed } from '../core/mnemonic';
 import { fromSeed, deriveChild } from '../core/hd-wallet';
 import { toChecksumAddress } from '../core/private-key';
+import { Keypair, PublicKey } from '@solana/web3.js';
+import bs58 from 'bs58';
 
 export class KeyService {
   private readonly keyMaterials: Map<string, KeyMaterialRecord> = new Map();
@@ -211,14 +213,14 @@ export class KeyService {
       const root = fromSeed(seed);
       const path = `m/44'/501'/0'/0/${index}`;
       const child = this.derivePath(root, path);
-      const privateKeyHex = Buffer.from(child.privateKey).toString('hex');
-      const publicKey = this.solanaPrivateKeyToPublicKey(privateKeyHex);
-      const address = this.publicKeyToSolanaAddress(publicKey);
+      const keypair = Keypair.fromSeed(Buffer.from(child.privateKey));
+      const publicKey = keypair.publicKey.toBase58();
+      const privateKey = bs58.encode(keypair.secretKey);
 
       return {
-        address,
+        address: publicKey,
         publicKey,
-        privateKey: privateKeyHex,
+        privateKey,
         derivationPath: path,
       };
     }
@@ -1121,12 +1123,12 @@ export class KeyService {
           } as DerivedEvmAccount;
 
         case 'solana':
-          const solPublicKey = this.solanaPrivateKeyToPublicKey(privateKeyHex);
-          const solAddress = this.publicKeyToSolanaAddress(solPublicKey);
+          const solKeypair = Keypair.fromSeed(Buffer.from(child.privateKey));
+          const solPublicKey = solKeypair.publicKey.toBase58();
           return {
-            address: solAddress,
+            address: solPublicKey,
             publicKey: solPublicKey,
-            privateKey: privateKeyHex,
+            privateKey: bs58.encode(solKeypair.secretKey),
             derivationPath: path,
           } as DerivedSolanaAccount;
 
@@ -1311,11 +1313,28 @@ export class KeyService {
   }
 
   private solanaPrivateKeyToPublicKey(privateKey: string): string {
-    return keystoreCrypto.sha256(privateKey).slice(0, 64);
+    return this.solanaKeypairFromPrivateKey(privateKey).publicKey.toBase58();
   }
 
   private publicKeyToSolanaAddress(publicKey: string): string {
-    return Buffer.from(publicKey, 'hex').toString('base64').slice(0, 44);
+    return new PublicKey(publicKey).toBase58();
+  }
+
+  private solanaKeypairFromPrivateKey(privateKey: string): Keypair {
+    const normalized = privateKey.startsWith('0x') ? privateKey.slice(2) : privateKey;
+    if (/^[0-9a-fA-F]{64}$/.test(normalized)) {
+      return Keypair.fromSeed(Buffer.from(normalized, 'hex'));
+    }
+
+    const decoded = bs58.decode(privateKey);
+    if (decoded.length === 64) {
+      return Keypair.fromSecretKey(decoded);
+    }
+    if (decoded.length === 32) {
+      return Keypair.fromSeed(decoded);
+    }
+
+    throw WalletKeyErrors.INVALID_PRIVATE_KEY('Invalid Solana private key format');
   }
 
   private publicKeyToBitcoinAddress(publicKey: string): string {

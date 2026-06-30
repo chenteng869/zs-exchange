@@ -191,6 +191,166 @@ export class BlacklistService {
   }
 
   /**
+   * 检查地址是否在黑名单中
+   */
+  isAddressBlacklisted(address: string): boolean {
+    return this.isInBlacklist(BlacklistType.ADDRESS, address).inBlacklist;
+  }
+
+  /**
+   * 检查合约是否在黑名单中
+   */
+  isContractBlacklisted(contractAddress: string): boolean {
+    return this.isInBlacklist(BlacklistType.CONTRACT, contractAddress).inBlacklist;
+  }
+
+  /**
+   * 检查域名是否在黑名单中
+   */
+  isDomainBlacklisted(domain: string): boolean {
+    return this.isInBlacklist(BlacklistType.DOMAIN, domain).inBlacklist;
+  }
+
+  // Legacy compatibility helpers for existing tests and callers.
+  addAddress(address: string): void {
+    this.addToBlacklist(BlacklistType.ADDRESS, address);
+  }
+
+  addAddresses(addresses: string[]): void {
+    this.batchAddToBlacklist(
+      BlacklistType.ADDRESS,
+      addresses.map((value) => ({ value }))
+    );
+  }
+
+  removeAddress(address: string): boolean {
+    return this.removeFromBlacklist(BlacklistType.ADDRESS, address);
+  }
+
+  getBlacklistedAddresses(): string[] {
+    return this.getBlacklist(BlacklistType.ADDRESS).map((item) => item.value);
+  }
+
+  clearAddresses(): void {
+    this.clearBlacklist(BlacklistType.ADDRESS);
+  }
+
+  addContract(contractAddress: string): void {
+    this.addToBlacklist(BlacklistType.CONTRACT, contractAddress);
+  }
+
+  addContracts(contractAddresses: string[]): void {
+    this.batchAddToBlacklist(
+      BlacklistType.CONTRACT,
+      contractAddresses.map((value) => ({ value }))
+    );
+  }
+
+  removeContract(contractAddress: string): boolean {
+    return this.removeFromBlacklist(BlacklistType.CONTRACT, contractAddress);
+  }
+
+  getBlacklistedContracts(): string[] {
+    return this.getBlacklist(BlacklistType.CONTRACT).map((item) => item.value);
+  }
+
+  clearContracts(): void {
+    this.clearBlacklist(BlacklistType.CONTRACT);
+  }
+
+  addDomain(domain: string): void {
+    this.addToBlacklist(BlacklistType.DOMAIN, domain);
+  }
+
+  addDomains(domains: string[]): void {
+    this.batchAddToBlacklist(
+      BlacklistType.DOMAIN,
+      domains.map((value) => ({ value }))
+    );
+  }
+
+  removeDomain(domain: string): boolean {
+    return this.removeFromBlacklist(BlacklistType.DOMAIN, domain);
+  }
+
+  getBlacklistedDomains(): string[] {
+    return this.getBlacklist(BlacklistType.DOMAIN).map((item) => item.value);
+  }
+
+  clearDomains(): void {
+    this.clearBlacklist(BlacklistType.DOMAIN);
+  }
+
+  addWhitelistAddress(address: string): void {
+    this.addToWhitelist(BlacklistType.ADDRESS, address);
+  }
+
+  addWhitelistAddresses(addresses: string[]): void {
+    this.batchAddToWhitelist(
+      BlacklistType.ADDRESS,
+      addresses.map((value) => ({ value }))
+    );
+  }
+
+  removeWhitelistAddress(address: string): boolean {
+    return this.removeFromWhitelist(BlacklistType.ADDRESS, address);
+  }
+
+  isAddressWhitelisted(address: string): boolean {
+    return this.isInWhitelist(BlacklistType.ADDRESS, address).inWhitelist;
+  }
+
+  importBlacklist(data: {
+    addresses?: string[];
+    contracts?: string[];
+    domains?: string[];
+  }): void {
+    if (data.addresses && data.addresses.length > 0) {
+      this.addAddresses(data.addresses);
+    }
+    if (data.contracts && data.contracts.length > 0) {
+      this.addContracts(data.contracts);
+    }
+    if (data.domains && data.domains.length > 0) {
+      this.addDomains(data.domains);
+    }
+  }
+
+  exportBlacklist(): {
+    addresses: string[];
+    contracts: string[];
+    domains: string[];
+  } {
+    return {
+      addresses: this.getBlacklistedAddresses(),
+      contracts: this.getBlacklistedContracts(),
+      domains: this.getBlacklistedDomains(),
+    };
+  }
+
+  getStats(): {
+    blacklistedAddresses: number;
+    blacklistedContracts: number;
+    blacklistedDomains: number;
+    whitelistedAddresses: number;
+  } {
+    return {
+      blacklistedAddresses: this.getBlacklistCount(BlacklistType.ADDRESS),
+      blacklistedContracts: this.getBlacklistCount(BlacklistType.CONTRACT),
+      blacklistedDomains: this.getBlacklistCount(BlacklistType.DOMAIN),
+      whitelistedAddresses: this.getWhitelistCount(BlacklistType.ADDRESS),
+    };
+  }
+
+  save(): void {
+    // Intentionally no-op for test compatibility in non-browser runtime.
+  }
+
+  load(): void {
+    // Intentionally no-op for test compatibility in non-browser runtime.
+  }
+
+  /**
    * 获取黑名单列表
    * @param type 类型
    * @param includeDisabled 是否包含已禁用的

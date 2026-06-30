@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
   return requireAuth(req, async (ctx: AuthContext) => {
     const pagination = parsePagination(req.nextUrl.searchParams);
     const result = await apiKeyRepository.findByUserId(ctx.userId, pagination);
-    return success(formatPaginatedResult(result));
+    return success(formatPaginatedResult({
+      ...result,
+      list: result.list.map(toApiKeyResponse),
+    }));
   });
 }
 
@@ -49,7 +52,7 @@ export async function POST(req: NextRequest) {
       } as any);
 
       return success({
-        ...created,
+        ...toApiKeyResponse(created),
         secretKey,
         secretKeyNote: 'Store this secret key — it will not be shown again',
       });
@@ -65,7 +68,7 @@ export async function POST(req: NextRequest) {
       }
 
       const updated = await apiKeyRepository.update(id, { status: 'revoked' } as any);
-      return success(updated);
+      return success(toApiKeyResponse(updated));
     }
 
     if (action === 'rotate') {
@@ -89,4 +92,21 @@ export async function POST(req: NextRequest) {
 
     return badRequest('Unsupported action');
   });
+}
+
+function toApiKeyResponse(key: any) {
+  return {
+    id: key.id,
+    userId: key.userId,
+    label: key.label ?? key.name,
+    name: key.name ?? key.label,
+    apiKey: key.apiKey,
+    permissions: key.permissions,
+    ipWhitelist: key.ipWhitelist ?? [],
+    status: key.status,
+    lastUsedAt: key.lastUsedAt,
+    expiresAt: key.expiresAt,
+    createdAt: key.createdAt,
+    updatedAt: key.updatedAt,
+  };
 }
