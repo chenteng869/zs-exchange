@@ -226,23 +226,23 @@ export class TronChainService {
       throw new TronRpcError('INVALID_TOKEN', `Invalid TRC20 contract: ${contractAddress}`);
     }
     try {
-      const res = await this.client.request<any>(`/v1/accounts/${address}/tokens/trc20`);
-      const list: any[] = Array.isArray(res?.data) ? res.data : [];
-      const item = list.find((t: any) => (t.tokenId || '').toLowerCase() === contractAddress.toLowerCase()) || list[0];
-      const balanceHex = item?.balance ?? '0';
-      const balanceRaw = this.hexBalanceToBigInt(balanceHex).toString();
-      const resolvedSymbol = item?.tokenAbbr || symbol;
-      const resolvedDecimals = item?.tokenDecimal ?? decimals;
+      // 注（2026-07-08 实测校验）：TronGrid 已下线 /v1/accounts/{address}/tokens/trc20，
+      // TRC20 余额改为内嵌在 /v1/accounts/{address} 响应的 trc20 字段（数组，每项为 {合约地址: 原始余额字符串}）。
+      const res = await this.client.request<any>(`/v1/accounts/${address}`);
+      const acc = Array.isArray(res?.data) ? res.data[0] : res?.data;
+      const trc20List: Array<Record<string, string>> = Array.isArray(acc?.trc20) ? acc.trc20 : [];
+      const entry = trc20List.find(t => Object.keys(t)[0]?.toLowerCase() === contractAddress.toLowerCase());
+      const balanceRaw = entry ? Object.values(entry)[0] : '0';
       return {
         chain: 'TRX',
         address,
         network: this.network,
         contractAddress,
-        symbol: resolvedSymbol,
-        decimals: resolvedDecimals,
-        balance: trc20Format(balanceRaw, resolvedDecimals),
+        symbol,
+        decimals,
+        balance: trc20Format(balanceRaw, decimals),
         balanceRaw,
-        unit: resolvedSymbol,
+        unit: symbol,
         source: 'rpc',
         updatedAt: new Date().toISOString(),
       };

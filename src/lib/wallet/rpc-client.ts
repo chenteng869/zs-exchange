@@ -30,26 +30,32 @@ export const DEFAULT_MAX_BACKOFF_MS = 5_000;
 
 /**
  * 以太坊主网公共 RPC 端点
- * 优先级：Infura（需 key）→ LlamaRPC → Cloudflare ETH → PublicNode → Ankr
+ * 优先级：Infura（需 key）→ PublicNode → Merkle → 1RPC → BlastAPI → MEVBlocker
+ *
+ * 注（2026-07-08 实测校验）：cloudflare-eth.com 已停止对外提供该方法、
+ * eth.llamarpc.com 返回 521、rpc.ankr.com/eth 已改为强制要求 API key，
+ * 三者均已从公共列表中移除，替换为实测可用的免费端点。
  */
 export const ETH_PUBLIC_RPCS = [
-  'https://cloudflare-eth.com',
-  'https://eth.llamarpc.com',
-  'https://rpc.ankr.com/eth',
   'https://ethereum.publicnode.com',
   'https://eth.merkle.io',
+  'https://1rpc.io/eth',
+  'https://eth-mainnet.public.blastapi.io',
+  'https://rpc.mevblocker.io',
 ];
 
 /**
  * BSC 主网公共 RPC 端点
  * 优先级：Alchemy（需 key）→ 官方 dataseed → 公共节点
+ *
+ * 注（2026-07-08 实测校验）：rpc.ankr.com/bsc 已改为强制要求 API key，已移除。
  */
 export const BSC_PUBLIC_RPCS = [
   'https://bsc-dataseed.binance.org',
   'https://bsc-dataseed1.defibit.io',
   'https://bsc-dataseed1.ninicoin.io',
   'https://bsc.publicnode.com',
-  'https://rpc.ankr.com/bsc',
+  'https://1rpc.io/bnb',
 ];
 
 /**

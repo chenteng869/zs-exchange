@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "next dev -p 3200",
     "dev:host": "next dev -p 3200 -H 0.0.0.0",
+    "market:seed": "tsx scripts/seed-perp-contracts.ts",
+    "market:sync": "tsx scripts/market-sync-worker.ts",
+    "admin:warm": "node scripts/warm-admin-pages.cjs",
+    "admin:warm:core": "node scripts/warm-admin-pages.cjs --core --concurrency=2 --timeout=60000",
     "build": "node scripts/generate-apk-info.js && next build",
     "start": "next start",
     "lint": "eslint . --ext .ts,.tsx",
