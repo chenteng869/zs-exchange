@@ -117,3 +117,5 @@ verify_columns.sql
 
 # === Q03-1 repository triage: misplaced prisma lockfiles ===
 prisma/migrations/**/migration_lock.toml
+# Q03-7.0b: ignore root-level agent/session temporary files
+/__tmp_*
