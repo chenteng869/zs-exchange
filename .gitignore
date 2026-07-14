@@ -87,3 +87,33 @@ vscode-codegraph/*.vsix
 
 # Local Netlify folder
 .netlify
+
+
+# === Q03-1 repository triage: generated mobile/static artifacts ===
+out-apk/
+*.apk
+*.aab
+app-release.apk
+public/*.apk
+
+# === Q03-1 repository triage: local credentials / tokens ===
+*token*.txt
+*jwt*.txt
+*creds*.txt
+*.secret
+*.key
+
+# keep public env templates trackable
+!.env.example
+!.env*.example
+
+# === Q03-1 repository triage: temporary diagnostics ===
+__tmp_*.txt
+tsc-*.txt
+tsc_*.txt
+tmp-*.json
+tmp-*.txt
+verify_columns.sql
+
+# === Q03-1 repository triage: misplaced prisma lockfiles ===
+prisma/migrations/**/migration_lock.toml

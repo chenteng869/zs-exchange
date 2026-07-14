@@ -40,6 +40,13 @@ ehthumbs.db
 .git
 .gitignore
 
+# 移动端原生工程与打包产物（Web 服务器镜像不需要）
+android
+ios
+out-apk
+*.apk
+*.aab
+
 # 文档
 docs
 README.md
@@ -54,3 +61,25 @@ data/
 .cache
 .temp
 .tmp
+
+
+# === Q03-1 docker context triage: local credentials / tokens ===
+h5-creds.txt
+h5-token.txt
+user-jwt.txt
+*token*.txt
+*jwt*.txt
+*creds*.txt
+*.secret
+*.key
+
+# === Q03-1 docker context triage: temporary diagnostics ===
+__tmp_*.txt
+tsc-*.txt
+tsc_*.txt
+tmp-*.json
+tmp-*.txt
+verify_columns.sql
+
+# === Q03-1 docker context triage: prisma misplaced lockfiles ===
+prisma/migrations/**/migration_lock.toml
