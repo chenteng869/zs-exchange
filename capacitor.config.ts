@@ -21,7 +21,7 @@ const config: CapacitorConfig = {
   appId: 'com.zhongsa.exchange',
   appName: 'ZS Exchange',
   // 内嵌 H5：next build 产物目录（100+ H5 页面 + _next 静态资源）
-  webDir: 'out',
+  webDir: 'out-apk',
   // 内嵌模式不需要 server.url（APK 自带 H5 全部代码）
   android: {
     backgroundColor: '#0F1B3D',
