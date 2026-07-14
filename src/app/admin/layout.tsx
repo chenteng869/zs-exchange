@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import AdminShell from '@/components/admin/AdminShell';
 
 export default function AdminRootLayout({
   children,
@@ -19,10 +21,12 @@ export default function AdminRootLayout({
         },
       })
   );
+  const pathname = usePathname();
+  const isLoginPage = pathname === '/admin/login';
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      {isLoginPage ? children : <AdminShell>{children}</AdminShell>}
     </QueryClientProvider>
   );
 }
