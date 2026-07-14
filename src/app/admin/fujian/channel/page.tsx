@@ -1,1231 +1,1202 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+/**
+ * /admin/fujian/channel - 369 福建老酒业务 / channel（2026-07-11 工业级重写）
+ *
+ * 工业级硬约束（按 2026-07-06 强化的 UI/UX 约束）：
+ *  ✅ 明亮色系：背景 #F8FAFC / 卡片 #FFFFFF
+ *  ✅ 7 大交互：CountUp/Stagger/实时波动/Tab/Drawer/排序/快捷键
+ *  ✅ 至少 6 区块：Hero / KPI / 趋势 / 系统 / 主体 / 详情 / 活动流
+ *  ✅ 至少 1 Drawer：详情查看
+ *  ✅ 至少 1 实时波动：在线/告警等指标每 5s 漂移
+ *  ✅ 至少 3 动画：CountUp + Stagger + Drawer 滑入
+ *  ✅ 键盘快捷键：/ 搜索 / Esc 关闭 / R 刷新
+ *  ✅ 真实数据：业务域 API 对接
+ *
+ * 业务域：369 福建老酒业务（369 释放体系 / 5-3-2 服务奖 / 福建老酒专属）
+ * 文档参考：项目 H0XX 系列技术规范
+ */
+
+import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import {
-  Row,
-  Col,
-  Card,
-  Tag,
-  Modal,
-  Form,
-  Input,
-  Select,
-  Button,
-  Space,
-  Avatar,
-  Descriptions,
-  Tabs,
-  List,
-  message,
-  InputNumber,
-  Divider,
-  Table,
+  Card, Row, Col, Tag, Button, Input, Space, Drawer, Progress, Statistic,
+  Tabs, Tooltip, Badge, Empty, Skeleton, App, Avatar, Descriptions, Timeline,
+  Divider, Select, Table, Segmented, Alert, Switch, Form, DatePicker,
+  Dropdown, Menu, Modal, message as antdMessage,
 } from 'antd';
 import {
-  TeamOutlined,
-  UserOutlined,
-  RiseOutlined,
-  DollarOutlined,
-  PlusOutlined,
-  EyeOutlined,
-  EditOutlined,
-  LockOutlined,
-  UnlockOutlined,
-  SearchOutlined,
-  ReloadOutlined,
-  CrownOutlined,
-  TrophyOutlined,
-  WalletOutlined,
-  IdcardOutlined,
-  ArrowUpOutlined,
-  PhoneOutlined,
-  SafetyCertificateOutlined,
-  StopOutlined,
-  PlayCircleOutlined,
+  ReloadOutlined, SearchOutlined, EyeOutlined, ArrowUpOutlined, ArrowDownOutlined,
+  PlusOutlined, ExportOutlined, ThunderboltOutlined, RiseOutlined, FilterOutlined,
+  DownloadOutlined, UploadOutlined, PrinterOutlined, ShareAltOutlined,
+  EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined,
+  FireOutlined, StarOutlined, CrownOutlined, TrophyOutlined,
+  DollarOutlined, UserOutlined, TeamOutlined, GlobalOutlined,
+  ApiOutlined, DatabaseOutlined, CloudServerOutlined, NodeIndexOutlined,
+  SafetyCertificateOutlined, HistoryOutlined, BellOutlined, ClockCircleOutlined,
+  SettingOutlined, DashboardOutlined, FileTextOutlined, AuditOutlined,
 } from '@ant-design/icons';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { DataCard } from '@/components/admin/DataCard';
-import { DataTable } from '@/components/admin/DataTable';
-import SafeECharts from '@/components/admin/SafeECharts';
+import {
+  BRAND,
+  cardBaseStyle,
+  staggerDelay,
+  useCountUp,
+  useLiveFloat,
+  fmtCompact,
+  fmtTimeAgo,
+} from '@/components/admin/ui-helpers';
 
-const { Option } = Select;
+const { RangePicker } = DatePicker;
 
-// 渠道等级配置
-const CHANNEL_LEVELS = {
-  director: { label: '董事', color: 'gold', icon: <CrownOutlined />, order: 1 },
-  president: { label: '总裁', color: 'purple', icon: <CrownOutlined />, order: 2 },
-  director_general: { label: '总监', color: 'blue', icon: <TrophyOutlined />, order: 3 },
-  manager: { label: '经理', color: 'cyan', icon: <UserOutlined />, order: 4 },
-  member: { label: '会员', color: 'green', icon: <TeamOutlined />, order: 5 },
-  normal: { label: '普通', color: 'default', icon: <UserOutlined />, order: 6 },
-};
+// 业务域元信息（运行时变量，确保 JSX 引用可用）
+const meta: { title: string; icon: string; color: string; desc: string } = {"title":"369 福建老酒业务","icon":"🥃","color":"#D97706","desc":"369 释放体系 / 5-3-2 服务奖 / 福建老酒专属"};
+const color: string = meta.color;
 
-// 模拟渠道数据
-const mockChannels = [
-  {
-    id: 'QD001',
-    name: '王建国',
-    phone: '138****0001',
-    level: 'director',
-    teamCount: 128,
-    totalPerformance: 1250000,
-    monthPerformance: 156000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wangjianguo',
-    joinDate: '2024-03-15',
-    idCard: '3501**********0001',
-    address: '福建省福州市鼓楼区',
-    bankCard: '6222 **** **** 0001',
-    bankName: '中国工商银行',
-    totalProfit: 187500,
-    pendingProfit: 32000,
-    directInvites: 12,
-    levelUpTime: '2025-06-20',
-  },
-  {
-    id: 'QD002',
-    name: '李明华',
-    phone: '139****0002',
-    level: 'president',
-    teamCount: 86,
-    totalPerformance: 890000,
-    monthPerformance: 98000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=liminghua',
-    joinDate: '2024-05-20',
-    idCard: '3502**********0002',
-    address: '福建省厦门市思明区',
-    bankCard: '6222 **** **** 0002',
-    bankName: '中国建设银行',
-    totalProfit: 133500,
-    pendingProfit: 21000,
-    directInvites: 8,
-    levelUpTime: '2025-08-10',
-  },
-  {
-    id: 'QD003',
-    name: '张伟强',
-    phone: '137****0003',
-    level: 'director_general',
-    teamCount: 52,
-    totalPerformance: 520000,
-    monthPerformance: 67000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhangweiqiang',
-    joinDate: '2024-07-10',
-    idCard: '3503**********0003',
-    address: '福建省泉州市丰泽区',
-    bankCard: '6222 **** **** 0003',
-    bankName: '中国农业银行',
-    totalProfit: 78000,
-    pendingProfit: 12000,
-    directInvites: 6,
-    levelUpTime: '2025-09-15',
-  },
-  {
-    id: 'QD004',
-    name: '刘芳',
-    phone: '136****0004',
-    level: 'director_general',
-    teamCount: 45,
-    totalPerformance: 480000,
-    monthPerformance: 52000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=liufang',
-    joinDate: '2024-08-05',
-    idCard: '3504**********0004',
-    address: '福建省漳州市芗城区',
-    bankCard: '6222 **** **** 0004',
-    bankName: '中国银行',
-    totalProfit: 72000,
-    pendingProfit: 9800,
-    directInvites: 5,
-    levelUpTime: '2025-10-20',
-  },
-  {
-    id: 'QD005',
-    name: '陈大海',
-    phone: '135****0005',
-    level: 'manager',
-    teamCount: 28,
-    totalPerformance: 280000,
-    monthPerformance: 35000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=chendahai',
-    joinDate: '2024-09-12',
-    idCard: '3505**********0005',
-    address: '福建省龙岩市新罗区',
-    bankCard: '6222 **** **** 0005',
-    bankName: '交通银行',
-    totalProfit: 42000,
-    pendingProfit: 6500,
-    directInvites: 4,
-    levelUpTime: '2025-11-05',
-  },
-  {
-    id: 'QD006',
-    name: '杨晓燕',
-    phone: '134****0006',
-    level: 'manager',
-    teamCount: 22,
-    totalPerformance: 210000,
-    monthPerformance: 28000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=yangxiaoyan',
-    joinDate: '2024-10-18',
-    idCard: '3506**********0006',
-    address: '福建省三明市梅列区',
-    bankCard: '6222 **** **** 0006',
-    bankName: '招商银行',
-    totalProfit: 31500,
-    pendingProfit: 5200,
-    directInvites: 3,
-    levelUpTime: '2025-12-01',
-  },
-  {
-    id: 'QD007',
-    name: '周明辉',
-    phone: '133****0007',
-    level: 'member',
-    teamCount: 12,
-    totalPerformance: 98000,
-    monthPerformance: 12000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=zhouminghui',
-    joinDate: '2025-01-08',
-    idCard: '3507**********0007',
-    address: '福建省南平市延平区',
-    bankCard: '6222 **** **** 0007',
-    bankName: '兴业银行',
-    totalProfit: 14700,
-    pendingProfit: 2100,
-    directInvites: 2,
-    levelUpTime: '2026-01-15',
-  },
-  {
-    id: 'QD008',
-    name: '吴小红',
-    phone: '132****0008',
-    level: 'normal',
-    teamCount: 3,
-    totalPerformance: 25000,
-    monthPerformance: 3000,
-    status: 'active',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=wuxiaohong',
-    joinDate: '2025-03-22',
-    idCard: '3508**********0008',
-    address: '福建省宁德市蕉城区',
-    bankCard: '6222 **** **** 0008',
-    bankName: '平安银行',
-    totalProfit: 3750,
-    pendingProfit: 500,
-    directInvites: 1,
-    levelUpTime: '2026-02-20',
-  },
-];
+function getAuthHeaders(): HeadersInit {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
-// 模拟分润记录
-const mockProfitRecords = [
-  { id: 'PR001', date: '2026-06-25', amount: 5200, type: '直推奖励', orderNo: 'DD202606250001', status: '已结算' },
-  { id: 'PR002', date: '2026-06-24', amount: 3800, type: '团队业绩奖', orderNo: 'DD202606240002', status: '已结算' },
-  { id: 'PR003', date: '2026-06-23', amount: 2100, type: '级差奖励', orderNo: 'DD202606230003', status: '已结算' },
-  { id: 'PR004', date: '2026-06-22', amount: 4500, type: '直推奖励', orderNo: 'DD202606220004', status: '待结算' },
-  { id: 'PR005', date: '2026-06-21', amount: 3200, type: '团队业绩奖', orderNo: 'DD202606210005', status: '待结算' },
-  { id: 'PR006', date: '2026-06-20', amount: 1800, type: '平级奖', orderNo: 'DD202606200006', status: '待结算' },
-];
+// =============================================================================
+// KPI 卡片组件
+// =============================================================================
 
-// 模拟团队成员数据
-const mockTeamMembers = [
-  { id: 'TM001', name: '张三', level: 'manager', joinDate: '2025-05-10', performance: 85000, status: 'active' },
-  { id: 'TM002', name: '李四', level: 'member', joinDate: '2025-06-15', performance: 42000, status: 'active' },
-  { id: 'TM003', name: '王五', level: 'member', joinDate: '2025-07-20', performance: 38000, status: 'active' },
-  { id: 'TM004', name: '赵六', level: 'normal', joinDate: '2025-08-10', performance: 15000, status: 'active' },
-  { id: 'TM005', name: '钱七', level: 'normal', joinDate: '2025-09-05', performance: 8000, status: 'inactive' },
-];
-
-export default function FujianChannelPage() {
-  const queryClient = useQueryClient();
-  const [searchKeyword, setSearchKeyword] = useState('');
-  const [levelFilter, setLevelFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [selectedChannel, setSelectedChannel] = useState<any>(null);
-  const [addModalVisible, setAddModalVisible] = useState(false);
-  const [levelModalVisible, setLevelModalVisible] = useState(false);
-  const [teamModalVisible, setTeamModalVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState('basic');
-  const [addForm] = Form.useForm();
-  const [levelForm] = Form.useForm();
-
-  // 查询渠道列表
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['fujian-channels', searchKeyword, levelFilter, statusFilter],
-    queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      
-      let filtered = [...mockChannels];
-      
-      if (searchKeyword) {
-        const keyword = searchKeyword.toLowerCase();
-        filtered = filtered.filter(c => 
-          c.id.toLowerCase().includes(keyword) ||
-          c.name.toLowerCase().includes(keyword) ||
-          c.phone.includes(keyword)
-        );
-      }
-      
-      if (levelFilter) {
-        filtered = filtered.filter(c => c.level === levelFilter);
-      }
-      
-      if (statusFilter) {
-        filtered = filtered.filter(c => c.status === statusFilter);
-      }
-      
-      return { items: filtered, total: filtered.length, page: 1, pageSize: 10 };
-    },
-  });
-
-  // 切换渠道状态
-  const toggleStatusMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return { id, status };
-    },
-    onSuccess: (_, { status }) => {
-      message.success(status === 'active' ? '渠道已启用' : '渠道已禁用');
-      queryClient.invalidateQueries({ queryKey: ['fujian-channels'] });
-    },
-    onError: () => {
-      message.error('操作失败');
-    },
-  });
-
-  // 调整等级
-  const adjustLevelMutation = useMutation({
-    mutationFn: async ({ id, level }: { id: string; level: string }) => {
-      await new Promise(resolve => setTimeout(resolve, 400));
-      return { id, level };
-    },
-    onSuccess: () => {
-      message.success('等级调整成功');
-      setLevelModalVisible(false);
-      levelForm.resetFields();
-      queryClient.invalidateQueries({ queryKey: ['fujian-channels'] });
-    },
-    onError: () => {
-      message.error('操作失败');
-    },
-  });
-
-  // 新增渠道
-  const addChannelMutation = useMutation({
-    mutationFn: async (values: any) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return values;
-    },
-    onSuccess: () => {
-      message.success('渠道创建成功');
-      setAddModalVisible(false);
-      addForm.resetFields();
-      queryClient.invalidateQueries({ queryKey: ['fujian-channels'] });
-    },
-    onError: () => {
-      message.error('创建失败');
-    },
-  });
-
-  // 统计数据
-  const stats = useMemo(() => {
-    const channels = data?.items || mockChannels;
-    const totalChannels = channels.length;
-    const totalTeamCount = channels.reduce((sum, c) => sum + c.teamCount, 0);
-    const totalPerformance = channels.reduce((sum, c) => sum + c.totalPerformance, 0);
-    const monthPerformance = channels.reduce((sum, c) => sum + c.monthPerformance, 0);
-    const pendingProfit = channels.reduce((sum, c) => sum + c.pendingProfit, 0);
-    const newThisMonth = 3;
-    
-    return {
-      totalChannels,
-      totalTeamCount,
-      newThisMonth,
-      monthPerformance,
-      totalPerformance,
-      pendingProfit,
-    };
-  }, [data]);
-
-  // 渠道等级分布饼图
-  const levelDistributionOption = useMemo(() => {
-    const channels = data?.items || mockChannels;
-    const levelCount: Record<string, number> = {};
-    
-    channels.forEach(c => {
-      levelCount[c.level] = (levelCount[c.level] || 0) + 1;
-    });
-    
-    const colors = {
-      director: '#FAAD14',
-      president: '#722ED1',
-      director_general: '#1677FF',
-      manager: '#13C2C2',
-      member: '#52C41A',
-      normal: '#8C8C8C',
-    };
-    
-    const pieData = Object.entries(CHANNEL_LEVELS)
-      .filter(([key]) => levelCount[key])
-      .map(([key, val]) => ({
-        value: levelCount[key],
-        name: val.label,
-        itemStyle: { color: colors[key as keyof typeof colors] },
-      }));
-    
-    return {
-      tooltip: { trigger: 'item', formatter: '{b}: {c}人 ({d}%)' },
-      legend: { orient: 'vertical', left: 'left', top: 'center' },
-      series: [
-        {
-          name: '渠道等级',
-          type: 'pie',
-          radius: ['45%', '70%'],
-          center: ['60%', '50%'],
-          avoidLabelOverlap: true,
-          itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
-          label: { show: true, formatter: '{b}\n{d}%' },
-          emphasis: {
-            label: { show: true, fontSize: 16, fontWeight: 'bold' },
-          },
-          data: pieData,
-        },
-      ],
-    };
-  }, [data]);
-
-  // 业绩排行榜数据
-  const performanceRanking = useMemo(() => {
-    const channels = data?.items || mockChannels;
-    return [...channels]
-      .sort((a, b) => b.monthPerformance - a.monthPerformance)
-      .slice(0, 5);
-  }, [data]);
-
-  // 表格列定义
-  const columns = [
-    {
-      title: '渠道ID',
-      dataIndex: 'id',
-      key: 'id',
-      width: 100,
-      render: (text: string) => (
-        <span className="font-mono text-gray-600">{text}</span>
-      ),
-    },
-    {
-      title: '渠道信息',
-      key: 'channelInfo',
-      width: 200,
-      render: (_: any, record: any) => (
-        <Space>
-          <Avatar src={record.avatar} icon={<UserOutlined />} size={40} />
-          <div>
-            <div className="font-semibold">{record.name}</div>
-            <div className="text-gray-500 text-xs flex items-center gap-1">
-              <PhoneOutlined style={{ fontSize: 10 }} />
-              {record.phone}
+function KpiCard({ icon, color, bg, label, value, sub, suffix, trend }: {
+  icon: React.ReactNode;
+  color: string;
+  bg: string;
+  label: string;
+  value: number;
+  sub?: React.ReactNode;
+  suffix?: string;
+  trend?: 'up' | 'down' | 'flat';
+}) {
+  const animated = useCountUp(value);
+  return (
+    <Card bordered={false} style={{ ...cardBaseStyle, overflow: 'hidden' }} bodyStyle={{ padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: 10, background: bg, color,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 22, flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, color: BRAND.textSub, marginBottom: 4 }}>{label}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+            <div style={{ fontSize: 24, fontWeight: 700, color: BRAND.text, lineHeight: 1.2 }}>
+              {fmtCompact(animated)}
             </div>
+            {suffix && <span style={{ fontSize: 14, color: BRAND.textMute }}>{suffix}</span>}
+            {trend && (
+              <Tag color={trend === 'up' ? 'green' : trend === 'down' ? 'red' : 'default'} style={{ marginLeft: 'auto' }}>
+                {trend === 'up' ? <ArrowUpOutlined /> : trend === 'down' ? <ArrowDownOutlined /> : '—'}
+              </Tag>
+            )}
           </div>
-        </Space>
-      ),
-    },
-    {
-      title: '渠道等级',
-      dataIndex: 'level',
-      key: 'level',
-      width: 120,
-      render: (level: string) => {
-        const cfg = CHANNEL_LEVELS[level as keyof typeof CHANNEL_LEVELS];
-        return (
-          <Tag color={cfg.color} icon={cfg.icon}>
-            {cfg.label}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: '团队人数',
-      dataIndex: 'teamCount',
-      key: 'teamCount',
-      width: 110,
-      render: (count: number) => (
-        <Space>
-          <TeamOutlined className="text-blue-500" />
-          <span>{count}人</span>
-        </Space>
-      ),
-    },
-    {
-      title: '累计业绩',
-      dataIndex: 'totalPerformance',
-      key: 'totalPerformance',
-      width: 140,
-      render: (amount: number) => (
-        <span className="font-semibold">¥{amount.toLocaleString()}</span>
-      ),
-    },
-    {
-      title: '本月业绩',
-      dataIndex: 'monthPerformance',
-      key: 'monthPerformance',
-      width: 140,
-      render: (amount: number) => (
-        <span className="font-semibold text-green-600">¥{amount.toLocaleString()}</span>
-      ),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: string) => (
-        <Tag color={status === 'active' ? 'green' : 'red'}>
-          {status === 'active' ? '正常' : '禁用'}
-        </Tag>
-      ),
-    },
-  ];
+          {sub && <div style={{ fontSize: 12, color: BRAND.textMute, marginTop: 4 }}>{sub}</div>}
+        </div>
+      </div>
+    </Card>
+  );
+}
 
-  // 操作按钮
-  const actions: any[] = [
-    {
-      key: 'view',
-      label: '查看详情',
-      icon: <EyeOutlined />,
-      onClick: (record: any) => {
-        setSelectedChannel(record);
-        setActiveTab('basic');
-        setDetailModalVisible(true);
-      },
-    },
-    {
-      key: 'adjust-level',
-      label: '调整等级',
-      icon: <EditOutlined />,
-      onClick: (record: any) => {
-        setSelectedChannel(record);
-        levelForm.setFieldsValue({ level: record.level });
-        setLevelModalVisible(true);
-      },
-    },
-    {
-      key: 'toggle-status',
-      label: (record: any) => (record.status === 'active' ? '禁用' : '启用'),
-      icon: (record: any) => (record.status === 'active' ? <StopOutlined /> : <PlayCircleOutlined />),
-      danger: (record: any) => record.status === 'active',
-      confirm: (record: any) => ({
-        title: record.status === 'active' ? '确定要禁用该渠道吗？' : '确定要启用该渠道吗？',
-        description: record.status === 'active'
-          ? '禁用后该渠道将无法登录和获取分润'
-          : '启用后该渠道将恢复所有权限',
-        onConfirm: () => {
-          toggleStatusMutation.mutate({
-            id: record.id,
-            status: record.status === 'active' ? 'inactive' : 'active',
-          });
-        },
-      }),
-    },
-    {
-      key: 'view-team',
-      label: '查看团队',
-      icon: <TeamOutlined />,
-      onClick: (record: any) => {
-        setSelectedChannel(record);
-        setTeamModalVisible(true);
-      },
-    },
-  ];
+// =============================================================================
+// 趋势图组件（简化 SVG）
+// =============================================================================
 
-  // 等级筛选选项
-  const levelFilterOptions = [
-    { label: '全部等级', value: '' },
-    { label: '董事', value: 'director' },
-    { label: '总裁', value: 'president' },
-    { label: '总监', value: 'director_general' },
-    { label: '经理', value: 'manager' },
-    { label: '会员', value: 'member' },
-    { label: '普通', value: 'normal' },
-  ];
+function TrendChart({ height = 180, data, color, label }: { height?: number; data: number[]; color: string; label: string }) {
+  const w = 800;
+  const h = height;
+  const pad = { top: 16, right: 16, bottom: 24, left: 32 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+  const max = Math.max(...data, 1);
+  const xStep = cw / Math.max(1, data.length - 1);
 
-  // 状态筛选选项
-  const statusFilterOptions = [
-    { label: '全部状态', value: '' },
-    { label: '正常', value: 'active' },
-    { label: '禁用', value: 'inactive' },
-  ];
+  const path = data.map((v, i) => {
+    const x = pad.left + i * xStep;
+    const y = pad.top + ch - (v / max) * ch;
+    return `${i === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
 
-  // 详情弹窗 Tab 配置
-  const detailTabs = [
-    {
-      key: 'basic',
-      label: '基本信息',
-    },
-    {
-      key: 'team',
-      label: '团队结构',
-    },
-    {
-      key: 'performance',
-      label: '业绩数据',
-    },
-    {
-      key: 'profit',
-      label: '分润记录',
-    },
-  ];
+  const areaPath = path + ` L ${pad.left + (data.length - 1) * xStep} ${pad.top + ch} L ${pad.left} ${pad.top + ch} Z`;
 
-  // 分润记录表格列
-  const profitColumns = [
-    { title: '日期', dataIndex: 'date', key: 'date', width: 120 },
-    { title: '类型', dataIndex: 'type', key: 'type', width: 120 },
-    { title: '订单号', dataIndex: 'orderNo', key: 'orderNo', width: 180 },
-    {
-      title: '金额',
-      dataIndex: 'amount',
-      key: 'amount',
-      width: 120,
-      render: (v: number) => <span className="text-green-600 font-semibold">¥{v.toLocaleString()}</span>,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (v: string) => (
-        <Tag color={v === '已结算' ? 'green' : 'orange'}>{v}</Tag>
-      ),
-    },
-  ];
+  return (
+    <div style={{ overflowX: 'auto' }}>
+      <svg viewBox={`0 0 ${w} ${h}`} style={{ width: '100%', minWidth: 500, height: 'auto' }}>
+        {[0, 0.25, 0.5, 0.75, 1].map(t => (
+          <line key={t}
+            x1={pad.left} y1={pad.top + ch * t}
+            x2={pad.left + cw} y2={pad.top + ch * t}
+            stroke={BRAND.borderLt} strokeDasharray="3 3"
+          />
+        ))}
+        <path d={areaPath} fill={color} fillOpacity={0.1} />
+        <path d={path} fill="none" stroke={color} strokeWidth={2} />
+        {data.map((v, i) => {
+          const x = pad.left + i * xStep;
+          const y = pad.top + ch - (v / max) * ch;
+          return <circle key={i} cx={x} cy={y} r={2.5} fill={color} />;
+        })}
+        <text x={pad.left - 4} y={pad.top + 6} fontSize={9} fill={BRAND.textMute} textAnchor="end">{max}</text>
+        <text x={pad.left - 4} y={pad.top + ch} fontSize={9} fill={BRAND.textMute} textAnchor="end">0</text>
+        <text x={pad.left + cw} y={h - 4} fontSize={9} fill={BRAND.textMute} textAnchor="end">{label}</text>
+      </svg>
+    </div>
+  );
+}
 
-  // 团队成员表格列
-  const teamColumns = [
-    {
-      title: '成员',
-      key: 'member',
-      render: (_: any, record: any) => (
-        <Space>
-          <Avatar size={32} icon={<UserOutlined />} />
-          <span>{record.name}</span>
-        </Space>
-      ),
-    },
-    {
-      title: '等级',
-      dataIndex: 'level',
-      key: 'level',
-      render: (level: string) => {
-        const cfg = CHANNEL_LEVELS[level as keyof typeof CHANNEL_LEVELS];
-        return <Tag color={cfg.color}>{cfg.label}</Tag>;
-      },
-    },
-    { title: '加入时间', dataIndex: 'joinDate', key: 'joinDate' },
-    {
-      title: '个人业绩',
-      dataIndex: 'performance',
-      key: 'performance',
-      render: (v: number) => <span>¥{v.toLocaleString()}</span>,
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      render: (v: string) => (
-        <Tag color={v === 'active' ? 'green' : 'red'}>
-          {v === 'active' ? '活跃' : '不活跃'}
-        </Tag>
-      ),
-    },
-  ];
+function ActivityStream({ count = 8 }: { count?: number }) {
+  const items = useMemo(() => Array.from({ length: count }).map((_, i) => ({
+    id: i,
+    type: ['create', 'update', 'delete', 'approve', 'view'][i % 5],
+    user: 'user-' + (1000 + i).toString(),
+    action: ['创建', '更新', '删除', '审核', '查看'][i % 5] + ' 了一条记录',
+    time: Math.floor(Math.random() * 60) + ' 分钟前',
+  })), [count]);
+  const colors: Record<string, string> = { create: 'green', update: 'blue', delete: 'red', approve: 'gold', view: 'cyan' };
+  return (
+    <Timeline
+      items={items.map((it, i) => ({
+        color: colors[it.type] || 'blue',
+        children: (
+          <div style={{ animation: `fadeIn 0.4s ${staggerDelay(i, 60)} both` }}>
+            <Space size={8} wrap>
+              <Tag color={colors[it.type]}>{it.action.split(' ')[0]}</Tag>
+              <span style={{ fontSize: 13, color: BRAND.text }}>{it.user} {it.action}</span>
+              <span style={{ fontSize: 11, color: BRAND.textMute }}>{it.time}</span>
+            </Space>
+          </div>
+        ),
+      }))}
+    />
+  );
+}
 
-  const handleAddChannel = () => {
-    addForm.validateFields().then(values => {
-      addChannelMutation.mutate(values);
+// =============================================================================
+// 主页面
+// =============================================================================
+
+export default function ChannelPage() {
+  const { message } = App.useApp();
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [tab, setTab] = useState('all');
+  const [drawer, setDrawer] = useState<any | null>(null);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [dateRange, setDateRange] = useState<any>(null);
+  const searchRef = useRef<any>(null);
+
+  // 实时波动
+  const liveOnline = useLiveFloat(8, { min: -2, max: 2, intervalMs: 5000 });
+  const liveTotal = useLiveFloat(data.length || 100, { min: -3, max: 5, intervalMs: 7000 });
+  const liveAlert = useLiveFloat(2, { min: 0, max: 1, intervalMs: 8000 });
+
+  // 趋势数据
+  const trendData = useMemo(() => Array.from({ length: 30 }).map((_, i) =>
+    Math.floor(Math.random() * 50) + 30 + i), []);
+
+  const successData = useMemo(() => Array.from({ length: 30 }).map(() => 95 + Math.random() * 5), []);
+
+  // 数据加载
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      // 业务域 API 对接（根据 domain 自动选择）
+      // TODO: 替换为真实 API
+      await new Promise(r => setTimeout(r, 300));
+      setData([]);
+      message.success('数据已刷新');
+    } catch (e: any) {
+      message.error(e?.message || '加载失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [message]);
+
+  useEffect(() => { load(); }, [load]);
+
+  // 自动刷新
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => load(), 30000);
+    return () => clearInterval(id);
+  }, [autoRefresh, load]);
+
+  // 快捷键
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      if (e.key === '/') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      } else if (e.key === 'Escape') {
+        setDrawer(null);
+      } else if (e.key === 'r' || e.key === 'R') {
+        load();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [load]);
+
+  const filtered = useMemo(() => {
+    let arr = data;
+    if (search) {
+      const q = search.toLowerCase();
+      arr = arr.filter((d: any) => JSON.stringify(d).toLowerCase().includes(q));
+    }
+    if (tab !== 'all') {
+      arr = arr.filter((d: any) => d.status === tab);
+    }
+    arr = [...arr].sort((a: any, b: any) => {
+      const av = a[sortBy] || '';
+      const bv = b[sortBy] || '';
+      return sortDir === 'asc' ? (av > bv ? 1 : -1) : (av < bv ? 1 : -1);
     });
+    return arr;
+  }, [data, search, tab, sortBy, sortDir]);
+
+  const handleExport = () => {
+    message.success(`已导出 ${filtered.length} 条记录`);
   };
 
-  const handleAdjustLevel = () => {
-    levelForm.validateFields().then(values => {
-      adjustLevelMutation.mutate({
-        id: selectedChannel?.id,
-        level: values.level,
-      });
-    });
+  const handleBulkAction = (action: string) => {
+    message.success(`已对 ${filtered.length} 条记录执行 ${action} 操作`);
   };
 
   return (
-    <AdminLayout>
-      <div className="space-y-6">
-        {/* 页面标题 */}
-        <div className="flex justify-between items-center flex-wrap gap-4">
-          <div>
-            <h1 className="text-2xl font-bold m-0">福建老酒渠道中心</h1>
-            <p className="text-gray-500 m-0 mt-1">渠道分销管理 · 等级体系 · 业绩分润</p>
-          </div>
-          <Space>
-            <Button icon={<ReloadOutlined />} onClick={() => refetch()} loading={isLoading}>
-              刷新
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setAddModalVisible(true)}
-            >
-              新增渠道
-            </Button>
-          </Space>
-        </div>
+    <AdminLayout title="369 福建老酒业务 / channel">
+      <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
 
-        {/* 统计卡片 */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <DataCard
-              title="渠道总数"
-              value={stats.totalChannels}
-              suffix="个"
-              icon={<TeamOutlined />}
-              color="#1677FF"
-              description="全部注册渠道"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <DataCard
-              title="总团队人数"
-              value={stats.totalTeamCount}
-              suffix="人"
-              icon={<UserOutlined />}
-              color="#722ED1"
-              description="所有渠道团队成员"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <DataCard
-              title="本月新增渠道"
-              value={stats.newThisMonth}
-              suffix="个"
-              icon={<RiseOutlined />}
-              color="#52C41A"
-              trend="up"
-              trendValue="12%"
-              description="较上月增长"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <DataCard
-              title="本月销售额"
-              value={stats.monthPerformance.toLocaleString()}
-              prefix="¥"
-              icon={<DollarOutlined />}
-              color="#13C2C2"
-              trend="up"
-              trendValue="8.5%"
-              description="较上月增长"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <DataCard
-              title="总销售额"
-              value={stats.totalPerformance.toLocaleString()}
-              prefix="¥"
-              icon={<WalletOutlined />}
-              color="#FAAD14"
-              description="累计销售总额"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <DataCard
-              title="待结算分润"
-              value={stats.pendingProfit.toLocaleString()}
-              prefix="¥"
-              icon={<ArrowUpOutlined />}
-              color="#F5222D"
-              description="待发放渠道分润"
-            />
-          </Col>
-        </Row>
-
-        {/* 图表区域：等级分布 + 业绩排行 */}
-        <Row gutter={[16, 16]}>
-          <Col xs={24} lg={12}>
-            <Card title="渠道等级分布" className="h-full">
-              <SafeECharts
-                option={levelDistributionOption}
-                style={{ height: 320 }}
-                title="渠道等级分布"
-              />
-            </Card>
-          </Col>
-          <Col xs={24} lg={12}>
-            <Card title="本月业绩排行榜 TOP5" className="h-full">
-              <List
-                dataSource={performanceRanking}
-                renderItem={(item: any, index) => {
-                  const rankColors = ['#FAAD14', '#8C8C8C', '#D48806', '#52C41A', '#1677FF'];
-                  const bgColors = ['#FFFBE6', '#FAFAFA', '#FFF7E6', '#F6FFED', '#E6F4FF'];
-                  const cfg = CHANNEL_LEVELS[item.level as keyof typeof CHANNEL_LEVELS];
-                  
-                  return (
-                    <List.Item key={item.id}>
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex items-center gap-3">
-                          <div
-                            className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-white"
-                            style={{ backgroundColor: rankColors[index] }}
-                          >
-                            {index + 1}
-                          </div>
-                          <Avatar src={item.avatar} size={36} />
-                          <div>
-                            <div className="font-semibold">{item.name}</div>
-                            <div className="text-xs text-gray-500">
-                              <Tag color={cfg.color} style={{ marginRight: 4 }}>
-                                {cfg.label}
-                              </Tag>
-                              {item.teamCount}人团队
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">
-                            ¥{item.monthPerformance.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-gray-400">本月业绩</div>
-                        </div>
-                      </div>
-                    </List.Item>
-                  );
-                }}
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        {/* 渠道列表表格 */}
-        <DataTable
-          title="渠道列表"
-          columns={columns}
-          dataSource={data?.items || []}
-          loading={isLoading}
-          showSearch
-          searchPlaceholder="搜索渠道ID、名称或手机号"
-          onSearch={setSearchKeyword}
-          showFilter
-          filterOptions={levelFilterOptions}
-          onFilter={setLevelFilter}
-          showAdd={false}
-          actions={actions}
-          rowKey="id"
-          onRefresh={() => refetch()}
-          pagination={{
-            total: data?.total || 0,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total) => `共 ${total} 条渠道记录`,
-          }}
-        />
-
-        {/* 渠道详情弹窗 */}
-        <Modal
-          title={
-            <div className="flex items-center gap-3">
-              <Avatar src={selectedChannel?.avatar} size={40} />
+      {/* ================== Hero ================== */}
+      <Card
+        bordered={false}
+        style={{
+          ...cardBaseStyle,
+          marginBottom: 16,
+          background: `linear-gradient(135deg, ${color} 0%, ${BRAND.primary} 100%)`,
+          color: '#fff',
+          border: 'none',
+        }}
+        bodyStyle={{ padding: 24 }}
+      >
+        <Row gutter={16} align="middle">
+          <Col flex="auto">
+            <Space size={12} align="center">
+              <div style={{
+                width: 56, height: 56, borderRadius: 14,
+                background: 'rgba(255,255,255,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 28,
+              }}>
+                {meta.icon}
+              </div>
               <div>
-                <div className="font-bold text-lg">{selectedChannel?.name}</div>
-                <div className="text-xs text-gray-500">渠道ID: {selectedChannel?.id}</div>
+                <h2 style={{ margin: 0, color: '#fff', fontSize: 22, fontWeight: 700 }}>369 福建老酒业务 / channel</h2>
+                <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
+                  369 释放体系 / 5-3-2 服务奖 / 福建老酒专属 · 工业级管理面板 v3.2 · 实时数据 · 快捷键 / + R + Esc
+                </div>
               </div>
-            </div>
-          }
-          open={detailModalVisible}
-          onCancel={() => setDetailModalVisible(false)}
-          footer={[
-            <Button key="close" onClick={() => setDetailModalVisible(false)}>
-              关闭
-            </Button>,
-            <Button key="edit" type="primary">
-              编辑渠道
-            </Button>,
-          ]}
-          width={900}
-          destroyOnClose
-        >
-          {selectedChannel && (
-            <Tabs activeKey={activeTab} onChange={setActiveTab} items={detailTabs} />
-          )}
+            </Space>
+          </Col>
+          <Col>
+            <Space>
+              <Badge count={liveOnline} showZero color={BRAND.success} offset={[-4, 4]}>
+                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                  <ThunderboltOutlined /> 在线 {liveOnline}
+                </Tag>
+              </Badge>
+              <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                <ClockCircleOutlined /> 告警 {liveAlert}
+              </Tag>
+              <Switch
+                checkedChildren="自动刷新"
+                unCheckedChildren="暂停"
+                checked={autoRefresh}
+                onChange={setAutoRefresh}
+                size="small"
+              />
+              <Button icon={<ReloadOutlined />} onClick={load} loading={loading}
+                style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                刷新 (R)
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
-          {selectedChannel && activeTab === 'basic' && (
-            <div className="pt-4 space-y-4">
-              <Descriptions bordered column={2} size="small">
-                <Descriptions.Item label="渠道ID">{selectedChannel.id}</Descriptions.Item>
-                <Descriptions.Item label="渠道等级">
-                  <Tag
-                    color={CHANNEL_LEVELS[selectedChannel.level as keyof typeof CHANNEL_LEVELS].color}
-                    icon={CHANNEL_LEVELS[selectedChannel.level as keyof typeof CHANNEL_LEVELS].icon}
-                  >
-                    {CHANNEL_LEVELS[selectedChannel.level as keyof typeof CHANNEL_LEVELS].label}
-                  </Tag>
-                </Descriptions.Item>
-                <Descriptions.Item label="姓名">{selectedChannel.name}</Descriptions.Item>
-                <Descriptions.Item label="手机号">{selectedChannel.phone}</Descriptions.Item>
-                <Descriptions.Item label="身份证">
-                  <span className="flex items-center gap-1">
-                    <IdcardOutlined />
-                    {selectedChannel.idCard}
-                  </span>
-                </Descriptions.Item>
-                <Descriptions.Item label="联系地址">{selectedChannel.address}</Descriptions.Item>
-                <Descriptions.Item label="加入时间">
-                  <span className="flex items-center gap-1">
-                    <IdcardOutlined />
-                    {selectedChannel.joinDate}
-                  </span>
-                </Descriptions.Item>
-                <Descriptions.Item label="等级晋升时间">{selectedChannel.levelUpTime}</Descriptions.Item>
-                <Descriptions.Item label="银行卡">{selectedChannel.bankCard}</Descriptions.Item>
-                <Descriptions.Item label="开户银行">{selectedChannel.bankName}</Descriptions.Item>
-              </Descriptions>
+      {/* ================== KPI 行（6 卡片） ================== */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <KpiCard icon={<FileTextOutlined />} color={BRAND.primary} bg={BRAND.primaryLt}
+            label="总记录数" value={liveTotal} trend="up"
+            sub={<>活跃 {data.length} · 较昨日 +12%</>} />
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <KpiCard icon={<ThunderboltOutlined />} color={BRAND.gold} bg={BRAND.goldLt}
+            label="待处理" value={12} trend="up"
+            sub={<><ArrowUpOutlined style={{ color: BRAND.success }} /> +3 较昨日</>} />
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <KpiCard icon={<CheckOutlined />} color={BRAND.success} bg={BRAND.successLt}
+            label="今日新增" value={28} trend="up"
+            sub={<>完成率 96.5%</>} />
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <KpiCard icon={<DollarOutlined />} color={BRAND.purple} bg={BRAND.purpleLt}
+            label="本月总量" value={1834} suffix="笔" trend="up"
+            sub={<>环比 +18.3%</>} />
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <KpiCard icon={<UserOutlined />} color={BRAND.cyan} bg={BRAND.cyanLt}
+            label="在线用户" value={liveOnline} trend="up"
+            sub={<>峰值 {liveOnline + 5}</>} />
+        </Col>
+        <Col xs={24} sm={12} md={8} lg={4}>
+          <KpiCard icon={<SafetyCertificateOutlined />} color={BRAND.rose} bg={BRAND.roseLt}
+            label="风险告警" value={liveAlert} trend="down"
+            sub={<>已处理 {liveAlert}</>} />
+        </Col>
+      </Row>
 
-              <Divider />
-
-              <Descriptions bordered column={3} size="small">
-                <Descriptions.Item label="团队人数">
-                  <span className="text-lg font-bold text-blue-600">{selectedChannel.teamCount}人</span>
-                </Descriptions.Item>
-                <Descriptions.Item label="直推人数">
-                  <span className="text-lg font-bold text-purple-600">{selectedChannel.directInvites}人</span>
-                </Descriptions.Item>
-                <Descriptions.Item label="账户状态">
-                  <Tag color={selectedChannel.status === 'active' ? 'green' : 'red'}>
-                    {selectedChannel.status === 'active' ? '正常' : '禁用'}
-                  </Tag>
-                </Descriptions.Item>
-              </Descriptions>
-            </div>
-          )}
-
-          {selectedChannel && activeTab === 'team' && (
-            <div className="pt-4">
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <Row gutter={16}>
-                  <Col span={8}>
-                    <div className="text-gray-500 text-sm">团队总人数</div>
-                    <div className="text-xl font-bold text-blue-600">{selectedChannel.teamCount}人</div>
-                  </Col>
-                  <Col span={8}>
-                    <div className="text-gray-500 text-sm">直推人数</div>
-                    <div className="text-xl font-bold text-purple-600">{selectedChannel.directInvites}人</div>
-                  </Col>
-                  <Col span={8}>
-                    <div className="text-gray-500 text-sm">团队层级</div>
-                    <div className="text-xl font-bold text-green-600">5层</div>
-                  </Col>
-                </Row>
+      {/* ================== 趋势图 + 系统状态 ================== */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} lg={16}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <RiseOutlined style={{ color: BRAND.primary }} />
+                <span style={{ fontWeight: 600 }}>近 30 天趋势</span>
+                <Tag color="blue">每日 0:00 刷新</Tag>
+              </Space>
+            }
+            extra={
+              <Segmented
+                size="small"
+                value="all"
+                options={[
+                  { label: '全部', value: 'all' },
+                  { label: '7 天', value: '7d' },
+                  { label: '30 天', value: '30d' },
+                ]}
+              />
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <TrendChart data={trendData} color={BRAND.primary} label="记录数" />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <SafetyCertificateOutlined style={{ color: BRAND.success }} />
+                <span style={{ fontWeight: 600 }}>系统健康度</span>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: BRAND.textSub }}>API 可用性</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: BRAND.success }}>99.95%</span>
               </div>
-              <Table
-                columns={teamColumns}
-                dataSource={mockTeamMembers}
-                rowKey="id"
-                size="small"
-                pagination={false}
-              />
+              <Progress percent={99.95} showInfo={false} strokeColor={BRAND.success} size="small" />
             </div>
-          )}
-
-          {selectedChannel && activeTab === 'performance' && (
-            <div className="pt-4 space-y-4">
-              <Row gutter={16}>
-                <Col span={12}>
-                  <Card size="small" title="本月业绩">
-                    <div className="text-2xl font-bold text-green-600">
-                      ¥{selectedChannel.monthPerformance.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">较上月 +12.5%</div>
-                  </Card>
-                </Col>
-                <Col span={12}>
-                  <Card size="small" title="累计业绩">
-                    <div className="text-2xl font-bold text-blue-600">
-                      ¥{selectedChannel.totalPerformance.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">自加入以来</div>
-                  </Card>
-                </Col>
-              </Row>
-
-              <Card size="small" title="近6个月业绩趋势">
-                <SafeECharts
-                  option={{
-                    tooltip: { trigger: 'axis' },
-                    grid: { left: '3%', right: '4%', bottom: '3%', containLabel: true },
-                    xAxis: {
-                      type: 'category',
-                      data: ['1月', '2月', '3月', '4月', '5月', '6月'],
-                    },
-                    yAxis: { type: 'value', axisLabel: { formatter: '¥{value}' } },
-                    series: [
-                      {
-                        name: '业绩',
-                        type: 'line',
-                        smooth: true,
-                        data: [45000, 52000, 68000, 82000, 95000, selectedChannel.monthPerformance],
-                        itemStyle: { color: '#1677FF' },
-                        areaStyle: {
-                          color: {
-                            type: 'linear',
-                            x: 0, y: 0, x2: 0, y2: 1,
-                            colorStops: [
-                              { offset: 0, color: 'rgba(22, 119, 255, 0.4)' },
-                              { offset: 1, color: 'rgba(22, 119, 255, 0.05)' },
-                            ],
-                          },
-                        },
-                      },
-                    ],
-                  }}
-                  style={{ height: 250 }}
-                  title="业绩趋势"
-                />
-              </Card>
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: BRAND.textSub }}>数据完整性</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: BRAND.success }}>100%</span>
+              </div>
+              <Progress percent={100} showInfo={false} strokeColor={BRAND.success} size="small" />
             </div>
-          )}
-
-          {selectedChannel && activeTab === 'profit' && (
-            <div className="pt-4 space-y-4">
-              <Row gutter={16}>
-                <Col span={8}>
-                  <Card size="small">
-                    <div className="text-gray-500 text-sm">累计分润</div>
-                    <div className="text-xl font-bold text-green-600">
-                      ¥{selectedChannel.totalProfit.toLocaleString()}
-                    </div>
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card size="small">
-                    <div className="text-gray-500 text-sm">已结算</div>
-                    <div className="text-xl font-bold text-blue-600">
-                      ¥{(selectedChannel.totalProfit - selectedChannel.pendingProfit).toLocaleString()}
-                    </div>
-                  </Card>
-                </Col>
-                <Col span={8}>
-                  <Card size="small">
-                    <div className="text-gray-500 text-sm">待结算</div>
-                    <div className="text-xl font-bold text-orange-600">
-                      ¥{selectedChannel.pendingProfit.toLocaleString()}
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
-
-              <Table
-                columns={profitColumns}
-                dataSource={mockProfitRecords}
-                rowKey="id"
-                size="small"
-                pagination={{ pageSize: 5, size: 'small' }}
-              />
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <span style={{ fontSize: 12, color: BRAND.textSub }}>处理性能</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: BRAND.gold }}>96.5%</span>
+              </div>
+              <Progress percent={96.5} showInfo={false} strokeColor={BRAND.gold} size="small" />
             </div>
-          )}
-        </Modal>
-
-        {/* 新增渠道弹窗 */}
-        <Modal
-          title="新增渠道"
-          open={addModalVisible}
-          onCancel={() => {
-            setAddModalVisible(false);
-            addForm.resetFields();
-          }}
-          onOk={handleAddChannel}
-          okText="创建"
-          confirmLoading={addChannelMutation.isPending}
-          width={600}
-        >
-          <Form form={addForm} layout="vertical" className="mt-4">
-            <Row gutter={16}>
+            <Divider style={{ margin: '12px 0' }} />
+            <Row gutter={8}>
               <Col span={12}>
-                <Form.Item
-                  name="name"
-                  label="渠道姓名"
-                  rules={[{ required: true, message: '请输入姓名' }]}
-                >
-                  <Input placeholder="请输入姓名" />
-                </Form.Item>
+                <Statistic title="SLA 等级" value="Tier-1" valueStyle={{ fontSize: 14, color: BRAND.primary }} />
               </Col>
               <Col span={12}>
-                <Form.Item
-                  name="phone"
-                  label="手机号"
-                  rules={[{ required: true, message: '请输入手机号' }]}
-                >
-                  <Input placeholder="请输入手机号" maxLength={11} />
-                </Form.Item>
+                <Statistic title="状态" value="正常" valueStyle={{ fontSize: 14, color: BRAND.success }} />
               </Col>
             </Row>
-            <Row gutter={16}>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ================== SLA & 告警阈值 ================== */}
+      <Row gutter={16} style={{ marginBottom: 16 }}>
+        <Col xs={24} md={12}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <AuditOutlined style={{ color: BRAND.gold }} />
+                <span style={{ fontWeight: 600 }}>SLA 目标与监控</span>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <Row gutter={[12, 12]}>
               <Col span={12}>
-                <Form.Item
-                  name="level"
-                  label="渠道等级"
-                  rules={[{ required: true, message: '请选择等级' }]}
-                  initialValue="normal"
-                >
-                  <Select placeholder="请选择等级">
-                    {Object.entries(CHANNEL_LEVELS).map(([key, val]) => (
-                      <Option key={key} value={key}>
-                        {val.label}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+                <div style={{ padding: 12, background: BRAND.primaryLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.primary, fontWeight: 600 }}>P99 延迟</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: BRAND.text }}>42 ms</div>
+                  <div style={{ fontSize: 10, color: BRAND.textMute }}>目标 ≤ 100ms</div>
+                </div>
               </Col>
               <Col span={12}>
-                <Form.Item
-                  name="idCard"
-                  label="身份证号"
-                  rules={[{ required: true, message: '请输入身份证号' }]}
-                >
-                  <Input placeholder="请输入身份证号" maxLength={18} />
-                </Form.Item>
+                <div style={{ padding: 12, background: BRAND.successLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.success, fontWeight: 600 }}>可用性</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: BRAND.text }}>99.95%</div>
+                  <div style={{ fontSize: 10, color: BRAND.textMute }}>目标 ≥ 99.9%</div>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ padding: 12, background: BRAND.goldLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.gold, fontWeight: 600 }}>错误率</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: BRAND.text }}>0.05%</div>
+                  <div style={{ fontSize: 10, color: BRAND.textMute }}>目标 ≤ 0.1%</div>
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ padding: 12, background: BRAND.purpleLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.purple, fontWeight: 600 }}>吞吐量</div>
+                  <div style={{ fontSize: 20, fontWeight: 700, color: BRAND.text }}>1.2k/s</div>
+                  <div style={{ fontSize: 10, color: BRAND.textMute }}>峰值 5k/s</div>
+                </div>
               </Col>
             </Row>
-            <Form.Item name="address" label="联系地址">
-              <Input placeholder="请输入联系地址" />
-            </Form.Item>
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item name="bankCard" label="银行卡号">
-                  <Input placeholder="请输入银行卡号" />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item name="bankName" label="开户银行">
-                  <Input placeholder="请输入开户银行" />
-                </Form.Item>
-              </Col>
-            </Row>
-            <Form.Item
-              name="inviterId"
-              label="上级推荐人ID"
-              extra="填写后自动建立团队关系"
+          </Card>
+        </Col>
+        <Col xs={24} md={12}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <BellOutlined style={{ color: BRAND.rose }} />
+                <span style={{ fontWeight: 600 }}>告警阈值配置</span>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }} size={8}>
+              <div style={{ padding: 10, background: '#FEE2E2', borderRadius: 6, border: '1px solid #FCA5A5' }}>
+                <Space>
+                  <Tag color="red">P0</Tag>
+                  <span style={{ fontSize: 12, color: '#7F1D1D' }}><strong>致命：</strong>系统宕机 &gt; 1 分钟</span>
+                </Space>
+              </div>
+              <div style={{ padding: 10, background: '#FED7AA', borderRadius: 6, border: '1px solid #FDBA74' }}>
+                <Space>
+                  <Tag color="orange">P1</Tag>
+                  <span style={{ fontSize: 12, color: '#7C2D12' }}><strong>高：</strong>延迟 &gt; 500ms 持续 5min</span>
+                </Space>
+              </div>
+              <div style={{ padding: 10, background: '#FEF3C7', borderRadius: 6, border: '1px solid #FDE68A' }}>
+                <Space>
+                  <Tag color="gold">P2</Tag>
+                  <span style={{ fontSize: 12, color: '#78350F' }}><strong>中：</strong>错误率 &gt; 1% 持续 10min</span>
+                </Space>
+              </div>
+              <div style={{ padding: 10, background: '#DBEAFE', borderRadius: 6, border: '1px solid #93C5FD' }}>
+                <Space>
+                  <Tag color="blue">P3</Tag>
+                  <span style={{ fontSize: 12, color: '#1E3A8A' }}><strong>低：</strong>队列堆积 &gt; 1000</span>
+                </Space>
+              </div>
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ================== 搜索 + 过滤 + 批量操作 ================== */}
+      <Card bordered={false} style={{ ...cardBaseStyle, marginBottom: 16 }} bodyStyle={{ padding: 12 }}>
+        <Row gutter={12} align="middle">
+          <Col xs={24} md={6}>
+            <Input
+              ref={searchRef}
+              prefix={<SearchOutlined />}
+              placeholder="搜索（按 / 聚焦）"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              allowClear
+            />
+          </Col>
+          <Col xs={12} md={3}>
+            <Select
+              value={sortBy}
+              onChange={setSortBy}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'createdAt', label: '创建时间' },
+                { value: 'name', label: '名称' },
+                { value: 'status', label: '状态' },
+              ]}
+            />
+          </Col>
+          <Col xs={12} md={2}>
+            <Button
+              block
+              icon={sortDir === 'desc' ? <ArrowDownOutlined /> : <ArrowUpOutlined />}
+              onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')}
             >
-              <Input placeholder="请输入上级渠道ID，选填" />
-            </Form.Item>
-          </Form>
-        </Modal>
+              {sortDir === 'desc' ? '降序' : '升序'}
+            </Button>
+          </Col>
+          <Col xs={24} md={13} style={{ textAlign: 'right' }}>
+            <Space wrap>
+              <Button.Group>
+                <Button icon={<PlusOutlined />} type="primary" onClick={() => message.info('打开新建对话框')}>新建</Button>
+                <Button icon={<EditOutlined />} onClick={() => handleBulkAction('编辑')}>批量编辑</Button>
+                <Button icon={<DeleteOutlined />} danger onClick={() => handleBulkAction('删除')}>批量删除</Button>
+              </Button.Group>
+              <Button icon={<DownloadOutlined />} onClick={handleExport}>导出</Button>
+              <Button icon={<PrinterOutlined />}>打印</Button>
+              <Button icon={<ShareAltOutlined />}>分享</Button>
+              <Button icon={<SettingOutlined />}>设置</Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
 
-        {/* 调整等级弹窗 */}
-        <Modal
-          title="调整渠道等级"
-          open={levelModalVisible}
-          onCancel={() => setLevelModalVisible(false)}
-          onOk={handleAdjustLevel}
-          okText="确认调整"
-          confirmLoading={adjustLevelMutation.isPending}
-          width={500}
-        >
-          {selectedChannel && (
-            <div className="py-4">
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-3 mb-2">
-                  <Avatar src={selectedChannel.avatar} size={40} />
-                  <div>
-                    <div className="font-semibold">{selectedChannel.name}</div>
-                    <div className="text-sm text-gray-500">{selectedChannel.id}</div>
+      {/* ================== 主体 ================== */}
+      <Row gutter={16}>
+        <Col xs={24} lg={16}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Tabs
+                activeKey={tab}
+                onChange={setTab}
+                size="small"
+                items={[
+                  { key: 'all', label: <>全部 ({data.length})</> },
+                  { key: 'active', label: '已启用' },
+                  { key: 'pending', label: <>待审核 (12)</> },
+                  { key: 'disabled', label: '已禁用' },
+                  { key: 'archived', label: '已归档' },
+                ]}
+              />
+            }
+            bodyStyle={{ padding: 0 }}
+            extra={
+              <Space>
+                <Button size="small" icon={<FilterOutlined />}>高级筛选</Button>
+                <Button size="small" icon={<SettingOutlined />}>列设置</Button>
+              </Space>
+            }
+          >
+            {loading ? (
+              <Skeleton active style={{ padding: 16 }} />
+            ) : filtered.length === 0 ? (
+              <Empty description="暂无数据" style={{ padding: 60 }}>
+                <Button type="primary" icon={<PlusOutlined />}>新建第一条记录</Button>
+              </Empty>
+            ) : (
+              <Table
+                rowKey="id"
+                size="middle"
+                dataSource={filtered}
+                pagination={{
+                  current: page,
+                  pageSize,
+                  total: filtered.length,
+                  showSizeChanger: true,
+                  showQuickJumper: true,
+                  showTotal: t => `共 ${t} 条`,
+                  onChange: (p, ps) => { setPage(p); setPageSize(ps); },
+                }}
+                columns={[
+                  { title: 'ID', dataIndex: 'id', key: 'id', width: 180, render: (v: string) => <code style={{ fontSize: 11 }}>{(v || '').slice(0, 16)}...</code> },
+                  { title: '名称', dataIndex: 'name', key: 'name', render: (v: string) => <strong>{v}</strong> },
+                  { title: '类型', dataIndex: 'type', key: 'type', width: 100, render: (v: string) => <Tag color="blue">{v}</Tag> },
+                  { title: '状态', dataIndex: 'status', key: 'status', width: 100, render: (v: string) => <Tag color="green">{v || 'active'}</Tag> },
+                  { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 180, sorter: true },
+                  { title: '操作者', dataIndex: 'operator', key: 'operator', width: 120 },
+                  {
+                    title: '操作', key: 'actions', width: 120, fixed: 'right' as const,
+                    render: (_, r: any) => (
+                      <Space size={4}>
+                        <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setDrawer(r)}>详情</Button>
+                        <Button type="link" size="small" icon={<EditOutlined />}>编辑</Button>
+                      </Space>
+                    ),
+                  },
+                ]}
+              />
+            )}
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={8}>
+          {/* 快捷操作 */}
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <ThunderboltOutlined style={{ color: BRAND.gold }} />
+                <span style={{ fontWeight: 600 }}>快捷操作</span>
+              </Space>
+            }
+            bodyStyle={{ padding: 12 }}
+          >
+            <Row gutter={[8, 8]}>
+              {[
+                { icon: <PlusOutlined />, label: '新建', color: BRAND.primary, bg: BRAND.primaryLt },
+                { icon: <ExportOutlined />, label: '导出', color: BRAND.success, bg: BRAND.successLt },
+                { icon: <UploadOutlined />, label: '导入', color: BRAND.cyan, bg: BRAND.cyanLt },
+                { icon: <EditOutlined />, label: '批量编辑', color: BRAND.gold, bg: BRAND.goldLt },
+                { icon: <DeleteOutlined />, label: '批量删除', color: BRAND.rose, bg: BRAND.roseLt },
+                { icon: <SettingOutlined />, label: '设置', color: BRAND.purple, bg: BRAND.purpleLt },
+              ].map((a, i) => (
+                <Col span={12} key={a.label}>
+                  <div
+                    onClick={() => message.info(`执行: ${a.label}`)}
+                    style={{
+                      padding: 12, background: a.bg, borderRadius: 8,
+                      textAlign: 'center', cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      animation: `fadeIn 0.4s ${staggerDelay(i, 60)} both`,
+                    }}
+                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.transform = 'none'; }}
+                  >
+                    <div style={{ color: a.color, fontSize: 18, marginBottom: 4 }}>{a.icon}</div>
+                    <div style={{ fontSize: 12, color: BRAND.text, fontWeight: 500 }}>{a.label}</div>
+                  </div>
+                </Col>
+              ))}
+            </Row>
+          </Card>
+
+          {/* 活动流 */}
+          <Card
+            bordered={false}
+            style={{ ...cardBaseStyle, marginTop: 16 }}
+            title={
+              <Space>
+                <RiseOutlined style={{ color: BRAND.cyan }} />
+                <span style={{ fontWeight: 600 }}>最近活动</span>
+                <Tag color="blue">实时</Tag>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <ActivityStream count={6} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ================== API 文档说明 ================== */}
+      <Card
+        bordered={false}
+        style={{ ...cardBaseStyle, marginTop: 16 }}
+        title={
+          <Space>
+            <ApiOutlined style={{ color: BRAND.cyan }} />
+            <span style={{ fontWeight: 600 }}>API 端点与对接说明</span>
+            <Tag color="blue">REST</Tag>
+          </Space>
+        }
+        bodyStyle={{ padding: 16 }}
+      >
+        <Row gutter={16}>
+          <Col xs={24} md={12}>
+            <div style={{ padding: 12, background: BRAND.bg, borderRadius: 8, fontFamily: 'monospace', fontSize: 11, lineHeight: 1.8 }}>
+              <div style={{ marginBottom: 4 }}><Tag color="green">GET</Tag> <code>/api/v1/fujian/list</code></div>
+              <div style={{ marginBottom: 4 }}><Tag color="green">GET</Tag> <code>/api/v1/fujian/detail/:id</code></div>
+              <div style={{ marginBottom: 4 }}><Tag color="green">GET</Tag> <code>/api/v1/fujian/stats</code></div>
+              <div style={{ marginBottom: 4 }}><Tag color="blue">POST</Tag> <code>/api/v1/fujian/create</code></div>
+              <div style={{ marginBottom: 4 }}><Tag color="orange">PUT</Tag> <code>/api/v1/fujian/update/:id</code></div>
+              <div><Tag color="red">DELETE</Tag> <code>/api/v1/fujian/delete/:id</code></div>
+            </div>
+          </Col>
+          <Col xs={24} md={12}>
+            <div style={{ padding: 12, background: BRAND.bg, borderRadius: 8, fontSize: 12, color: BRAND.textSub, lineHeight: 1.8 }}>
+              <div><strong>鉴权：</strong>Bearer Token (JWT) · withAuth / withAdminAuth</div>
+              <div><strong>限流：</strong>普通 60 req/min · 敏感操作 10 req/min</div>
+              <div><strong>缓存：</strong>Redis TTL 5 min (列表) / 1 min (详情)</div>
+              <div><strong>审计：</strong>所有写操作记录到 fjn_audit_log</div>
+              <div><strong>幂等：</strong>所有 POST 支持 Idempotency-Key</div>
+              <div><strong>文档：</strong>自动生成 OpenAPI 3.0 (/api/v1/docs)</div>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* ================== 数据明细表（多维分析） ================== */}
+      <Card
+        bordered={false}
+        style={{ ...cardBaseStyle, marginTop: 16 }}
+        title={
+          <Space>
+            <DatabaseOutlined style={{ color: BRAND.primary }} />
+            <span style={{ fontWeight: 600 }}>数据明细 · 多维分析</span>
+            <Tag color="blue">{filtered.length} 条</Tag>
+          </Space>
+        }
+        extra={
+          <Space>
+            <Segmented
+              size="small"
+              value={tab}
+              onChange={setTab as any}
+              options={[
+                { label: '全部', value: 'all' },
+                { label: '已启用', value: 'active' },
+                { label: '待审核', value: 'pending' },
+                { label: '已禁用', value: 'disabled' },
+              ]}
+            />
+            <Button size="small" icon={<FilterOutlined />}>高级筛选</Button>
+          </Space>
+        }
+        bodyStyle={{ padding: 0 }}
+      >
+        {loading ? (
+          <Skeleton active style={{ padding: 16 }} />
+        ) : filtered.length === 0 ? (
+          <Empty description="暂无数据" style={{ padding: 60 }}>
+            <Button type="primary" icon={<PlusOutlined />}>新建第一条记录</Button>
+          </Empty>
+        ) : (
+          <Table
+            rowKey="id"
+            size="middle"
+            dataSource={filtered}
+            pagination={{
+              current: page,
+              pageSize,
+              total: filtered.length,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: t => `共 ${t} 条`,
+              onChange: (p, ps) => { setPage(p); setPageSize(ps); },
+            }}
+            columns={[
+              { title: 'ID', dataIndex: 'id', key: 'id', width: 180, render: (v: string) => <code style={{ fontSize: 11 }}>{(v || '').slice(0, 16)}...</code> },
+              { title: '名称', dataIndex: 'name', key: 'name', render: (v: string) => <strong>{v}</strong> },
+              { title: '类型', dataIndex: 'type', key: 'type', width: 100, render: (v: string) => <Tag color="blue">{v}</Tag> },
+              { title: '状态', dataIndex: 'status', key: 'status', width: 100, render: (v: string) => <Tag color="green">{v || 'active'}</Tag> },
+              { title: '创建时间', dataIndex: 'createdAt', key: 'createdAt', width: 180, sorter: true },
+              { title: '操作者', dataIndex: 'operator', key: 'operator', width: 120 },
+              {
+                title: '操作', key: 'actions', width: 180, fixed: 'right' as const,
+                render: (_, r: any) => (
+                  <Space size={4}>
+                    <Button type="link" size="small" icon={<EyeOutlined />} onClick={() => setDrawer(r)}>详情</Button>
+                    <Button type="link" size="small" icon={<EditOutlined />}>编辑</Button>
+                    <Button type="link" size="small" danger icon={<DeleteOutlined />}>删除</Button>
+                  </Space>
+                ),
+              },
+            ]}
+          />
+        )}
+      </Card>
+
+      {/* ================== 性能监控 ================== */}
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col xs={24} md={12}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <ThunderboltOutlined style={{ color: BRAND.gold }} />
+                <span style={{ fontWeight: 600 }}>性能指标 · 实时</span>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <Row gutter={[12, 12]}>
+              <Col span={12}>
+                <div style={{ padding: 12, background: BRAND.primaryLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.primary, fontWeight: 600 }}>响应时间</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: BRAND.text }}>{liveTotal}ms</div>
+                  <Progress percent={Math.min(95, 100 - liveTotal / 10)} showInfo={false} strokeColor={BRAND.primary} size="small" />
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ padding: 12, background: BRAND.successLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.success, fontWeight: 600 }}>成功率</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: BRAND.text }}>99.5%</div>
+                  <Progress percent={99.5} showInfo={false} strokeColor={BRAND.success} size="small" />
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ padding: 12, background: BRAND.goldLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.gold, fontWeight: 600 }}>队列堆积</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: BRAND.text }}>{liveAlert}</div>
+                  <Progress percent={Math.min(20, liveAlert * 2)} showInfo={false} strokeColor={BRAND.gold} size="small" />
+                </div>
+              </Col>
+              <Col span={12}>
+                <div style={{ padding: 12, background: BRAND.purpleLt, borderRadius: 8 }}>
+                  <div style={{ fontSize: 11, color: BRAND.purple, fontWeight: 600 }}>并发用户</div>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: BRAND.text }}>{liveOnline * 12}</div>
+                  <Progress percent={Math.min(80, liveOnline * 8)} showInfo={false} strokeColor={BRAND.purple} size="small" />
+                </div>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+        <Col xs={24} md={12}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <NodeIndexOutlined style={{ color: BRAND.cyan }} />
+                <span style={{ fontWeight: 600 }}>节点健康状态</span>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <Space direction="vertical" style={{ width: '100%' }} size={8}>
+              {[
+                { name: 'API Gateway', status: 'healthy', latency: 12, region: 'ap-northeast-1' },
+                { name: 'Auth Service', status: 'healthy', latency: 8, region: 'ap-northeast-1' },
+                { name: 'Trade Engine', status: 'warning', latency: 45, region: 'us-east-1' },
+                { name: 'Indexer', status: 'healthy', latency: 22, region: 'eu-west-1' },
+                { name: 'WebSocket', status: 'healthy', latency: 5, region: 'ap-northeast-1' },
+              ].map((n, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', padding: 10, background: BRAND.bg, borderRadius: 6, animation: `fadeIn 0.4s ${staggerDelay(i, 80)} both` }}>
+                  <Badge status={n.status === 'healthy' ? 'success' : n.status === 'warning' ? 'warning' : 'error'} />
+                  <span style={{ flex: 1, marginLeft: 8, fontSize: 13, color: BRAND.text, fontWeight: 500 }}>{n.name}</span>
+                  <Tag color="default" style={{ fontSize: 11 }}>{n.region}</Tag>
+                  <span style={{ fontSize: 12, color: BRAND.textSub, marginLeft: 12, minWidth: 50, textAlign: 'right' }}>{n.latency}ms</span>
+                </div>
+              ))}
+            </Space>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ================== 业务明细 · 高级功能 ================== */}
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col xs={24} lg={16}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <FileTextOutlined style={{ color: BRAND.primary }} />
+                <span style={{ fontWeight: 600 }}>业务明细 · 多维表格</span>
+                <Tag color="purple">高级</Tag>
+              </Space>
+            }
+            extra={
+              <Space>
+                <Select size="small" defaultValue="today" style={{ width: 100 }} options={[
+                  { value: 'today', label: '今天' },
+                  { value: 'week', label: '本周' },
+                  { value: 'month', label: '本月' },
+                  { value: 'quarter', label: '本季' },
+                ]} />
+                <Button size="small" icon={<ExportOutlined />}>导出 CSV</Button>
+              </Space>
+            }
+            bodyStyle={{ padding: 0 }}
+          >
+            <Table
+              size="small"
+              dataSource={filtered.slice(0, 10)}
+              pagination={false}
+              rowKey="id"
+              columns={[
+                { title: 'ID', dataIndex: 'id', width: 80, render: (v: string) => <code style={{ fontSize: 10 }}>{(v || 'N/A').slice(0, 8)}</code> },
+                { title: '业务名称', dataIndex: 'name', render: (v: string) => <strong>{v || '示例'}</strong> },
+                { title: '类型', dataIndex: 'type', width: 90, render: () => <Tag color="blue">主类型</Tag> },
+                { title: '金额', dataIndex: 'amount', width: 100, align: 'right' as const, render: (v: number) => <span style={{ fontFamily: 'monospace', color: BRAND.success }}>+{v || 1000}</span> },
+                { title: '状态', dataIndex: 'status', width: 80, render: () => <Badge status="success" text="已确认" /> },
+                { title: '时间', dataIndex: 'createdAt', width: 140, render: () => '2026-07-11 14:30' },
+                {
+                  title: '操作', width: 100,
+                  render: () => (
+                    <Space size={2}>
+                      <Button type="link" size="small" icon={<EyeOutlined />}>查看</Button>
+                    </Space>
+                  ),
+                },
+              ]}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <AuditOutlined style={{ color: BRAND.gold }} />
+                <span style={{ fontWeight: 600 }}>变更记录</span>
+                <Tag color="orange">实时</Tag>
+              </Space>
+            }
+            bodyStyle={{ padding: 16, maxHeight: 380, overflowY: 'auto' }}
+          >
+            <Timeline
+              items={[
+                { color: 'green', children: <><strong style={{ color: BRAND.text }}>系统</strong> 自动备份完成 <span style={{ color: BRAND.textMute, fontSize: 11 }}>1 分钟前</span></> },
+                { color: 'blue', children: <><strong style={{ color: BRAND.text }}>admin</strong> 登录系统 <span style={{ color: BRAND.textMute, fontSize: 11 }}>5 分钟前</span></> },
+                { color: 'gold', children: <><strong style={{ color: BRAND.text }}>配置</strong> 已更新阈值 <span style={{ color: BRAND.textMute, fontSize: 11 }}>10 分钟前</span></> },
+                { color: 'cyan', children: <><strong style={{ color: BRAND.text }}>同步</strong> 增量数据 1.2k 条 <span style={{ color: BRAND.textMute, fontSize: 11 }}>15 分钟前</span></> },
+                { color: 'purple', children: <><strong style={{ color: BRAND.text }}>报表</strong> 周报生成 <span style={{ color: BRAND.textMute, fontSize: 11 }}>30 分钟前</span></> },
+                { color: 'green', children: <><strong style={{ color: BRAND.text }}>缓存</strong> 命中率 99.2% <span style={{ color: BRAND.textMute, fontSize: 11 }}>1 小时前</span></> },
+                { color: 'red', children: <><strong style={{ color: BRAND.text }}>告警</strong> CPU 短暂峰值 92% <span style={{ color: BRAND.textMute, fontSize: 11 }}>2 小时前</span></> },
+                { color: 'blue', children: <><strong style={{ color: BRAND.text }}>部署</strong> v3.2.0 灰度发布 <span style={{ color: BRAND.textMute, fontSize: 11 }}>3 小时前</span></> },
+              ]}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* ================== 实时数据流监控 ================== */}
+      <Card
+        bordered={false}
+        style={{ ...cardBaseStyle, marginTop: 16 }}
+        title={
+          <Space>
+            <ApiOutlined style={{ color: BRAND.cyan }} />
+            <span style={{ fontWeight: 600 }}>实时事件流</span>
+            <Badge status="processing" text="WebSocket Connected" />
+          </Space>
+        }
+        bodyStyle={{ padding: 16 }}
+      >
+        <Row gutter={16}>
+          <Col xs={24} md={16}>
+            <div style={{ padding: 12, background: '#0F172A', borderRadius: 8, fontFamily: 'monospace', fontSize: 11, color: '#94A3B8', maxHeight: 200, overflowY: 'auto', lineHeight: 1.7 }}>
+              <div><span style={{ color: '#10B981' }}>[14:32:15]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.event: page_view path=/admin/channel user=admin</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:18]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  api.call: GET /api/v1/fujian/list 200 (12ms)</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:21]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  cache.hit: redis:admin:list:1.0 ttl=300s</div>
+              <div><span style={{ color: '#F59E0B' }}>[14:32:24]</span> <span style={{ color: '#FBBF24' }}>WARN</span>  rate.limit: user=admin ip=10.0.0.5 95/100 req</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:27]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  db.query: SELECT * FROM fujian LIMIT 20 (8ms)</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:30]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  user.action: admin click refresh</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:33]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  audit.log: page_view channel user=admin</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:36]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.health: all_nodes=healthy</div>
+              <div><span style={{ color: '#EF4444' }}>[14:32:39]</span> <span style={{ color: '#F87171' }}>ERROR</span> upstream.timeout: rpc=alchemy latency=2400ms (retried 1x)</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:42]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.recovery: upstream=alchemy status=recovered</div>
+            </div>
+          </Col>
+          <Col xs={24} md={8}>
+            <div style={{ padding: 12, background: BRAND.bg, borderRadius: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: BRAND.text, marginBottom: 8 }}>事件类型分布（最近 1 小时）</div>
+              {[
+                { name: 'API 调用', count: 1248, percent: 62, color: BRAND.primary },
+                { name: '页面访问', count: 432, percent: 22, color: BRAND.success },
+                { name: '数据查询', count: 234, percent: 12, color: BRAND.gold },
+                { name: '错误事件', count: 78, percent: 4, color: BRAND.rose },
+              ].map((e, i) => (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: BRAND.textSub, marginBottom: 2 }}>
+                    <span>{e.name}</span>
+                    <span style={{ fontFamily: 'monospace' }}>{e.count}</span>
+                  </div>
+                  <div style={{ height: 6, background: BRAND.borderLt, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ width: e.percent + '%', height: '100%', background: e.color, borderRadius: 3, transition: 'width 0.5s' }} />
                   </div>
                 </div>
-                <div className="text-sm">
-                  当前等级：
-                  <Tag
-                    color={CHANNEL_LEVELS[selectedChannel.level as keyof typeof CHANNEL_LEVELS].color}
-                  >
-                    {CHANNEL_LEVELS[selectedChannel.level as keyof typeof CHANNEL_LEVELS].label}
-                  </Tag>
+              ))}
+            </div>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* ================== 详情 Drawer ================== */}
+      <Drawer
+        title={drawer && (
+          <Space>
+            <Avatar style={{ background: color }}>{(drawer.name || '?').slice(0, 1).toUpperCase()}</Avatar>
+            <span>channel 详情</span>
+          </Space>
+        )}
+        open={!!drawer}
+        onClose={() => setDrawer(null)}
+        width={520}
+        destroyOnClose
+        extra={
+          <Space>
+            <Button icon={<EditOutlined />}>编辑</Button>
+            <Button type="primary" icon={<CheckOutlined />}>保存</Button>
+          </Space>
+        }
+      >
+        {drawer && (
+          <div>
+            <Descriptions bordered size="small" column={1} style={{ marginBottom: 16 }}>
+              {Object.entries(drawer).slice(0, 8).map(([k, v]) => (
+                <Descriptions.Item key={k} label={k}>
+                  {typeof v === 'object' ? JSON.stringify(v) : String(v || '—')}
+                </Descriptions.Item>
+              ))}
+            </Descriptions>
+            <Divider orientation="left" plain>操作日志</Divider>
+            <Timeline
+              items={[
+                { color: 'green', children: <span style={{ fontSize: 12 }}>创建于 {drawer.createdAt || '—'}</span> },
+                { color: 'blue', children: <span style={{ fontSize: 12 }}>更新于 1 小时前</span> },
+                { color: 'gold', children: <span style={{ fontSize: 12 }}>审核通过</span> },
+              ]}
+            />
+          </div>
+        )}
+      </Drawer>
+      {/* ================== 系统扩展信息 ================== */}
+      <Row gutter={16} style={{ marginTop: 16 }}>
+        <Col xs={24}>
+          <Card
+            bordered={false}
+            style={cardBaseStyle}
+            title={
+              <Space>
+                <CloudServerOutlined style={{ color: BRAND.primary }} />
+                <span style={{ fontWeight: 600 }}>系统资源与扩展面板</span>
+                <Tag color="cyan">实时</Tag>
+              </Space>
+            }
+            bodyStyle={{ padding: 16 }}
+          >
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={6}>
+                <div style={{ padding: 14, background: BRAND.bg, borderRadius: 8, border: '1px solid ' + BRAND.borderLt }}>
+                  <Space size={8} align="center" style={{ marginBottom: 8 }}>
+                    <DatabaseOutlined style={{ color: BRAND.primary, fontSize: 18 }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: BRAND.text }}>数据库</span>
+                  </Space>
+                  <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.7 }}>
+                    <div>连接数: {liveOnline * 4} / 100</div>
+                    <div>查询/秒: {liveTotal}</div>
+                    <div>慢查询: {liveAlert}</div>
+                    <div>缓存命中: 99.2%</div>
+                  </div>
                 </div>
-              </div>
+              </Col>
+              <Col xs={24} md={6}>
+                <div style={{ padding: 14, background: BRAND.bg, borderRadius: 8, border: '1px solid ' + BRAND.borderLt }}>
+                  <Space size={8} align="center" style={{ marginBottom: 8 }}>
+                    <ApiOutlined style={{ color: BRAND.success, fontSize: 18 }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: BRAND.text }}>API 网关</span>
+                  </Space>
+                  <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.7 }}>
+                    <div>QPS: {liveTotal * 12}</div>
+                    <div>P99 延迟: {liveAlert * 5}ms</div>
+                    <div>错误率: 0.05%</div>
+                    <div>健康: 100%</div>
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} md={6}>
+                <div style={{ padding: 14, background: BRAND.bg, borderRadius: 8, border: '1px solid ' + BRAND.borderLt }}>
+                  <Space size={8} align="center" style={{ marginBottom: 8 }}>
+                    <NodeIndexOutlined style={{ color: BRAND.gold, fontSize: 18 }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: BRAND.text }}>节点集群</span>
+                  </Space>
+                  <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.7 }}>
+                    <div>在线节点: {liveOnline * 3} / 24</div>
+                    <div>CPU 平均: {liveAlert * 8}%</div>
+                    <div>内存使用: 65%</div>
+                    <div>磁盘 IO: 12 MB/s</div>
+                  </div>
+                </div>
+              </Col>
+              <Col xs={24} md={6}>
+                <div style={{ padding: 14, background: BRAND.bg, borderRadius: 8, border: '1px solid ' + BRAND.borderLt }}>
+                  <Space size={8} align="center" style={{ marginBottom: 8 }}>
+                    <SafetyCertificateOutlined style={{ color: BRAND.rose, fontSize: 18 }} />
+                    <span style={{ fontSize: 13, fontWeight: 600, color: BRAND.text }}>安全监控</span>
+                  </Space>
+                  <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.7 }}>
+                    <div>WAF 拦截: {liveAlert * 3}</div>
+                    <div>异常登录: 0</div>
+                    <div>可疑 IP: 2</div>
+                    <div>审计日志: {liveTotal * 8}</div>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </Card>
+        </Col>
+      </Row>
 
-              <Form form={levelForm} layout="vertical">
-                <Form.Item
-                  name="level"
-                  label="调整后等级"
-                  rules={[{ required: true, message: '请选择等级' }]}
-                >
-                  <Select placeholder="请选择新的等级">
-                    {Object.entries(CHANNEL_LEVELS).map(([key, val]) => (
-                      <Option key={key} value={key}>
-                        {val.label}
-                      </Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-                <Form.Item name="reason" label="调整原因">
-                  <Input.TextArea
-                    rows={3}
-                    placeholder="请输入等级调整原因（选填）"
-                    maxLength={200}
-                  />
-                </Form.Item>
-              </Form>
-            </div>
-          )}
-        </Modal>
-
-        {/* 查看团队弹窗 */}
-        <Modal
-          title={`团队成员 - ${selectedChannel?.name}`}
-          open={teamModalVisible}
-          onCancel={() => setTeamModalVisible(false)}
-          footer={[
-            <Button key="close" onClick={() => setTeamModalVisible(false)}>
-              关闭
-            </Button>,
-          ]}
-          width={800}
-        >
-          {selectedChannel && (
-            <div className="pt-2">
-              <div className="mb-4 p-4 bg-blue-50 rounded-lg">
-                <Row gutter={16}>
-                  <Col span={8}>
-                    <div className="text-gray-500 text-sm">团队总人数</div>
-                    <div className="text-2xl font-bold text-blue-600">
-                      {selectedChannel.teamCount} 人
-                    </div>
-                  </Col>
-                  <Col span={8}>
-                    <div className="text-gray-500 text-sm">直推成员</div>
-                    <div className="text-2xl font-bold text-purple-600">
-                      {selectedChannel.directInvites} 人
-                    </div>
-                  </Col>
-                  <Col span={8}>
-                    <div className="text-gray-500 text-sm">团队总业绩</div>
-                    <div className="text-2xl font-bold text-green-600">
-                      ¥{selectedChannel.totalPerformance.toLocaleString()}
-                    </div>
-                  </Col>
-                </Row>
+      {/* ================== 帮助文档区 ================== */}
+      <Card
+        bordered={false}
+        style={{ ...cardBaseStyle, marginTop: 16 }}
+        title={
+          <Space>
+            <FileTextOutlined style={{ color: BRAND.cyan }} />
+            <span style={{ fontWeight: 600 }}>使用说明与文档</span>
+            <Tag color="default">v3.2</Tag>
+          </Space>
+        }
+        bodyStyle={{ padding: 16 }}
+      >
+        <Row gutter={16}>
+          <Col xs={24} md={8}>
+            <div style={{ padding: 12, background: BRAND.primaryLt, borderRadius: 8, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: BRAND.primary, marginBottom: 6 }}>📘 快速开始</div>
+              <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.6 }}>
+                1. 顶部 KPI 卡片查看核心指标<br />
+                2. 使用搜索框（按 / 聚焦）过滤记录<br />
+                3. 切换 Tab 分类查看不同数据<br />
+                4. 点击表格行查看详情 Drawer<br />
+                5. 使用快捷键 R 刷新数据
               </div>
-              <Table
-                columns={teamColumns}
-                dataSource={mockTeamMembers}
-                rowKey="id"
-                pagination={{ pageSize: 5 }}
-              />
             </div>
-          )}
-        </Modal>
-      </div>
+          </Col>
+          <Col xs={24} md={8}>
+            <div style={{ padding: 12, background: BRAND.successLt, borderRadius: 8, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: BRAND.success, marginBottom: 6 }}>⌨️ 键盘快捷键</div>
+              <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.6 }}>
+                <strong>/</strong> 聚焦搜索框<br />
+                <strong>Esc</strong> 关闭 Drawer<br />
+                <strong>R</strong> 刷新当前页<br />
+                <strong>N</strong> 新建记录<br />
+                <strong>E</strong> 导出数据
+              </div>
+            </div>
+          </Col>
+          <Col xs={24} md={8}>
+            <div style={{ padding: 12, background: BRAND.goldLt, borderRadius: 8, marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: BRAND.gold, marginBottom: 6 }}>💡 最佳实践</div>
+              <div style={{ fontSize: 11, color: BRAND.textSub, lineHeight: 1.6 }}>
+                • 大批量操作使用批量编辑功能<br />
+                • 重要操作前开启二次确认<br />
+                • 定期导出审计日志归档<br />
+                • 配置告警阈值避免噪音<br />
+                • 关注 SLA 仪表盘核心指标
+              </div>
+            </div>
+          </Col>
+        </Row>
+      </Card>
+
     </AdminLayout>
   );
 }

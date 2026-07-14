@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * /admin/fujian/profits - 369 福建老酒业务 / profits（2026-07-11 工业级重写）
+ * /admin/fujian/payment - 369 福建老酒业务 / payment（2026-07-11 工业级重写）
  *
  * 工业级硬约束（按 2026-07-06 强化的 UI/UX 约束）：
  *  ✅ 明亮色系：背景 #F8FAFC / 卡片 #FFFFFF
@@ -179,7 +179,7 @@ function ActivityStream({ count = 8 }: { count?: number }) {
 // 主页面
 // =============================================================================
 
-export default function ProfitsPage() {
+export default function PaymentPage() {
   const { message } = App.useApp();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any[]>([]);
@@ -274,7 +274,7 @@ export default function ProfitsPage() {
   };
 
   return (
-    <AdminLayout title="369 福建老酒业务 / profits">
+    <AdminLayout title="369 福建老酒业务 / payment">
       <style>{`@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }`}</style>
 
       {/* ================== Hero ================== */}
@@ -301,7 +301,7 @@ export default function ProfitsPage() {
                 {meta.icon}
               </div>
               <div>
-                <h2 style={{ margin: 0, color: '#fff', fontSize: 22, fontWeight: 700 }}>369 福建老酒业务 / profits</h2>
+                <h2 style={{ margin: 0, color: '#fff', fontSize: 22, fontWeight: 700 }}>369 福建老酒业务 / payment</h2>
                 <div style={{ marginTop: 6, color: 'rgba(255,255,255,0.85)', fontSize: 13 }}>
                   369 释放体系 / 5-3-2 服务奖 / 福建老酒专属 · 工业级管理面板 v3.2 · 实时数据 · 快捷键 / + R + Esc
                 </div>
@@ -992,13 +992,13 @@ export default function ProfitsPage() {
         <Row gutter={16}>
           <Col xs={24} md={16}>
             <div style={{ padding: 12, background: '#0F172A', borderRadius: 8, fontFamily: 'monospace', fontSize: 11, color: '#94A3B8', maxHeight: 200, overflowY: 'auto', lineHeight: 1.7 }}>
-              <div><span style={{ color: '#10B981' }}>[14:32:15]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.event: page_view path=/admin/profits user=admin</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:15]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.event: page_view path=/admin/payment user=admin</div>
               <div><span style={{ color: '#10B981' }}>[14:32:18]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  api.call: GET /api/v1/fujian/list 200 (12ms)</div>
               <div><span style={{ color: '#10B981' }}>[14:32:21]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  cache.hit: redis:admin:list:1.0 ttl=300s</div>
               <div><span style={{ color: '#F59E0B' }}>[14:32:24]</span> <span style={{ color: '#FBBF24' }}>WARN</span>  rate.limit: user=admin ip=10.0.0.5 95/100 req</div>
               <div><span style={{ color: '#10B981' }}>[14:32:27]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  db.query: SELECT * FROM fujian LIMIT 20 (8ms)</div>
               <div><span style={{ color: '#10B981' }}>[14:32:30]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  user.action: admin click refresh</div>
-              <div><span style={{ color: '#10B981' }}>[14:32:33]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  audit.log: page_view profits user=admin</div>
+              <div><span style={{ color: '#10B981' }}>[14:32:33]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  audit.log: page_view payment user=admin</div>
               <div><span style={{ color: '#10B981' }}>[14:32:36]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.health: all_nodes=healthy</div>
               <div><span style={{ color: '#EF4444' }}>[14:32:39]</span> <span style={{ color: '#F87171' }}>ERROR</span> upstream.timeout: rpc=alchemy latency=2400ms (retried 1x)</div>
               <div><span style={{ color: '#10B981' }}>[14:32:42]</span> <span style={{ color: '#60A5FA' }}>INFO</span>  system.recovery: upstream=alchemy status=recovered</div>
@@ -1033,7 +1033,7 @@ export default function ProfitsPage() {
         title={drawer && (
           <Space>
             <Avatar style={{ background: color }}>{(drawer.name || '?').slice(0, 1).toUpperCase()}</Avatar>
-            <span>profits 详情</span>
+            <span>payment 详情</span>
           </Space>
         )}
         open={!!drawer}
