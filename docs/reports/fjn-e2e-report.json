@@ -1,0 +1,96 @@
+{
+  "testTag": "e2e-1782849495855",
+  "timestamp": "2026-06-30T19:58:16.121Z",
+  "summary": {
+    "pass": 14,
+    "fail": 0,
+    "warning": 1,
+    "total": 15
+  },
+  "steps": [
+    {
+      "name": "创建用户",
+      "status": "✅",
+      "detail": "id=88b6534e-efcb-41d4-a33d-016adaaf8e00"
+    },
+    {
+      "name": "创建产品",
+      "status": "✅",
+      "detail": "id=c9bdd621-8ec7-408a-b593-abdb77f8c0e9, no=PRD20260701000008"
+    },
+    {
+      "name": "创建订单",
+      "status": "✅",
+      "detail": "id=79e69b5e-c26f-4d0a-90fe-aceb0bbbcfca, no=ORD20260701000006"
+    },
+    {
+      "name": "订单状态变更为 paid",
+      "status": "✅",
+      "detail": "status=paid"
+    },
+    {
+      "name": "初始化 369 池子",
+      "status": "✅",
+      "detail": "cost/market/company"
+    },
+    {
+      "name": "Seed Revenue Rule",
+      "status": "✅",
+      "detail": "id=238e9fe8-d8ac-41a6-a9ea-953fd7c552a2, code=WINE_369_DEFAULT v3.6.9"
+    },
+    {
+      "name": "创建分账",
+      "status": "✅",
+      "detail": "id=3ce2cf82-523f-4846-b15a-19de2a270885, paidAmount=1000"
+    },
+    {
+      "name": "369 收入确认",
+      "status": "✅",
+      "detail": "3 条流水 (40/30/30)"
+    },
+    {
+      "name": "3 笔流水落库",
+      "status": "✅",
+      "detail": "共 3 条，合计 1000.00 CNY"
+    },
+    {
+      "name": "wine_cost_pool 余额",
+      "status": "✅",
+      "detail": "1200"
+    },
+    {
+      "name": "market_ecosystem_pool 余额",
+      "status": "✅",
+      "detail": "900"
+    },
+    {
+      "name": "company_pool 余额",
+      "status": "✅",
+      "detail": "900"
+    },
+    {
+      "name": "记录税务",
+      "status": "✅",
+      "detail": "id=7281bdb5-dcd0-43f4-b466-07188dfa3e0d, amount=130"
+    },
+    {
+      "name": "记录风险事件",
+      "status": "✅",
+      "detail": "id=1a467afb-3949-4728-932a-d377d45fe7b1, score=10, level=low"
+    },
+    {
+      "name": "outbox 事件数",
+      "status": "⚠️",
+      "detail": "0 个事件已记录 (outbox 表可能不存在)"
+    }
+  ],
+  "created": {
+    "userId": "88b6534e-efcb-41d4-a33d-016adaaf8e00",
+    "productId": "c9bdd621-8ec7-408a-b593-abdb77f8c0e9",
+    "orderId": "79e69b5e-c26f-4d0a-90fe-aceb0bbbcfca",
+    "orderNo": "ORD20260701000006",
+    "allocationId": "3ce2cf82-523f-4846-b15a-19de2a270885",
+    "taxRecordId": "7281bdb5-dcd0-43f4-b466-07188dfa3e0d",
+    "riskEventId": "1a467afb-3949-4728-932a-d377d45fe7b1"
+  }
+}
