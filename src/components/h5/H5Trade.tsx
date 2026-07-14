@@ -7,18 +7,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { AlertCircle, CheckCircle2, TrendingUp, TrendingDown, ChevronDown, Copy, Crown, BarChart3, Activity, Loader2, Maximize2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, TrendingUp, TrendingDown, ChevronDown, Copy, Crown, BarChart3, Activity, Loader2 } from 'lucide-react';
 import {
   type Candle,
   type PeriodKey,
   PERIODS,
   sma as ma,
-  fmtPrice,
-  fmtTimeByPeriod,
 } from '@/lib/shared';
 import type { KlineInterval } from '@/lib/market/kline';
 import { PAIR_MAP, TOP20_PAIRS } from '@/lib/h5/top20-pairs';
 import { ConnectionStatus } from './ConnectionStatus';
+import { KLineChart } from './KLineChart';
 import { spotApi } from '@/lib/api/spot';
 import { useTickerData, useKlineData } from '@/hooks/useMarketData';
 
@@ -332,7 +331,7 @@ export default function H5Trade() {
         </div>
       </div>
 
-      {/* K 线图（真实 Binance OHLC） */}
+      {/* K 线图（真实数据） */}
       <KLineChart
         candles={candles}
         ma5={ma5}
@@ -343,11 +342,9 @@ export default function H5Trade() {
         onToggleMA={(k) => setShowMA({ ...showMA, [k]: !showMA[k] })}
         period={period}
         onPeriod={setPeriod}
-        symbol={symbol}
         trendUp={trendUp}
         loading={loading}
         loadError={loadError}
-        status={status}
       />
 
       {/* 下单面板 */}
@@ -522,283 +519,5 @@ function TradeNotice({ children, icon, color }: { children: React.ReactNode; ico
       <span style={{ flexShrink: 0, marginTop: 1 }}>{icon}</span>
       <span>{children}</span>
     </div>
-  );
-}
-
-// =============================================================================
-// KLineChart 子组件
-// =============================================================================
-
-interface KLineProps {
-  candles: Candle[];
-  ma5:  (number | null)[];
-  ma10: (number | null)[];
-  ma20: (number | null)[];
-  ma60: (number | null)[];
-  showMA: { ma5: boolean; ma10: boolean; ma20: boolean; ma60: boolean };
-  onToggleMA: (k: 'ma5' | 'ma10' | 'ma20' | 'ma60') => void;
-  period: PeriodKey;
-  onPeriod: (p: PeriodKey) => void;
-  symbol: string;
-  trendUp: boolean;
-  loading: boolean;
-  loadError: string | null;
-  status: 'connecting' | 'online' | 'offline';
-}
-
-function KLineChart({ candles, ma5, ma10, ma20, ma60, showMA, onToggleMA, period, onPeriod, symbol, trendUp, loading, loadError, status }: KLineProps) {
-  const W = 320, H = 220;
-  const padL = 8, padR = 56, padT = 12, padB = 18;
-  const cw = W - padL - padR;
-  const ch = H - padT - padB;
-  const volH = 36;
-  const priceH = ch - volH - 4;
-
-  const ready = !loading && !loadError && candles.length > 0;
-
-  return (
-    <div
-      style={{
-        background: 'linear-gradient(180deg, rgba(26, 36, 86, 0.55) 0%, rgba(21, 34, 74, 0.70) 100%)',
-        border: '1px solid rgba(148, 163, 184, 0.12)',
-        borderRadius: 16,
-        padding: 12,
-        marginBottom: 12,
-      }}
-    >
-      {/* 顶部：周期切换 + 工具按钮 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 8, overflowX: 'auto' }}>
-        {PERIODS.map((p) => (
-          <button
-            key={p.key}
-            onClick={() => onPeriod(p.key)}
-            style={{
-              fontSize: 11, padding: '3px 10px', borderRadius: 6, cursor: 'pointer',
-              background: period === p.key ? 'rgba(240,185,11,0.20)' : 'rgba(148, 163, 184, 0.05)',
-              border: period === p.key ? '1px solid rgba(240,185,11,0.40)' : '1px solid transparent',
-              color: period === p.key ? '#F0B90B' : '#7B89B8',
-              fontWeight: period === p.key ? 700 : 500,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {p.label}
-          </button>
-        ))}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4 }}>
-          <BarChart3 size={12} color="#7B89B8" style={{ cursor: 'pointer' }} />
-          <Activity size={12} color="#7B89B8" style={{ cursor: 'pointer' }} />
-          <Maximize2 size={12} color="#7B89B8" style={{ cursor: 'pointer' }} />
-        </div>
-      </div>
-
-      {/* MA 指标切换 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, fontSize: 10, color: '#7B89B8' }}>
-        <span>指标：</span>
-        {([
-          { k: 'ma5',  label: 'MA5',  color: '#FCD535' },
-          { k: 'ma10', label: 'MA10', color: '#A78BFA' },
-          { k: 'ma20', label: 'MA20', color: '#38BDF8' },
-          { k: 'ma60', label: 'MA60', color: '#F472B6' },
-        ] as const).map((m) => (
-          <button
-            key={m.k}
-            onClick={() => onToggleMA(m.k as any)}
-            style={{
-              fontSize: 9, padding: '2px 6px', borderRadius: 4, cursor: 'pointer',
-              background: showMA[m.k as keyof typeof showMA] ? `${m.color}25` : 'rgba(148,163,184,0.05)',
-              border: `1px solid ${showMA[m.k as keyof typeof showMA] ? m.color : 'rgba(148,163,184,0.20)'}`,
-              color: showMA[m.k as keyof typeof showMA] ? m.color : '#7B89B8',
-              fontWeight: showMA[m.k as keyof typeof showMA] ? 700 : 500,
-            }}
-          >
-            {m.label}
-          </button>
-        ))}
-      </div>
-
-      {/* K 线 SVG / 骨架屏 / 错误 / 断线 */}
-      {loadError && (
-        <div style={{ padding: 32, textAlign: 'center', color: '#F472B6', fontSize: 12 }}>
-          K 线加载失败：{loadError}
-        </div>
-      )}
-
-      {!loadError && loading && (
-        <div style={{ padding: 32, textAlign: 'center', color: '#7B89B8', fontSize: 12 }}>
-          正在拉取历史 K 线…
-        </div>
-      )}
-
-      {!loadError && !loading && candles.length === 0 && (
-        <div style={{ padding: 32, textAlign: 'center', color: '#7B89B8', fontSize: 12 }}>
-          暂无数据
-        </div>
-      )}
-
-      {ready && (
-        <KLineSvg
-          candles={candles}
-          ma5={ma5} ma10={ma10} ma20={ma20} ma60={ma60}
-          showMA={showMA}
-          period={period}
-          trendUp={trendUp}
-          W={W} H={H} padL={padL} padR={padR} padT={padT} padB={padB}
-          volH={volH} priceH={priceH} cw={cw}
-        />
-      )}
-
-      {/* 底部 K 线数据：开/高/低/收 */}
-      {ready && candles.length > 0 && (() => {
-        const last = candles[candles.length - 1];
-        return (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6, marginTop: 8, fontSize: 9 }}>
-            {[
-              { l: '开',  v: last.open,  c: '#7B89B8' },
-              { l: '高',  v: last.high,  c: '#34D399' },
-              { l: '低',  v: last.low,   c: '#F472B6' },
-              { l: '收',  v: last.close, c: trendUp ? '#34D399' : '#F472B6' },
-            ].map((d) => (
-              <div key={d.l} style={{ background: 'rgba(148,163,184,0.05)', borderRadius: 6, padding: '4px 6px', textAlign: 'center' }}>
-                <div style={{ color: '#7B89B8', fontSize: 8 }}>{d.l}</div>
-                <div style={{ color: d.c, fontWeight: 700, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' }}>{fmtPrice(d.v)}</div>
-              </div>
-            ))}
-          </div>
-        );
-      })()}
-    </div>
-  );
-}
-
-// =============================================================================
-// KLineSvg（独立子组件，K 线数据准备就绪后才挂载）
-// =============================================================================
-
-interface KLineSvgProps {
-  candles: Candle[];
-  ma5:  (number | null)[];
-  ma10: (number | null)[];
-  ma20: (number | null)[];
-  ma60: (number | null)[];
-  showMA: { ma5: boolean; ma10: boolean; ma20: boolean; ma60: boolean };
-  period: PeriodKey;
-  trendUp: boolean;
-  W: number; H: number;
-  padL: number; padR: number; padT: number; padB: number;
-  volH: number; priceH: number; cw: number;
-}
-
-function KLineSvg({ candles, ma5, ma10, ma20, ma60, showMA, period, trendUp, W, H, padL, padR, padT, volH, priceH, cw }: KLineSvgProps) {
-  const highs = candles.map((c) => c.high);
-  const lows  = candles.map((c) => c.low);
-  const maxP = Math.max(...highs);
-  const minP = Math.min(...lows);
-  const padR2 = (maxP - minP) * 0.05 || maxP * 0.005;
-  const yMax = maxP + padR2;
-  const yMin = minP - padR2;
-  const yRange = yMax - yMin || 1;
-
-  const candleW = cw / candles.length;
-  const bodyW = Math.max(candleW * 0.65, 1);
-  const xCenter = (i: number) => padL + i * candleW + candleW / 2;
-  const yPrice  = (p: number) => padT + priceH - ((p - yMin) / yRange) * priceH;
-
-  const maxV = Math.max(...candles.map((c) => c.volume)) || 1;
-  const yVol = (v: number) => padT + priceH + 4 + (volH - (v / maxV) * volH);
-
-  const maPath = (arr: (number | null)[]) => {
-    const segs: string[] = [];
-    let started = false;
-    for (let i = 0; i < arr.length; i++) {
-      const v = arr[i];
-      if (v == null) { started = false; continue; }
-      const x = xCenter(i).toFixed(1);
-      const y = yPrice(v).toFixed(1);
-      segs.push(`${started ? 'L' : 'M'} ${x} ${y}`);
-      started = true;
-    }
-    return segs.join(' ') || '';
-  };
-
-  const priceTicks: number[] = [];
-  for (let i = 0; i <= 4; i++) priceTicks.push(yMin + (yRange * i) / 4);
-
-  const xTickIdxs: number[] = [];
-  for (let i = 0; i < 5; i++) xTickIdxs.push(Math.floor((candles.length - 1) * (i / 4)));
-
-  const last = candles[candles.length - 1];
-  const lastY = yPrice(last.close);
-
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: H, display: 'block' }}>
-      {/* 网格 */}
-      {[0, 1, 2, 3, 4].map((i) => (
-        <line
-          key={i}
-          x1={padL} y1={padT + (priceH * i) / 4}
-          x2={W - padR} y2={padT + (priceH * i) / 4}
-          stroke="rgba(148, 163, 184, 0.08)" strokeWidth="0.5" strokeDasharray="2 2"
-        />
-      ))}
-
-      {/* Y 轴价格 */}
-      {priceTicks.map((p, i) => (
-        <text
-          key={i}
-          x={W - padR + 4}
-          y={yPrice(p) + 3}
-          fontSize="8"
-          fill="#7B89B8"
-          textAnchor="start"
-          fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace"
-        >
-          {fmtPrice(p)}
-        </text>
-      ))}
-
-      {/* 蜡烛 */}
-      {candles.map((c, i) => {
-        const up = c.close >= c.open;
-        const color = up ? '#34D399' : '#F472B6';
-        const top = yPrice(Math.max(c.open, c.close));
-        const bot = yPrice(Math.min(c.open, c.close));
-        const bodyH = Math.max(bot - top, 0.5);
-        return (
-          <g key={i}>
-            <line x1={xCenter(i)} y1={yPrice(c.high)} x2={xCenter(i)} y2={yPrice(c.low)} stroke={color} strokeWidth="0.8" />
-            <rect x={xCenter(i) - bodyW / 2} y={top} width={bodyW} height={bodyH} fill={color} />
-          </g>
-        );
-      })}
-
-      {/* 成交量 */}
-      {candles.map((c, i) => {
-        const up = c.close >= c.open;
-        const color = up ? 'rgba(52,211,153,0.55)' : 'rgba(244,114,182,0.55)';
-        return (
-          <rect key={`v${i}`} x={xCenter(i) - bodyW / 2} y={yVol(c.volume)} width={bodyW} height={(c.volume / maxV) * volH} fill={color} />
-        );
-      })}
-
-      {/* MA 折线 */}
-      {showMA.ma5  && <path d={maPath(ma5)}  fill="none" stroke="#FCD535" strokeWidth="1" />}
-      {showMA.ma10 && <path d={maPath(ma10)} fill="none" stroke="#A78BFA" strokeWidth="1" />}
-      {showMA.ma20 && <path d={maPath(ma20)} fill="none" stroke="#38BDF8" strokeWidth="1" />}
-      {showMA.ma60 && <path d={maPath(ma60)} fill="none" stroke="#F472B6" strokeWidth="1" />}
-
-      {/* 当前价横线 + 标签 */}
-      <line x1={padL} y1={lastY} x2={W - padR} y2={lastY} stroke={trendUp ? '#34D399' : '#F472B6'} strokeWidth="0.6" strokeDasharray="3 2" />
-      <rect x={W - padR + 1} y={lastY - 7} width={padR - 2} height={14} fill={trendUp ? '#34D399' : '#F472B6'} rx="2" />
-      <text x={W - padR + 3} y={lastY + 3} fontSize="9" fill="#0F1B3D" fontWeight="800" textAnchor="start" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">
-        {fmtPrice(last.close)}
-      </text>
-
-      {/* X 轴时间 */}
-      {xTickIdxs.map((i, k) => (
-        <text key={k} x={xCenter(i)} y={H - 4} fontSize="8" fill="#7B89B8" textAnchor="middle">
-          {fmtTimeByPeriod(candles[i].time, period)}
-        </text>
-      ))}
-    </svg>
   );
 }
