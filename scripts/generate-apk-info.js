@@ -22,8 +22,8 @@ function parseApkVersion(apkPath) {
   // 简单方案：从路径或文件名解析版本
   // 若需要从 APK 内部读取，需使用 aapt 工具
   return {
-    version: '1.0.0',
-    versionCode: 1,
+    version: '1.0.3',
+    versionCode: 4,
   };
 }
 
@@ -55,8 +55,8 @@ function main() {
     versionCode,
     fileSize: stat.size,
     fileSizeFormatted: formatFileSize(stat.size),
-    downloadUrl: '/zs-exchange.apk',
-    packageName: 'com.smy.exchange.smy_exchange_mobile',
+    downloadUrl: '/downloads/android/zs-exchange-h5.apk',
+    packageName: 'com.zhongsa.exchange',
     minAndroidVersion: '5.1 (API 22)',
     targetAndroidVersion: '14 (API 34)',
     architecture: ['arm64-v8a', 'armeabi-v7a', 'x86_64'],
