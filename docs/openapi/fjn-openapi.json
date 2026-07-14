@@ -1,0 +1,3036 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "FJN 福建老酒业务服务 API",
+    "version": "1.0.0",
+    "description": "FJN 福建老酒业务 11 个 Service 的完整 REST API 规范。\n\n**覆盖服务**\n- 阶段C+F (7)：Revenue / Referral / Team / Node / Finance / Tax / Risk\n- 阶段I (4)：KYC（含KYB） / Permission（RBAC+ABAC） / Region（3级+限制+IP Geo） / Device（指纹/绑定/风险/挑战）\n\n**鉴权**：JWT Bearer Token，所有 admin 端点需 `admin` 角色。",
+    "contact": {
+      "name": "FJN Development Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3200",
+      "description": "本地开发"
+    },
+    {
+      "url": "https://api.zs-exchange.com",
+      "description": "生产环境"
+    }
+  ],
+  "tags": [
+    {
+      "name": "revenue",
+      "description": "Revenue Service (C+F) - 369 分账"
+    },
+    {
+      "name": "referral",
+      "description": "Referral Service (C+F) - 推荐奖励"
+    },
+    {
+      "name": "team",
+      "description": "Team Service (C+F) - 团队奖励"
+    },
+    {
+      "name": "node",
+      "description": "Node Service (C+F) - 节点奖励"
+    },
+    {
+      "name": "finance",
+      "description": "Finance Service (G) - 财务账本"
+    },
+    {
+      "name": "tax",
+      "description": "Tax Service (G) - 税务服务"
+    },
+    {
+      "name": "risk",
+      "description": "Risk Service (G) - 风控服务"
+    },
+    {
+      "name": "kyc",
+      "description": "KYC/KYB Service (I) - 个人+企业合规身份"
+    },
+    {
+      "name": "permission",
+      "description": "Permission Service (I) - RBAC+ABAC 权限"
+    },
+    {
+      "name": "region",
+      "description": "Region Service (I) - 3 级地区 + 限制 + IP Geo"
+    },
+    {
+      "name": "device",
+      "description": "Device Service (I) - 设备指纹/绑定/风险/挑战"
+    }
+  ],
+  "paths": {
+    "/api/v1/fjn/revenue": {
+      "get": {
+        "tags": [
+          "revenue"
+        ],
+        "summary": "revenue 服务的 GET 端点（6 个 action）",
+        "description": "**revenue 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `list` — 列出分账 (👤 user)\n- `detail` — 分账详情 (👤 user)\n- `pool-list` — 列出分账池 (👤 user)\n- `ledger-list` — 列出账本流水 (👤 user)\n- `stats` — 统计概览 (👤 user)\n- `preview-369` — 预览 369 分账 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "revenue_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "list",
+                "detail",
+                "pool-list",
+                "ledger-list",
+                "stats",
+                "preview-369"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list, pool-list, ledger-list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list, pool-list, ledger-list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "revenue"
+        ],
+        "summary": "revenue 服务的 POST 端点（3 个 action）",
+        "description": "**revenue 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `allocate` — 触发分账 (🔒 admin)\n- `settle` — 结算分账 (🔒 admin)\n- `reverse` — 冲销分账 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "revenue_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": [
+              "admin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "allocate",
+                "settle",
+                "reverse"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "revenue 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/referral": {
+      "get": {
+        "tags": [
+          "referral"
+        ],
+        "summary": "referral 服务的 GET 端点（4 个 action）",
+        "description": "**referral 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `list` — 列出推荐奖励 (👤 user)\n- `detail` — 推荐奖励详情 (👤 user)\n- `rules` — 列出推荐规则 (👤 user)\n- `stats` — 推荐统计 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "referral_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "list",
+                "detail",
+                "rules",
+                "stats"
+              ]
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "referral"
+        ],
+        "summary": "referral 服务的 POST 端点（3 个 action）",
+        "description": "**referral 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `create` — 创建推荐奖励 (🔒 admin)\n- `approve` — 审核推荐奖励 (🔒 admin)\n- `settle` — 结算推荐奖励 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "referral_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": [
+              "admin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "create",
+                "approve",
+                "settle"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "referral 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/team": {
+      "get": {
+        "tags": [
+          "team"
+        ],
+        "summary": "team 服务的 GET 端点（7 个 action）",
+        "description": "**team 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `list` — 列出团队奖励 (👤 user)\n- `detail` — 团队奖励详情 (👤 user)\n- `structure-list` — 列出团队结构 (👤 user)\n- `stats` — 团队统计 (👤 user)\n- `records` — 服务记录 (👤 user)\n- `reward-list` — 团队奖励列表 (👤 user)\n- `reward-detail` — 团队奖励详情 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "team_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "list",
+                "detail",
+                "structure-list",
+                "stats",
+                "records",
+                "reward-list",
+                "reward-detail"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {reward-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list, structure-list, reward-list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list, structure-list, reward-list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "team"
+        ],
+        "summary": "team 服务的 POST 端点（6 个 action）",
+        "description": "**team 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `create-structure` — 创建团队结构 (🔒 admin)\n- `create` — 创建团队奖励 (🔒 admin)\n- `approve` — 审核团队奖励 (🔒 admin)\n- `submit-record` — 提交服务记录 (🔒 admin)\n- `distribute` — 分发团队奖励 (🔒 admin)\n- `settle` — 结算团队奖励 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "team_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": [
+              "admin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "create-structure",
+                "create",
+                "approve",
+                "submit-record",
+                "distribute",
+                "settle"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "team 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/node": {
+      "get": {
+        "tags": [
+          "node"
+        ],
+        "summary": "node 服务的 GET 端点（14 个 action）",
+        "description": "**node 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `list` — 列出节点奖励 (👤 user)\n- `detail` — 节点奖励详情 (👤 user)\n- `rules` — 列出节点规则 (👤 user)\n- `rule-detail` — 节点规则详情 (👤 user)\n- `settlements` — 节点结算 (👤 user)\n- `settlement-detail` — 节点结算详情 (👤 user)\n- `claims` — 节点认领 (👤 user)\n- `claim-detail` — 节点认领详情 (👤 user)\n- `events` — 节点事件 (👤 user)\n- `event-detail` — 节点事件详情 (👤 user)\n- `stats` — 节点统计 (👤 user)\n- `scores` — 节点分数 (👤 user)\n- `score-detail` — 节点分数详情 (👤 user)\n- `history` — 节点历史 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "node_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "list",
+                "detail",
+                "rules",
+                "rule-detail",
+                "settlements",
+                "settlement-detail",
+                "claims",
+                "claim-detail",
+                "events",
+                "event-detail",
+                "stats",
+                "scores",
+                "score-detail",
+                "history"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {rule-detail, settlement-detail, claim-detail, event-detail, score-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "node"
+        ],
+        "summary": "node 服务的 POST 端点（13 个 action）",
+        "description": "**node 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `rule-create` — 创建节点规则 (🔒 admin)\n- `rule-update` — 更新节点规则 (🔒 admin)\n- `rule-archive` — 归档节点规则 (🔒 admin)\n- `event-record` — 记录节点事件 (🔒 admin)\n- `reward-create` — 创建节点奖励 (🔒 admin)\n- `reward-approve` — 审核节点奖励 (🔒 admin)\n- `reward-settle` — 结算节点奖励 (🔒 admin)\n- `claim-create` — 创建节点认领 (🔒 admin)\n- `claim-approve` — 审核节点认领 (🔒 admin)\n- `claim-reject` — 驳回节点认领 (🔒 admin)\n- `settlement-create` — 创建节点结算 (🔒 admin)\n- `settlement-pay` — 支付节点结算 (🔒 admin)\n- `score-update` — 更新节点分数 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "node_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": [
+              "admin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rule-create",
+                "rule-update",
+                "rule-archive",
+                "event-record",
+                "reward-create",
+                "reward-approve",
+                "reward-settle",
+                "claim-create",
+                "claim-approve",
+                "claim-reject",
+                "settlement-create",
+                "settlement-pay",
+                "score-update"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "node 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/finance": {
+      "get": {
+        "tags": [
+          "finance"
+        ],
+        "summary": "finance 服务的 GET 端点（9 个 action）",
+        "description": "**finance 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `account-list` — 列出账户 (👤 user)\n- `account-detail` — 账户详情 (👤 user)\n- `ledger-list` — 列出流水 (👤 user)\n- `ledger-detail` — 流水详情 (👤 user)\n- `settlement-list` — 列出结算单 (👤 user)\n- `settlement-detail` — 结算单详情 (👤 user)\n- `summary-account` — 账户汇总 (👤 user)\n- `summary-ledger` — 流水汇总 (👤 user)\n- `pools` — 369 池子列表 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "finance_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "account-list",
+                "account-detail",
+                "ledger-list",
+                "ledger-detail",
+                "settlement-list",
+                "settlement-detail",
+                "summary-account",
+                "summary-ledger",
+                "pools"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {account-detail, ledger-detail, settlement-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {account-list, ledger-list, settlement-list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {account-list, ledger-list, settlement-list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "finance"
+        ],
+        "summary": "finance 服务的 POST 端点（14 个 action）",
+        "description": "**finance 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `account-create` — 创建账户 (🔒 admin)\n- `account-freeze` — 冻结账户 (🔒 admin)\n- `account-unfreeze` — 解冻账户 (🔒 admin)\n- `account-close` — 关闭账户 (🔒 admin)\n- `ledger-post` — 入账 (🔒 admin)\n- `ledger-reverse` — 冲销流水 (🔒 admin)\n- `ledger-void` — 作废流水 (🔒 admin)\n- `revenue-recognize-369` — 369 收入确认 (🔒 admin)\n- `pools-initialize` — 初始化 369 池子 (🔒 admin)\n- `settlement-create` — 创建结算单 (🔒 admin)\n- `settlement-add-item` — 添加结算条目 (🔒 admin)\n- `settlement-approve` — 审核结算单 (🔒 admin)\n- `settlement-pay` — 支付结算单 (🔒 admin)\n- `settlement-cancel` — 取消结算单 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "finance_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": [
+              "admin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "account-create",
+                "account-freeze",
+                "account-unfreeze",
+                "account-close",
+                "ledger-post",
+                "ledger-reverse",
+                "ledger-void",
+                "revenue-recognize-369",
+                "pools-initialize",
+                "settlement-create",
+                "settlement-add-item",
+                "settlement-approve",
+                "settlement-pay",
+                "settlement-cancel"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "finance 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/tax": {
+      "get": {
+        "tags": [
+          "tax"
+        ],
+        "summary": "tax 服务的 GET 端点（7 个 action）",
+        "description": "**tax 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `rule-list` — 列出规则 (👤 user)\n- `rule-detail` — 规则详情 (👤 user)\n- `rule-active` — 激活规则 (👤 user)\n- `record-list` — 列出记录 (👤 user)\n- `record-detail` — 记录详情 (👤 user)\n- `report-list` — 列出报表 (👤 user)\n- `report-detail` — 报表详情 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "tax_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rule-list",
+                "rule-detail",
+                "rule-active",
+                "record-list",
+                "record-detail",
+                "report-list",
+                "report-detail"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {rule-detail, record-detail, report-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {rule-list, record-list, report-list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {rule-list, record-list, report-list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "tax"
+        ],
+        "summary": "tax 服务的 POST 端点（13 个 action）",
+        "description": "**tax 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `calculate` — 计算税额 (👤 user)\n- `rule-create` — 创建规则 (🔒 admin)\n- `rule-update` — 更新规则 (🔒 admin)\n- `rule-archive` — 归档规则 (🔒 admin)\n- `rule-deactivate` — 停用规则 (🔒 admin)\n- `record-create` — 记录税务 (🔒 admin)\n- `record-mark-paid` — 标记记录已支付 (🔒 admin)\n- `record-adjust` — 调整记录 (🔒 admin)\n- `record-reverse` — 冲销记录 (🔒 admin)\n- `report-create` — 创建报表 (🔒 admin)\n- `report-submit` — 提交报表 (🔒 admin)\n- `report-mark-paid` — 标记报表已支付 (🔒 admin)\n- `report-reject` — 驳回报表 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "tax_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "calculate",
+                "rule-create",
+                "rule-update",
+                "rule-archive",
+                "rule-deactivate",
+                "record-create",
+                "record-mark-paid",
+                "record-adjust",
+                "record-reverse",
+                "report-create",
+                "report-submit",
+                "report-mark-paid",
+                "report-reject"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "tax 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/risk": {
+      "get": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "risk 服务的 GET 端点（13 个 action）",
+        "description": "**risk 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `rule-list` — 列出规则 (👤 user)\n- `rule-detail` — 规则详情 (👤 user)\n- `rule-by-code` — 按 code 查规则 (👤 user)\n- `event-list` — 列出事件 (👤 user)\n- `event-detail` — 事件详情 (👤 user)\n- `case-list` — 列出案件 (👤 user)\n- `case-detail` — 案件详情 (👤 user)\n- `score-list` — 用户分数历史 (👤 user)\n- `score-latest` — 最新分数 (👤 user)\n- `blacklist-list` — 列出黑名单 (👤 user)\n- `blacklist-check` — 检查黑名单 (👤 user)\n- `device-list` — 列出设备 (👤 user)\n- `device-by-fingerprint` — 按指纹查设备 (👤 user)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "risk_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rule-list",
+                "rule-detail",
+                "rule-by-code",
+                "event-list",
+                "event-detail",
+                "case-list",
+                "case-detail",
+                "score-list",
+                "score-latest",
+                "blacklist-list",
+                "blacklist-check",
+                "device-list",
+                "device-by-fingerprint"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {rule-detail, event-detail, case-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "description": "资源 Code（action ∈ {rule-by-code} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {rule-list, event-list, case-list, score-list, blacklist-list, device-list} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {rule-list, event-list, case-list, score-list, blacklist-list, device-list} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "risk"
+        ],
+        "summary": "risk 服务的 POST 端点（18 个 action）",
+        "description": "**risk 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `rule-create` — 创建规则 (🔒 admin)\n- `rule-update` — 更新规则 (🔒 admin)\n- `rule-enable` — 启用规则 (🔒 admin)\n- `rule-disable` — 禁用规则 (🔒 admin)\n- `event-record` — 记录事件 (🔒 admin)\n- `event-review` — 审核事件 (🔒 admin)\n- `event-resolve` — 解决事件 (🔒 admin)\n- `event-escalate` — 升级事件 (🔒 admin)\n- `case-open` — 开案 (🔒 admin)\n- `case-assign` — 分派案件 (🔒 admin)\n- `case-resolve` — 解决案件 (🔒 admin)\n- `case-close` — 关闭案件 (🔒 admin)\n- `case-reopen` — 重开案件 (🔒 admin)\n- `score-update` — 更新分数 (🔒 admin)\n- `blacklist-add` — 添加黑名单 (🔒 admin)\n- `blacklist-remove` — 移除黑名单 (🔒 admin)\n- `blacklist-expire` — 扫描过期黑名单 (🔒 admin)\n- `device-register` — 注册设备 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "risk_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": [
+              "admin"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "rule-create",
+                "rule-update",
+                "rule-enable",
+                "rule-disable",
+                "event-record",
+                "event-review",
+                "event-resolve",
+                "event-escalate",
+                "case-open",
+                "case-assign",
+                "case-resolve",
+                "case-close",
+                "case-reopen",
+                "score-update",
+                "blacklist-add",
+                "blacklist-remove",
+                "blacklist-expire",
+                "device-register"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "risk 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/kyc": {
+      "get": {
+        "tags": [
+          "kyc"
+        ],
+        "summary": "kyc 服务的 GET 端点（9 个 action）",
+        "description": "**kyc 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `list` — 列出 KYC (👤 user)\n- `detail` — KYC 详情 (👤 user)\n- `my-status` — 我的 KYC (👤 user)\n- `summary` — KYC 汇总 (🔒 admin)\n- `list-kyb` — 列出 KYB (👤 user)\n- `kyb-detail` — KYB 详情 (👤 user)\n- `my-kyb-status` — 我的 KYB (👤 user)\n- `summary-kyb` — KYB 汇总 (🔒 admin)\n- `review-logs` — 审核日志 (🔒 admin)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "kyc_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "list",
+                "detail",
+                "my-status",
+                "summary",
+                "list-kyb",
+                "kyb-detail",
+                "my-kyb-status",
+                "summary-kyb",
+                "review-logs"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {kyb-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list, list-kyb, review-logs} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list, list-kyb, review-logs} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "kyc"
+        ],
+        "summary": "kyc 服务的 POST 端点（11 个 action）",
+        "description": "**kyc 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `submit` — 提交 KYC (👤 user)\n- `approve` — 通过 KYC (🔒 admin)\n- `reject` — 拒绝 KYC (🔒 admin)\n- `manual-review` — 转人工复核 (🔒 admin)\n- `expire` — 标记 KYC 过期 (🔒 admin)\n- `resubmit` — 重新提交 KYC (👤 user)\n- `submit-kyb` — 提交 KYB (👤 user)\n- `approve-kyb` — 通过 KYB (🔒 admin)\n- `reject-kyb` — 拒绝 KYB (🔒 admin)\n- `manual-review-kyb` — 转人工复核 KYB (🔒 admin)\n- `expire-kyb` — 标记 KYB 过期 (🔒 admin)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "kyc_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "submit",
+                "approve",
+                "reject",
+                "manual-review",
+                "expire",
+                "resubmit",
+                "submit-kyb",
+                "approve-kyb",
+                "reject-kyb",
+                "manual-review-kyb",
+                "expire-kyb"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "kyc 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/permission": {
+      "get": {
+        "tags": [
+          "permission"
+        ],
+        "summary": "permission 服务的 GET 端点（13 个 action）",
+        "description": "**permission 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `roles` — 列出角色 (👤 user)\n- `role-detail` — 角色详情 (👤 user)\n- `role-by-code` — 按 code 查角色 (👤 user)\n- `permissions` — 列出权限 (👤 user)\n- `permission-detail` — 权限详情 (👤 user)\n- `permission-by-code` — 按 code 查权限 (👤 user)\n- `role-permissions` — 角色权限列表 (👤 user)\n- `user-roles` — 用户角色列表 (👤 user)\n- `user-effective-roles` — 用户有效角色 (👤 user)\n- `user-permissions` — 用户直授权限 (👤 user)\n- `policies` — 列出 ABAC 策略 (👤 user)\n- `access-logs` — 访问日志 (🔒 admin)\n- `summary` — RBAC+ABAC 汇总 (🔒 admin)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "permission_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "roles",
+                "role-detail",
+                "role-by-code",
+                "permissions",
+                "permission-detail",
+                "permission-by-code",
+                "role-permissions",
+                "user-roles",
+                "user-effective-roles",
+                "user-permissions",
+                "policies",
+                "access-logs",
+                "summary"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {role-detail, permission-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "description": "资源 Code（action ∈ {role-by-code, permission-by-code} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "roleId",
+            "in": "query",
+            "required": false,
+            "description": "角色 ID（action ∈ {role-permissions} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "required": false,
+            "description": "用户 ID（action ∈ {user-effective-roles, user-permissions} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {roles, permissions, user-roles, policies, access-logs} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {roles, permissions, user-roles, policies, access-logs} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "permission"
+        ],
+        "summary": "permission 服务的 POST 端点（17 个 action）",
+        "description": "**permission 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `create-role` — 创建角色 (🔒 admin)\n- `update-role` — 更新角色 (🔒 admin)\n- `role-status` — 角色状态变更 (🔒 admin)\n- `create-permission` — 创建权限 (🔒 admin)\n- `update-permission` — 更新权限 (🔒 admin)\n- `disable-permission` — 禁用权限 (🔒 admin)\n- `grant-role-permission` — 给角色授权 (🔒 admin)\n- `revoke-role-permission` — 撤销角色权限 (🔒 admin)\n- `assign-user-role` — 分配用户角色 (🔒 admin)\n- `revoke-user-role` — 撤销用户角色 (🔒 admin)\n- `grant-user-permission` — 直授用户权限 (🔒 admin)\n- `revoke-user-permission` — 撤销用户直授权限 (🔒 admin)\n- `create-policy` — 创建 ABAC 策略 (🔒 admin)\n- `update-policy` — 更新 ABAC 策略 (🔒 admin)\n- `disable-policy` — 禁用 ABAC 策略 (🔒 admin)\n- `evaluate-access` — 访问评估 (👤 user)\n- `log-access` — 记录访问日志 (👤 user)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "permission_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "create-role",
+                "update-role",
+                "role-status",
+                "create-permission",
+                "update-permission",
+                "disable-permission",
+                "grant-role-permission",
+                "revoke-role-permission",
+                "assign-user-role",
+                "revoke-user-role",
+                "grant-user-permission",
+                "revoke-user-permission",
+                "create-policy",
+                "update-policy",
+                "disable-policy",
+                "evaluate-access",
+                "log-access"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "permission 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/region": {
+      "get": {
+        "tags": [
+          "region"
+        ],
+        "summary": "region 服务的 GET 端点（9 个 action）",
+        "description": "**region 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `list-regions` — 列出地区 (👤 user)\n- `region-detail` — 地区详情 (👤 user)\n- `region-by-code` — 按 code 查地区 (👤 user)\n- `country-tree` — 国家树 (👤 user)\n- `descendants` — 下属地区 (👤 user)\n- `path-to-root` — 到根路径 (👤 user)\n- `list-restrictions` — 列出地区限制 (👤 user)\n- `list-ip-geos` — 列出 IP Geo 段 (🔒 admin)\n- `summary` — 地区汇总 (🔒 admin)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "region_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "list-regions",
+                "region-detail",
+                "region-by-code",
+                "country-tree",
+                "descendants",
+                "path-to-root",
+                "list-restrictions",
+                "list-ip-geos",
+                "summary"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {region-detail, descendants, path-to-root} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "description": "资源 Code（action ∈ {region-by-code} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "countryCode",
+            "in": "query",
+            "required": false,
+            "description": "国家代码（action=country-tree 时必填，如 CN）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list-regions, list-restrictions, list-ip-geos} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list-regions, list-restrictions, list-ip-geos} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "region"
+        ],
+        "summary": "region 服务的 POST 端点（9 个 action）",
+        "description": "**region 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `create-region` — 创建地区 (🔒 admin)\n- `update-region` — 更新地区 (🔒 admin)\n- `region-status` — 地区状态变更 (🔒 admin)\n- `add-restriction` — 添加地区限制 (🔒 admin)\n- `restriction-status` — 限制状态变更 (🔒 admin)\n- `check-restriction` — 实时限制校验 (👤 user)\n- `register-ip-geo` — 注册 IP 段 (🔒 admin)\n- `ip-geo-status` — IP Geo 状态变更 (🔒 admin)\n- `resolve-ip` — 解析 IP (👤 user)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "region_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "create-region",
+                "update-region",
+                "region-status",
+                "add-restriction",
+                "restriction-status",
+                "check-restriction",
+                "register-ip-geo",
+                "ip-geo-status",
+                "resolve-ip"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "region 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fjn/device": {
+      "get": {
+        "tags": [
+          "device"
+        ],
+        "summary": "device 服务的 GET 端点（9 个 action）",
+        "description": "**device 服务** 提供的所有 GET 端点。\n\n**可用 actions：**\n- `fingerprint-detail` — 指纹详情 (👤 user)\n- `fingerprint-by-hash` — 按 hash 查指纹 (👤 user)\n- `list` — 列出用户设备 (👤 user)\n- `device-detail` — 设备详情 (👤 user)\n- `list-blacklist` — 列出黑名单 (🔒 admin)\n- `blacklist-by-fingerprint` — 按指纹查黑名单 (👤 user)\n- `list-risk-assessments` — 列出风险评估 (👤 user)\n- `list-challenges` — 列出挑战 (👤 user)\n- `summary` — 设备汇总 (🔒 admin)\n\n**注意**：根据所选 action，部分 query 参数（如 id/code/roleId/userId 等）为必填。",
+        "operationId": "device_get_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fingerprint-detail",
+                "fingerprint-by-hash",
+                "list",
+                "device-detail",
+                "list-blacklist",
+                "blacklist-by-fingerprint",
+                "list-risk-assessments",
+                "list-challenges",
+                "summary"
+              ]
+            }
+          },
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "description": "资源 ID（action ∈ {fingerprint-detail, device-detail} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "hash",
+            "in": "query",
+            "required": false,
+            "description": "指纹 hash（action ∈ {fingerprint-by-hash} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fingerprint",
+            "in": "query",
+            "required": false,
+            "description": "设备指纹（action ∈ {blacklist-by-fingerprint} 时必填）",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "页码（action ∈ {list, list-blacklist, list-risk-assessments, list-challenges} 时使用，默认 1）",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "description": "每页数量（action ∈ {list, list-blacklist, list-risk-assessments, list-challenges} 时使用，默认 20）",
+            "schema": {
+              "type": "integer",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "device"
+        ],
+        "summary": "device 服务的 POST 端点（22 个 action）",
+        "description": "**device 服务** 提供的所有 POST 端点。\n\n**可用 actions：**\n- `fingerprint` — 创建或更新指纹 (👤 user)\n- `create-fingerprint` — 强制创建指纹 (👤 user)\n- `update-fingerprint-stats` — 更新指纹统计 (👤 user)\n- `bind` — 绑定设备 (👤 user)\n- `heartbeat` — 心跳 (👤 user)\n- `trust` — 信任设备 (👤 user)\n- `untrust` — 取消信任 (👤 user)\n- `block` — 锁定设备 (🔒 admin)\n- `unblock` — 解除锁定 (🔒 admin)\n- `revoke` — 吊销设备 (👤 user)\n- `unbind` — 解绑设备 (👤 user)\n- `add-blacklist` — 加入黑名单 (🔒 admin)\n- `remove-blacklist` — 移除黑名单 (🔒 admin)\n- `check-blacklist` — 实时黑名单检查 (👤 user)\n- `assess-risk` — 触发风险评估 (👤 user)\n- `dismiss-risk` — 忽略风险评估 (🔒 admin)\n- `action-risk` — 处置风险评估 (🔒 admin)\n- `issue-challenge` — 签发挑战 (👤 user)\n- `verify-challenge` — 验证挑战 (👤 user)\n- `fail-challenge` — 标记挑战失败 (👤 user)\n- `cancel-challenge` — 取消挑战 (👤 user)\n- `expire-challenge` — 标记挑战过期 (👤 user)\n\n**注意**：请求体字段依 action 而异，详见对应 service 的源代码路由文件。",
+        "operationId": "device_post_aggregated",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "action",
+            "in": "query",
+            "required": true,
+            "description": "操作类型",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "fingerprint",
+                "create-fingerprint",
+                "update-fingerprint-stats",
+                "bind",
+                "heartbeat",
+                "trust",
+                "untrust",
+                "block",
+                "unblock",
+                "revoke",
+                "unbind",
+                "add-blacklist",
+                "remove-blacklist",
+                "check-blacklist",
+                "assess-risk",
+                "dismiss-risk",
+                "action-risk",
+                "issue-challenge",
+                "verify-challenge",
+                "fail-challenge",
+                "cancel-challenge",
+                "expire-challenge"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "device 服务的 POST 请求体（具体字段依 action 而异，参考 action 列表与对应 service 文档）"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/StandardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "请求参数错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "未认证",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "权限不足",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "资源不存在",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "服务器错误",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/responses/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Token，从 /api/v1/auth/login 获取"
+      }
+    },
+    "schemas": {
+      "StandardResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "example": "OK"
+          },
+          "data": {
+            "type": "object",
+            "description": "业务数据"
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "message"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "code": {
+            "type": "integer",
+            "example": 400
+          },
+          "message": {
+            "type": "string",
+            "example": "Bad request"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "example": "FINANCE_ACCOUNT_NOT_FOUND"
+              },
+              "context": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "required": [
+          "success",
+          "code",
+          "message"
+        ]
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "default": 1,
+            "description": "页码"
+          },
+          "pageSize": {
+            "type": "integer",
+            "default": 20,
+            "description": "每页数量"
+          }
+        }
+      }
+    },
+    "responses": {
+      "StandardResponse": {
+        "description": "标准响应",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": true
+                },
+                "code": {
+                  "type": "integer",
+                  "example": 0
+                },
+                "message": {
+                  "type": "string",
+                  "example": "OK"
+                },
+                "data": {
+                  "type": "object",
+                  "description": "业务数据"
+                }
+              },
+              "required": [
+                "success",
+                "code",
+                "message"
+              ]
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "description": "错误响应",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "success": {
+                  "type": "boolean",
+                  "example": false
+                },
+                "code": {
+                  "type": "integer",
+                  "example": 400
+                },
+                "message": {
+                  "type": "string",
+                  "example": "Bad request"
+                },
+                "data": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "example": "FINANCE_ACCOUNT_NOT_FOUND"
+                    },
+                    "context": {
+                      "type": "object"
+                    }
+                  }
+                }
+              },
+              "required": [
+                "success",
+                "code",
+                "message"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "parameters": {}
+  }
+}
