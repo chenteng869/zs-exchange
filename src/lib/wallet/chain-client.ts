@@ -35,7 +35,7 @@ import type { NodeHealth } from './rpc-client';
 // =============================================================================
 
 /** 链标识 */
-export type ChainId = 'ETH' | 'BSC' | 'POLYGON' | 'ARBITRUM' | 'SOLANA' | 'TRON' | 'BITCOIN';
+export type ChainId = 'ETH' | 'BSC' | 'POLYGON' | 'ARBITRUM' | 'OPTIMISM' | 'BASE' | 'SOLANA' | 'TRON' | 'BITCOIN';
 
 /** 代币引用 */
 export interface TokenRef {
@@ -171,19 +171,30 @@ export interface TronAdapterOptions {
 /**
  * 将 EvmChainService 适配到 ChainClient。
  * 不修改 EvmChainService 内部实现，仅做类型 / 字段映射。
+ *
+ * 2026-07-11 升级：支持 5 条 EVM 链（ETH/BSC/Polygon/Arbitrum/Optimism）
  */
 export class EvmChainClientAdapter implements ChainClient {
   public readonly chain: ChainId;
   private readonly service: EvmChainService;
-  /** EVM 原币符号：ETH/BNB */
-  private readonly nativeSymbol: 'ETH' | 'BNB';
+  /** EVM 原币符号 */
+  private readonly nativeSymbol: 'ETH' | 'BNB' | 'MATIC';
   private readonly nativeDecimals: number = 18;
 
-  constructor(chain: 'ETH' | 'BSC', opts: EvmAdapterOptions = {}) {
+  constructor(chain: 'ETH' | 'BSC' | 'POLYGON' | 'ARBITRUM' | 'OPTIMISM', opts: EvmAdapterOptions = {}) {
     this.chain = chain;
-    this.nativeSymbol = chain === 'ETH' ? 'ETH' : 'BNB';
+    // 原币符号映射
+    if (chain === 'POLYGON') {
+      this.nativeSymbol = 'MATIC';
+    } else if (chain === 'BSC') {
+      this.nativeSymbol = 'BNB';
+    } else {
+      this.nativeSymbol = 'ETH';
+    }
+    // EVM service 内部 chain 仅接受 ETH/BSC，其他链用 ETH 走 JSON-RPC 协议
+    const serviceChain: 'ETH' | 'BSC' = (chain === 'BSC') ? 'BSC' : 'ETH';
     this.service = new EvmChainService({
-      chain,
+      chain: serviceChain,
       apiKey: opts.apiKey,
       endpoints: opts.endpoints,
       fetchImpl: opts.fetchImpl,
@@ -373,7 +384,7 @@ export class TronChainClientAdapter implements ChainClient {
 function mapEvmNativeBalance(
   b: EvmNativeBalance,
   chain: ChainId,
-  symbol: 'ETH' | 'BNB',
+  symbol: 'ETH' | 'BNB' | 'MATIC',
   decimals: number,
 ): ChainBalance {
   return {

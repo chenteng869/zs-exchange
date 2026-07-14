@@ -66,11 +66,128 @@ export function infuraEthUrl(apiKey: string): string {
   return `https://mainnet.infura.io/v3/${apiKey}`;
 }
 
-/**
- * Alchemy 专用端点（需 API key）
- */
+// =============================================================================
+// Alchemy 专用端点（需 API key）
+// 2026-07-11 升级：全部 RPC 优先走 Alchemy，公共节点仅作 fallback
+// =============================================================================
+
+/** Ethereum Mainnet */
+export function alchemyEthUrl(apiKey: string): string {
+  return `https://eth-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** BSC Mainnet */
 export function alchemyBscUrl(apiKey: string): string {
   return `https://bsc-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** Polygon Mainnet */
+export function alchemyPolygonUrl(apiKey: string): string {
+  return `https://polygon-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** Arbitrum Mainnet */
+export function alchemyArbitrumUrl(apiKey: string): string {
+  return `https://arb-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** Optimism Mainnet */
+export function alchemyOptimismUrl(apiKey: string): string {
+  return `https://opt-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** Base Mainnet */
+export function alchemyBaseUrl(apiKey: string): string {
+  return `https://base-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** Solana Mainnet */
+export function alchemySolanaUrl(apiKey: string): string {
+  return `https://solana-mainnet.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** Sepolia Testnet */
+export function alchemySepoliaUrl(apiKey: string): string {
+  return `https://eth-sepolia.g.alchemy.com/v2/${apiKey}`;
+}
+
+/** 通用 Alchemy 链名 → URL */
+export function alchemyUrl(chainKey: string, apiKey: string): string {
+  const k = chainKey.toLowerCase();
+  if (k === 'eth' || k === 'ethereum') return alchemyEthUrl(apiKey);
+  if (k === 'bsc' || k === 'bnb') return alchemyBscUrl(apiKey);
+  if (k === 'polygon' || k === 'matic') return alchemyPolygonUrl(apiKey);
+  if (k === 'arbitrum' || k === 'arb') return alchemyArbitrumUrl(apiKey);
+  if (k === 'optimism' || k === 'opt') return alchemyOptimismUrl(apiKey);
+  if (k === 'base') return alchemyBaseUrl(apiKey);
+  if (k === 'solana' || k === 'sol') return alchemySolanaUrl(apiKey);
+  if (k === 'sepolia') return alchemySepoliaUrl(apiKey);
+  throw new Error(`Unknown chain key: ${chainKey}`);
+}
+
+// =============================================================================
+// Alchemy 端点集（按链）
+// =============================================================================
+
+/**
+ * ETH 端点（Alchemy → PublicNode → 其他）
+ * 2026-07-11 升级：Alchemy 优先级最高，公共节点作 fallback
+ */
+export function ethEndpoints(apiKey?: string): string[] {
+  const list: string[] = [];
+  if (apiKey) list.push(alchemyEthUrl(apiKey));
+  list.push(...ETH_PUBLIC_RPCS);
+  return list;
+}
+
+/**
+ * BSC 端点（Alchemy → 官方 → 公共节点）
+ */
+export function bscEndpoints(apiKey?: string): string[] {
+  const list: string[] = [];
+  if (apiKey) list.push(alchemyBscUrl(apiKey));
+  list.push(...BSC_PUBLIC_RPCS);
+  return list;
+}
+
+/**
+ * Polygon 端点（Alchemy 优先）
+ */
+export function polygonEndpoints(apiKey?: string): string[] {
+  const list: string[] = [];
+  if (apiKey) list.push(alchemyPolygonUrl(apiKey));
+  list.push('https://polygon-bor-rpc.publicnode.com', 'https://polygon.llamarpc.com');
+  return list;
+}
+
+/**
+ * Arbitrum 端点（Alchemy 优先）
+ */
+export function arbitrumEndpoints(apiKey?: string): string[] {
+  const list: string[] = [];
+  if (apiKey) list.push(alchemyArbitrumUrl(apiKey));
+  list.push('https://arbitrum-one-rpc.publicnode.com', 'https://arb1.arbitrum.io/rpc');
+  return list;
+}
+
+/**
+ * Optimism 端点（Alchemy 优先）
+ */
+export function optimismEndpoints(apiKey?: string): string[] {
+  const list: string[] = [];
+  if (apiKey) list.push(alchemyOptimismUrl(apiKey));
+  list.push('https://optimism-rpc.publicnode.com', 'https://mainnet.optimism.io');
+  return list;
+}
+
+/**
+ * Base 端点（Alchemy 优先）
+ */
+export function baseEndpoints(apiKey?: string): string[] {
+  const list: string[] = [];
+  if (apiKey) list.push(alchemyBaseUrl(apiKey));
+  list.push('https://base-rpc.publicnode.com', 'https://mainnet.base.org');
+  return list;
 }
 
 // =============================================================================

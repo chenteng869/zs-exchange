@@ -42,6 +42,7 @@ import {
   Signer,
   AdapterConfig,
 } from './chain-adapter.interface';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 import {
   TronRpcClient,
   TronRpcError,
@@ -820,8 +821,17 @@ export class TronAdapter implements ChainAdapter {
       let txObj: any;
 
       try {
-        txObj = JSON.parse(signedTransaction);
-      } catch {
+        txObj = safeJsonParse<any>(signedTransaction, {
+          context: 'tron-signed-tx',
+          maxBytes: 1 * 1024 * 1024,
+          silent: true,
+          defaultValue: null,
+        });
+        if (!txObj) {
+          throw new TronRpcError('INVALID_TX', 'Invalid signed transaction format');
+        }
+      } catch (err) {
+        if (err instanceof TronRpcError) throw err;
         throw new TronRpcError('INVALID_TX', 'Invalid signed transaction format');
       }
 

@@ -103,10 +103,13 @@ export const SOLANA_NETWORKS: Record<string, SolanaChainConfig> = {
     symbol: 'SOL',
     decimals: 9,
     rpcUrls: [
+      // 2026-07-11 升级：Alchemy Solana RPC 优先
+      process.env.ALCHEMY_SOLANA_RPC_URL
+        || (process.env.ALCHEMY_API_KEY ? `https://solana-mainnet.g.alchemy.com/v2/${process.env.ALCHEMY_API_KEY}` : ''),
+      // 公共节点 fallback
       'https://api.mainnet-beta.solana.com',
       'https://solana-api.projectserum.com',
-      'https://rpc.ankr.com/solana',
-    ],
+    ].filter(Boolean) as string[],
     blockExplorerUrl: 'https://explorer.solana.com',
     isTestnet: false,
     commitment: 'confirmed',

@@ -41,6 +41,7 @@ import {
   Signer,
   AdapterConfig,
 } from './chain-adapter.interface';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 // ============================================================================
 // Bitcoin 链配置
@@ -1412,7 +1413,14 @@ export class BitcoinAdapter implements ChainAdapter {
 
   parsePSBT(psbt: string): Record<string, unknown> {
     try {
-      return JSON.parse(Buffer.from(psbt, 'base64').toString('utf8'));
+      const decoded = Buffer.from(psbt, 'base64').toString('utf8');
+      const parsed = safeJsonParse<Record<string, unknown>>(decoded, {
+        context: 'bitcoin-psbt',
+        maxBytes: 1 * 1024 * 1024,
+        silent: true,
+        defaultValue: null,
+      });
+      return parsed ?? { raw: psbt };
     } catch {
       return { raw: psbt };
     }

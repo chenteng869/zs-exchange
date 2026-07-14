@@ -26,10 +26,6 @@ import {
 } from './chain-adapter.interface';
 import { ChainAdapterFactory } from './chain-adapter.factory';
 import {
-  EVMAdapter,
-  EVM_CHAINS,
-} from './evm-adapter';
-import {
   SolanaAdapter,
   SOLANA_NETWORKS,
 } from './solana-adapter';
@@ -105,26 +101,11 @@ export type {
 } from './chain-adapter.factory';
 
 // ============================================================================
-// EVM 适配器
+// EVM 适配器 (Solana-first: 已废弃，2026-07-01 起不再使用)
 // ============================================================================
 
-export {
-  EVMAdapter,
-  EVM_CHAINS,
-  weiToEther,
-  etherToWei,
-  toChecksumAddress,
-  encodeERC20Transfer,
-  encodeERC20BalanceOf,
-  decodeERC20Balance,
-  decodeERC20Symbol,
-  decodeERC20Name,
-  decodeERC20Decimals,
-} from './evm-adapter';
-
-export type {
-  EVMChainConfig,
-} from './evm-adapter';
+// EVM 适配器已归档到 docs/_trash/2026-07-01-solana-first-重构/
+// 保留注释用于历史追踪；如需重新启用 EVM，需恢复 evm-adapter.ts
 
 // ============================================================================
 // Solana 适配器
@@ -210,8 +191,7 @@ export default {
   // 工厂
   Factory: ChainAdapterFactory,
 
-  // 适配器
-  EVMAdapter,
+  // 适配器 (Solana-first: EVM 适配器已废弃)
   SolanaAdapter,
   BitcoinAdapter,
   TronAdapter,
@@ -224,8 +204,7 @@ export default {
   FeeLevel,
   AddressType,
 
-  // 网络配置
-  EVM_CHAINS,
+  // 网络配置（Solana-first：EVM_CHAINS 已废弃，迁移到 Solana 网络）
   SOLANA_NETWORKS,
   BITCOIN_NETWORKS,
   TRON_NETWORKS,

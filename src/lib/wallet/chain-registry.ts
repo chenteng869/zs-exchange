@@ -46,6 +46,9 @@ export interface CreateDefaultRegistryOptions {
     eth?: string[];
     bsc?: string[];
     tron?: string[];
+    polygon?: string[];
+    arbitrum?: string[];
+    optimism?: string[];
   };
   fetchImpl?: typeof fetch;
   timeoutMs?: number;
@@ -180,7 +183,9 @@ export class ChainRegistry {
 // 工厂函数
 // =============================================================================
 
-/** 默认 API key 提供器（可被环境变量覆盖） */
+/**
+ * 默认 API key 提供器（可被环境变量覆盖）
+ */
 function getEnvApiKey(name: string): string | undefined {
   if (typeof process !== 'undefined' && process.env) {
     return process.env[name] || process.env[`REACT_APP_${name}`] || process.env[`NEXT_PUBLIC_${name}`];
@@ -189,19 +194,31 @@ function getEnvApiKey(name: string): string | undefined {
 }
 
 /**
+ * 统一 Alchemy API Key（2026-07-11 升级）
+ *  - 一把 key 访问 12+ 链
+ *  - 优先级：ALCHEMY_API_KEY > ETH_API_KEY > INFURA_API_KEY
+ */
+function getAlchemyApiKey(): string | undefined {
+  return getEnvApiKey('ALCHEMY_API_KEY')
+    || getEnvApiKey('ETH_API_KEY')
+    || getEnvApiKey('INFURA_API_KEY');
+}
+
+/**
  * 创建默认 ChainRegistry
- * 默认注册：ETH + BSC + TRON
- * 暂不实现 SOL / BTC（保留扩展）
+ * 2026-07-11 升级：注册 5 条 EVM 链（ETH/BSC/Polygon/Arbitrum/Optimism）+ TRON
+ * 全部优先 Alchemy → 公共节点 fallback
  */
 export function createDefaultRegistry(opts: CreateDefaultRegistryOptions = {}): ChainRegistry {
   const registry = new ChainRegistry();
   const apiKeys = opts.apiKeys || {};
   const endpoints = opts.endpoints || {};
+  const alchemyKey = getAlchemyApiKey();
 
-  // ETH
+  // ETH（Alchemy → PublicNode → 其他）
   if (!endpoints.eth || endpoints.eth.length > 0) {
     registry.register('ETH', new EvmChainClientAdapter('ETH', {
-      apiKey: apiKeys.eth || getEnvApiKey('ETH_API_KEY') || getEnvApiKey('INFURA_API_KEY'),
+      apiKey: apiKeys.eth || alchemyKey,
       endpoints: endpoints.eth,
       fetchImpl: opts.fetchImpl,
       timeoutMs: opts.timeoutMs,
@@ -209,10 +226,10 @@ export function createDefaultRegistry(opts: CreateDefaultRegistryOptions = {}): 
     }));
   }
 
-  // BSC
+  // BSC（Alchemy → 官方 → 公共节点）
   if (!endpoints.bsc || endpoints.bsc.length > 0) {
     registry.register('BSC', new EvmChainClientAdapter('BSC', {
-      apiKey: apiKeys.bsc || getEnvApiKey('BSC_API_KEY') || getEnvApiKey('ALCHEMY_API_KEY'),
+      apiKey: apiKeys.bsc || alchemyKey,
       endpoints: endpoints.bsc,
       fetchImpl: opts.fetchImpl,
       timeoutMs: opts.timeoutMs,
@@ -220,7 +237,40 @@ export function createDefaultRegistry(opts: CreateDefaultRegistryOptions = {}): 
     }));
   }
 
-  // TRON
+  // Polygon（2026-07-11 新增）
+  if (!endpoints.polygon || endpoints.polygon.length > 0) {
+    registry.register('POLYGON', new EvmChainClientAdapter('POLYGON', {
+      apiKey: alchemyKey,
+      endpoints: endpoints.polygon,
+      fetchImpl: opts.fetchImpl,
+      timeoutMs: opts.timeoutMs,
+      fallbackToDemo: opts.fallbackToDemo,
+    }));
+  }
+
+  // Arbitrum（2026-07-11 新增）
+  if (!endpoints.arbitrum || endpoints.arbitrum.length > 0) {
+    registry.register('ARBITRUM', new EvmChainClientAdapter('ARBITRUM', {
+      apiKey: alchemyKey,
+      endpoints: endpoints.arbitrum,
+      fetchImpl: opts.fetchImpl,
+      timeoutMs: opts.timeoutMs,
+      fallbackToDemo: opts.fallbackToDemo,
+    }));
+  }
+
+  // Optimism（2026-07-11 新增）
+  if (!endpoints.optimism || endpoints.optimism.length > 0) {
+    registry.register('OPTIMISM', new EvmChainClientAdapter('OPTIMISM', {
+      apiKey: alchemyKey,
+      endpoints: endpoints.optimism,
+      fetchImpl: opts.fetchImpl,
+      timeoutMs: opts.timeoutMs,
+      fallbackToDemo: opts.fallbackToDemo,
+    }));
+  }
+
+  // TRON（保持原有 TronGrid 兼容，未纳入 Alchemy）
   if (!endpoints.tron || endpoints.tron.length > 0) {
     registry.register('TRON', new TronChainClientAdapter({
       apiKey: apiKeys.tron || getEnvApiKey('TRON_API_KEY') || getEnvApiKey('TRONGRID_API_KEY'),
