@@ -1,0 +1,17 @@
+# Q03-6.8-FJN line ending policy
+# Keep FJN source, scripts, OpenAPI specs, reports, and Swagger UI assets as LF.
+# Scoped to FJN range only - do NOT extend to *.ts globally because non-FJN
+# dirty changes (326 modified + 313 untracked outside FJN scope) are out of scope.
+
+src/lib/fjn/** text eol=lf
+src/app/api/v1/fjn/** text eol=lf
+src/app/admin/fujian/** text eol=lf
+
+scripts/fjn-*.ts text eol=lf
+scripts/generate-fjn-openapi.ts text eol=lf
+scripts/generate-complete-openapi.ts text eol=lf
+
+docs/openapi/*.json text eol=lf
+docs/reports/fjn-*.json text eol=lf
+
+public/swagger-ui/** text eol=lf
