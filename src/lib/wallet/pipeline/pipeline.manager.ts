@@ -289,7 +289,7 @@ export class PipelineManager {
         request: { id: pipelineId } as TransactionRequest,
         totalRetries: 0,
         stageDurations: {} as Record<PipelineStatus, number>,
-      } as PipelineResult;
+      } as unknown as PipelineResult;
     }
 
     return this.execute(context.request, { timeoutMs: context.timeoutMs });

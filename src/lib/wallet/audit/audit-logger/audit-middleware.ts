@@ -26,6 +26,7 @@ import {
   AuditError,
 } from '../audit.types';
 import { AuditLogger, LogEntryOptions } from './audit-logger';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 // ============================================================================
 // 中间件配置接口

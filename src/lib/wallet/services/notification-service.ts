@@ -21,6 +21,8 @@
  *  - Webhook
  */
 
+import { safeFetch } from '@/lib/security/ssrf-guard';  // P0-3: SSRF 防护
+
 // ============================================================================
 // 类型定义
 // ============================================================================
@@ -477,7 +479,8 @@ export class NotificationService {
       if (!webhook.events.includes(notification.type)) continue;
 
       try {
-        await fetch(webhook.url, {
+        // P0-3: SSRF 防护 - webhook URL 由用户配置，必须阻断私有 IP
+        await safeFetch(webhook.url, `webhook:${webhook.name}`, {
           method: webhook.method,
           headers: {
             'Content-Type': 'application/json',

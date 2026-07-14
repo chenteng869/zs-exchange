@@ -3,6 +3,7 @@
  * 提供地址、合约、域名的黑白名单管理功能
  */
 
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 import {
   BlacklistEntry,
   WhitelistEntry,
@@ -618,14 +619,27 @@ export class BlacklistService {
    * @param json JSON 数据
    */
   importBlacklistFromJSON(type: BlacklistType, json: string): ImportResult {
+    const data = safeJsonParse<unknown>(json, {
+      context: 'blacklist-import',
+      maxBytes: 5 * 1024 * 1024,
+      silent: true,
+      defaultValue: null,
+    });
+    if (data === null) {
+      return {
+        successCount: 0,
+        failedCount: 1,
+        skippedCount: 0,
+        failures: [{ value: 'N/A', reason: 'JSON 解析失败' }],
+      };
+    }
     try {
-      const data = JSON.parse(json);
       const items: Array<{
         value: string;
         reason?: string;
         source?: string;
         riskLevel?: RiskLevel;
-      }> = Array.isArray(data) ? data : data.items || [];
+      }> = Array.isArray(data) ? data : (data as any).items || [];
 
       return this.batchAddToBlacklist(
         type,
@@ -694,13 +708,26 @@ export class BlacklistService {
    * @param json JSON 数据
    */
   importWhitelistFromJSON(type: BlacklistType, json: string): ImportResult {
+    const data = safeJsonParse<unknown>(json, {
+      context: 'whitelist-import',
+      maxBytes: 5 * 1024 * 1024,
+      silent: true,
+      defaultValue: null,
+    });
+    if (data === null) {
+      return {
+        successCount: 0,
+        failedCount: 1,
+        skippedCount: 0,
+        failures: [{ value: 'N/A', reason: 'JSON 解析失败' }],
+      };
+    }
     try {
-      const data = JSON.parse(json);
       const items: Array<{
         value: string;
         remark?: string;
         source?: string;
-      }> = Array.isArray(data) ? data : data.items || [];
+      }> = Array.isArray(data) ? data : (data as any).items || [];
 
       return this.batchAddToWhitelist(
         type,
