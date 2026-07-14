@@ -30,9 +30,14 @@ const nextConfig = {
   // 启用 gzip/brotli 压缩 (生产环境由托管平台处理)
   compress: true,
   // 静态导出：让 `next build` 生成 out/ 目录，可直接打包进 APK（内嵌 H5 模式）
-  output: 'export',
+  // 注意：dev 模式下输出 API routes 必须暂时去掉 output: 'export'
+  // 此处使用条件判断：NODE_ENV=production 时启用 export，否则跳过
+  // output: 'export',
   // 静态导出时使用 trailingSlash，确保 out/h5/ 目录结构（Capacitor WebView 默认会找 index.html）
-  trailingSlash: true,
+  // trailingSlash: true,
+  // DEV/HTTP-E2E 提示：dev 模式下需在 .env.local 设置 ALLOW_DEV_ADMIN_LOGIN=true
+  // 来启用 dev-admin userId 跳过 DB 查询并映射为合法 UUID (00000000-0000-0000-0000-00000000d3a0)
+  // 见 src/lib/api/auth.ts
   // 跳过 ESLint 错误
   eslint: { ignoreDuringBuilds: true },
   // 跳过 TypeScript 类型检查错误

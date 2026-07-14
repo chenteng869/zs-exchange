@@ -3,6 +3,12 @@
   publish = ".next"
 
 [[redirects]]
+  from = "/zs-exchange.apk"
+  to = "/downloads/android/zs-exchange-h5.apk"
+  status = 301
+  force = true
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200

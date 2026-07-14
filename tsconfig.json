@@ -34,7 +34,8 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "capacitor.config.ts",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "programs/sdk/src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
