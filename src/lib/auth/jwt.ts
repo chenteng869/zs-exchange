@@ -17,6 +17,9 @@
 // 配置
 // ============================================================================
 
+import crypto from 'crypto';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
+
 const DEV_JWT_SECRET = 'zs-exchange-dev-secret-local-only';
 const DEV_JWT_REFRESH_SECRET = 'zs-exchange-dev-refresh-secret-local-only';
 const JWT_ISSUER = 'zs-exchange';
@@ -157,6 +160,7 @@ export async function generateAccessToken(payload: TokenPayload): Promise<string
   const secret = new TextEncoder().encode(getServerSecret('JWT_SECRET', DEV_JWT_SECRET));
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(crypto.randomUUID()) // P0-9: 唯一 ID（防止重复 token 冲突）
     .setIssuedAt()
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)
@@ -202,6 +206,7 @@ export async function generateRefreshToken(payload: TokenPayload): Promise<strin
   const secret = new TextEncoder().encode(getServerSecret('JWT_REFRESH_SECRET', DEV_JWT_REFRESH_SECRET));
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(crypto.randomUUID()) // P0-9: 唯一 ID（防止重复 token 冲突）
     .setIssuedAt()
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)
@@ -270,7 +275,7 @@ export async function refreshJWT(
 
   const payload: Record<string, unknown> = {};
   for (const key of Object.keys(claims)) {
-    if (key !== 'exp' && key !== 'iat') {
+    if (key !== 'exp' && key !== 'iat' && key !== 'jti') {
       payload[key] = claims[key];
     }
   }
@@ -280,6 +285,7 @@ export async function refreshJWT(
 
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
+    .setJti(crypto.randomUUID()) // P0-9: 唯一 ID
     .setIssuedAt()
     .setIssuer(JWT_ISSUER)
     .setAudience(JWT_AUDIENCE)

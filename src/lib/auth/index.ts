@@ -36,3 +36,16 @@ export * from './twofa';
 
 // 会话
 export * from './session';
+
+// MFA 多因素认证（P0-7）
+export {
+  mfaService,
+  MfaService,
+  totp,
+  verifyTotp,
+  generateSecret as generateMfaSecret,
+  generateBackupCodes,
+  hashBackupCode,
+  generateOtpauthUri,
+} from './mfa-service';
+export type { MfaEnrollResult, MfaVerifyResult } from './mfa-service';
