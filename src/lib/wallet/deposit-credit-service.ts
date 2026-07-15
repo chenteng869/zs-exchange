@@ -1,6 +1,11 @@
 import { createHash } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import {
+  allocateManagedDepositAddress,
+  DepositAddressProviderError,
+  isDevDeterministicAddressModeEnabled,
+} from './deposit-address-provider';
 
 export type DepositStatus = 'pending' | 'confirming' | 'confirmed' | 'credited';
 
@@ -162,34 +167,59 @@ export class DepositCreditService {
     });
 
     if (existing) {
-      return { address: existing, currency: walletCurrency, chain, reused: true };
+      return { address: existing, currency: walletCurrency, chain, reused: true, source: 'existing' as const };
     }
 
-    const addressValue = deterministicAddress(input.userId, walletCurrency.symbol, chain);
-
     try {
-      const address = await prisma.walletAddress.create({
-        data: {
-          userId: input.userId,
-          currency: { connect: { id: walletCurrency.id } },
-          address: addressValue,
-          tag: chain,
-          status: 'active',
-        },
+      const result = await allocateManagedDepositAddress({
+        prisma,
+        userId: input.userId,
+        currency: walletCurrency,
+        chain,
       });
 
-      return { address, currency: walletCurrency, chain, reused: false };
+      return {
+        address: result.address,
+        currency: walletCurrency,
+        chain,
+        reused: result.reused,
+        source: result.source,
+      };
     } catch (error) {
-      if (!isUniqueError(error)) {
+      if (!(error instanceof DepositAddressProviderError)) {
         throw error;
       }
 
-      const address = await prisma.walletAddress.findUnique({ where: { address: addressValue } });
-      if (!address || address.userId !== input.userId || address.currencyId !== walletCurrency.id) {
-        throw new DepositCreditError('ADDRESS_COLLISION', 'Generated deposit address is already assigned');
+      if (!isDevDeterministicAddressModeEnabled()) {
+        throw new DepositCreditError(error.code, error.message);
       }
 
-      return { address, currency: walletCurrency, chain, reused: true };
+      const addressValue = deterministicAddress(input.userId, walletCurrency.symbol, chain);
+
+      try {
+        const address = await prisma.walletAddress.create({
+          data: {
+            userId: input.userId,
+            currency: { connect: { id: walletCurrency.id } },
+            address: addressValue,
+            tag: chain,
+            status: 'active',
+          },
+        });
+
+        return { address, currency: walletCurrency, chain, reused: false, source: 'deterministic-dev' as const };
+      } catch (createError) {
+        if (!isUniqueError(createError)) {
+          throw createError;
+        }
+
+        const address = await prisma.walletAddress.findUnique({ where: { address: addressValue } });
+        if (!address || address.userId !== input.userId || address.currencyId !== walletCurrency.id) {
+          throw new DepositCreditError('ADDRESS_COLLISION', 'Generated dev deposit address is already assigned');
+        }
+
+        return { address, currency: walletCurrency, chain, reused: true, source: 'deterministic-dev' as const };
+      }
     }
   }
 
