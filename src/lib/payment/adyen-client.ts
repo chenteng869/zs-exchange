@@ -21,6 +21,7 @@
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { logger as defaultLogger } from '../logger';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 import {
   type CardBrand,
   type PaymentProvider,
@@ -218,7 +219,10 @@ export class AdyenClient {
             { status: resp.status, body: text },
           );
         }
-        return (await JSON.parse(text)) as T;
+        return safeJsonParse<T>(text, {
+          context: 'adyen-post-response',
+          maxBytes: 10 * 1024 * 1024,
+        }) as T;
       } catch (err) {
         lastErr = err;
         if (
@@ -443,10 +447,12 @@ export class AdyenClient {
     if (!this.hmacKey) {
       return { valid: false, code: 'KEY_MISSING' };
     }
-    let parsed: any;
-    try {
-      parsed = JSON.parse(rawBody);
-    } catch {
+    const parsed = safeJsonParse<any>(rawBody, {
+      context: 'adyen-webhook-body',
+      maxBytes: 10 * 1024 * 1024,
+      silent: true,
+    });
+    if (!parsed) {
       return { valid: false, code: 'INVALID_JSON' };
     }
     const items = parsed?.notificationItems ?? [];

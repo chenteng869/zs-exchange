@@ -21,6 +21,7 @@
 
 import { createHmac, timingSafeEqual } from 'crypto';
 import { logger as defaultLogger } from '../logger';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 import {
   type CardBrand,
   type CardInfo,
@@ -222,7 +223,10 @@ export class StripeClient {
             { status: resp.status, body: text },
           );
         }
-        return (await JSON.parse(text)) as T;
+        return safeJsonParse<T>(text, {
+          context: 'stripe-post-response',
+          maxBytes: 10 * 1024 * 1024,
+        }) as T;
       } catch (err) {
         lastErr = err;
         if (
@@ -280,7 +284,10 @@ export class StripeClient {
             { status: resp.status, body: text },
           );
         }
-        return (await JSON.parse(text)) as T;
+        return safeJsonParse<T>(text, {
+          context: 'stripe-get-response',
+          maxBytes: 10 * 1024 * 1024,
+        }) as T;
       } catch (err) {
         lastErr = err;
         if (err instanceof StripeApiError && err.code === 'UNAUTHORIZED') throw err;
@@ -609,12 +616,12 @@ export class StripeClient {
       }
     }
     if (!matched) return { valid: false, code: 'SIGNATURE_INVALID' };
-    let event: any = undefined;
-    try {
-      event = JSON.parse(rawBody);
-    } catch {
-      return { valid: true, code: 'INVALID_JSON' };
-    }
+    const event = safeJsonParse<any>(rawBody, {
+      context: 'stripe-webhook-body',
+      maxBytes: 10 * 1024 * 1024,
+      silent: true,
+    });
+    if (!event) return { valid: true, code: 'INVALID_JSON' };
     return { valid: true, event };
   }
 
