@@ -22,6 +22,7 @@ import {
   type MoonPayTransactionManager,
   type MoonPayWebhookPayload,
 } from './transaction-manager';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 // =============================================================================
 // 类型定义
@@ -91,15 +92,17 @@ export async function handleMoonPayWebhook(
   }
 
   // 2. 解析 payload
-  let payload: any;
-  try {
-    payload = JSON.parse(rawBody);
-  } catch (err) {
+  const payload = safeJsonParse<MoonPayWebhookPayload>(rawBody, {
+    context: 'moonpay-webhook',
+    maxBytes: 2 * 1024 * 1024, // 2MB
+    silent: true,
+  });
+  if (!payload) {
     return {
       ok: false,
       processed: 0,
       events: [],
-      errors: [`Invalid JSON: ${(err as Error).message}`],
+      errors: ['Invalid JSON: failed to parse webhook body'],
     };
   }
 
@@ -108,16 +111,17 @@ export async function handleMoonPayWebhook(
   //    兼容两种格式：
   //      { type: 'transactionCreated', data: [{ ... }] }
   //      { type: 'transactionCreated', ... }
-  const items: any[] = Array.isArray(payload?.data)
-    ? payload.data
+  const rawPayload = payload as unknown as { data?: any; type?: string };
+  const items: any[] = Array.isArray(rawPayload?.data)
+    ? rawPayload.data
     : payload
-      ? [payload]
+      ? [payload as any]
       : [];
 
   // 4. 逐条处理
   for (const item of items) {
     try {
-      const normalized = normalizeMoonPayWebhook(item, payload?.type);
+      const normalized = normalizeMoonPayWebhook(item, rawPayload?.type);
       if (!normalized.externalTransactionId) {
         errors.push(`[SKIP] webhook missing externalTransactionId: ${JSON.stringify(item).slice(0, 100)}`);
         continue;
