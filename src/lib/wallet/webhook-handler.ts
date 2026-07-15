@@ -15,6 +15,7 @@
 
 import { verifyAlchemySignature, WebhookSignatureError } from './webhook-verifier';
 import type { DepositMonitor, WebhookPayload, DepositEvent } from './deposit-monitor';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 export interface HandleAlchemyWebhookResult {
   ok: boolean;
@@ -72,15 +73,17 @@ export async function handleAlchemyWebhook(
   }
 
   // 2. 解析 payload
-  let payload: WebhookPayload;
-  try {
-    payload = JSON.parse(rawBody) as WebhookPayload;
-  } catch (err) {
+  const payload = safeJsonParse<WebhookPayload>(rawBody, {
+    context: 'alchemy-webhook',
+    maxBytes: 10 * 1024 * 1024, // 10MB for batched webhooks
+    silent: true,
+  });
+  if (!payload) {
     return {
       ok: false,
       processed: 0,
       events: [],
-      errors: [`Invalid JSON: ${(err as Error).message}`],
+      errors: ['Invalid JSON: failed to parse webhook body'],
     };
   }
 
