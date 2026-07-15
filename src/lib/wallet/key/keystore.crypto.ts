@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { EncryptedPayload } from './key.types';
 import { WalletKeyErrors } from './key.errors';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 export class KeystoreCrypto {
   private readonly keyLength = 32;
@@ -52,8 +53,14 @@ export class KeystoreCrypto {
   decryptSecret(encryptedPayload: string, password: string): string {
     try {
       const payload: EncryptedPayload = typeof encryptedPayload === 'string'
-        ? JSON.parse(encryptedPayload)
+        ? safeJsonParse<EncryptedPayload>(encryptedPayload, {
+            context: 'keystore-decrypt',
+            maxBytes: 64 * 1024,
+            silent: true,
+            defaultValue: null,
+          }) as EncryptedPayload
         : encryptedPayload;
+      if (!payload) throw WalletKeyErrors.DECRYPT_FAILED();
 
       const salt = Buffer.from(payload.salt, 'hex');
       const iv = Buffer.from(payload.iv, 'hex');

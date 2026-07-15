@@ -34,7 +34,6 @@ import {
 } from './key.types';
 import { WalletKeyErrors } from './key.errors';
 import { keystoreCrypto } from './keystore.crypto';
-import { EvmSigner } from './evm-signer';
 import { SolanaSigner } from './solana-signer';
 import { BitcoinSigner } from './bitcoin-signer';
 import { TronSigner } from './tron-signer';
@@ -44,11 +43,13 @@ import { fromSeed, deriveChild } from '../core/hd-wallet';
 import { toChecksumAddress } from '../core/private-key';
 import { Keypair, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 export class KeyService {
   private readonly keyMaterials: Map<string, KeyMaterialRecord> = new Map();
   private readonly auditLogs: SignAuditLogEntry[] = [];
-  private evmSignerCache: Map<number, EvmSigner> = new Map();
+  // Solana-first: EVM 签名器已废弃
+  // private evmSignerCache: Map<number, EvmSigner> = new Map();
   private solanaSigner: SolanaSigner = new SolanaSigner();
   private bitcoinSignerCache: Map<string, BitcoinSigner> = new Map();
   private tronSigner: TronSigner = new TronSigner();
@@ -278,153 +279,38 @@ export class KeyService {
     };
   }
 
+  /**
+   * ⚠️ Solana-first 架构：EVM 已废弃
+   */
   async signEvmMessage(input: SignMessageInput): Promise<SignResult> {
-    const riskAssessment = await this.evaluateSignatureRisk({
-      walletId: input.walletId,
-      userId: input.userId,
-      address: input.address,
-      chainType: input.chainType,
-      signType: 'message',
-    });
-
-    if (!riskAssessment.allowed && riskAssessment.action === 'reject') {
-      throw WalletKeyErrors.SIGN_REJECTED_BY_RISK(riskAssessment.reasons.join('; '));
-    }
-
-    try {
-      const account = await this.deriveEvmAddress(input.walletId, input.password);
-      const signer = this.getEvmSigner(1);
-      const result = await signer.signMessage(input, account.privateKey);
-
-      await this.recordAuditLog({
-        walletId: input.walletId,
-        userId: input.userId,
-        address: input.address,
-        chainType: input.chainType,
-        signType: 'message',
-        riskScore: riskAssessment.riskScore,
-        riskLevel: riskAssessment.riskLevel,
-        action: riskAssessment.action,
-        success: true,
-      });
-
-      return result;
-    } catch (error) {
-      await this.recordAuditLog({
-        walletId: input.walletId,
-        userId: input.userId,
-        address: input.address,
-        chainType: input.chainType,
-        signType: 'message',
-        riskScore: riskAssessment.riskScore,
-        riskLevel: riskAssessment.riskLevel,
-        action: riskAssessment.action,
-        success: false,
-        errorCode: 'EVM_SIGN_FAILED',
-      });
-      throw error;
-    }
+    void input;
+    throw new Error(
+      'EVM is deprecated under Solana-first architecture. ' +
+      'Use signSolanaMessage or signSolanaTransaction. ' +
+      'See: docs/工业级最终方案：Solana-first 统一生态架构.md §0'
+    );
   }
 
+  /**
+   * ⚠️ Solana-first 架构：EVM 已废弃
+   */
   async signEvmTypedData(input: SignTypedDataInput): Promise<SignResult> {
-    const riskAssessment = await this.evaluateSignatureRisk({
-      walletId: input.walletId,
-      userId: input.userId,
-      address: input.address,
-      chainType: input.chainType,
-      signType: 'typed_data',
-      payload: input.message,
-    });
-
-    if (!riskAssessment.allowed && riskAssessment.action === 'reject') {
-      throw WalletKeyErrors.SIGN_REJECTED_BY_RISK(riskAssessment.reasons.join('; '));
-    }
-
-    try {
-      const account = await this.deriveEvmAddress(input.walletId, input.password);
-      const signer = this.getEvmSigner(1);
-      const result = await signer.signTypedData(input, account.privateKey);
-
-      await this.recordAuditLog({
-        walletId: input.walletId,
-        userId: input.userId,
-        address: input.address,
-        chainType: input.chainType,
-        signType: 'typed_data',
-        riskScore: riskAssessment.riskScore,
-        riskLevel: riskAssessment.riskLevel,
-        action: riskAssessment.action,
-        success: true,
-      });
-
-      return result;
-    } catch (error) {
-      await this.recordAuditLog({
-        walletId: input.walletId,
-        userId: input.userId,
-        address: input.address,
-        chainType: input.chainType,
-        signType: 'typed_data',
-        riskScore: riskAssessment.riskScore,
-        riskLevel: riskAssessment.riskLevel,
-        action: riskAssessment.action,
-        success: false,
-        errorCode: 'EVM_TYPED_DATA_SIGN_FAILED',
-      });
-      throw error;
-    }
+    void input;
+    throw new Error(
+      'EVM typed data signing is deprecated under Solana-first architecture. ' +
+      'Use Solana signing. See: docs/工业级最终方案：Solana-first 统一生态架构.md §0'
+    );
   }
 
+  /**
+   * ⚠️ Solana-first 架构：EVM 已废弃
+   */
   async signEvmTransaction(input: SignEvmTransactionInput): Promise<SignResult> {
-    const riskAssessment = await this.evaluateSignatureRisk({
-      walletId: input.walletId,
-      userId: input.userId,
-      address: input.address,
-      chainType: 'evm',
-      signType: 'transaction',
-      toAddress: input.tx.to,
-      amount: input.tx.value,
-      payload: input.tx,
-    });
-
-    if (!riskAssessment.allowed && riskAssessment.action === 'reject') {
-      throw WalletKeyErrors.SIGN_REJECTED_BY_RISK(riskAssessment.reasons.join('; '));
-    }
-
-    try {
-      const account = await this.deriveEvmAddress(input.walletId, input.password);
-      const signer = this.getEvmSigner(input.tx.chainId);
-      const result = await signer.signTransaction(input, account.privateKey);
-
-      await this.recordAuditLog({
-        walletId: input.walletId,
-        userId: input.userId,
-        address: input.address,
-        chainType: 'evm',
-        signType: 'transaction',
-        riskScore: riskAssessment.riskScore,
-        riskLevel: riskAssessment.riskLevel,
-        action: riskAssessment.action,
-        success: true,
-        txHash: result.rawTransaction,
-      });
-
-      return result;
-    } catch (error) {
-      await this.recordAuditLog({
-        walletId: input.walletId,
-        userId: input.userId,
-        address: input.address,
-        chainType: 'evm',
-        signType: 'transaction',
-        riskScore: riskAssessment.riskScore,
-        riskLevel: riskAssessment.riskLevel,
-        action: riskAssessment.action,
-        success: false,
-        errorCode: 'EVM_TX_SIGN_FAILED',
-      });
-      throw error;
-    }
+    void input;
+    throw new Error(
+      'EVM transaction signing is deprecated under Solana-first architecture. ' +
+      'Use signSolanaTransaction. See: docs/工业级最终方案：Solana-first 统一生态架构.md §0'
+    );
   }
 
   async signSolanaTransaction(input: SignSolanaTransactionInput): Promise<SignResult> {
@@ -894,18 +780,22 @@ export class KeyService {
       }
 
       if (input.backupType === 'keystore') {
-        try {
-          JSON.parse(input.backupData);
-          return {
-            valid: true,
-            matched: input.backupData === (keyMaterial.encryptedMnemonic || keyMaterial.encryptedPrivateKey),
-          };
-        } catch {
+        const parsed = safeJsonParse<unknown>(input.backupData, {
+          context: 'wallet-keystore-backup',
+          maxBytes: 1 * 1024 * 1024,
+          silent: true,
+          defaultValue: null,
+        });
+        if (parsed === null) {
           return {
             valid: false,
             matched: false,
           };
         }
+        return {
+          valid: true,
+          matched: input.backupData === (keyMaterial.encryptedMnemonic || keyMaterial.encryptedPrivateKey),
+        };
       }
 
       throw WalletKeyErrors.BACKUP_VERIFICATION_FAILED('Unsupported backup type');
@@ -1278,11 +1168,15 @@ export class KeyService {
     return `audit_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   }
 
-  private getEvmSigner(chainId: number): EvmSigner {
-    if (!this.evmSignerCache.has(chainId)) {
-      this.evmSignerCache.set(chainId, new EvmSigner(chainId));
-    }
-    return this.evmSignerCache.get(chainId)!;
+  // Solana-first: EVM 签名器已废弃，方法保留作为占位
+  // private getEvmSigner(chainId: number): EvmSigner {
+  //   if (!this.evmSignerCache.has(chainId)) {
+  //     this.evmSignerCache.set(chainId, new EvmSigner(chainId));
+  //   }
+  //   return this.evmSignerCache.get(chainId)!;
+  // }
+  private getEvmSigner(_chainId: number): never {
+    throw new Error('EVM signer is deprecated in Solana-first architecture (2026-07-01)');
   }
 
   private derivePath(root: any, path: string): any {
