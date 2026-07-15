@@ -1,14 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { success, badRequest, conflict, internalError, unauthorized } from '@/lib/api/response';
+import { success, badRequest, conflict, internalError, unauthorized, error as errorResponse } from '@/lib/api/response';
 import { userRepository } from '@/repositories/user.repository';
 import { hashPassword, verifyPassword, generateReferralCode } from '@/lib/auth/password';
-import { generateTokenPair, verifyRefreshToken } from '@/lib/auth/jwt';
+import { verifyRefreshToken, generateTokenPair } from '@/lib/auth/jwt';
 import { sessionRepository } from '@/repositories/session.repository';
 import { auditLoginLogRepository } from '@/repositories/audit.repository';
 import { userDidRepository } from '@/repositories/user-did.repository';
 import { withRateLimit } from '@/lib/api/middleware';
 import { getClientIp, getUserAgent } from '@/lib/api/auth';
 import { DidSolService } from '@/modules/did-identity/core/methods/did-sol.service';
+import { logger } from '@/lib/logger';
+import {
+  setAuthCookies,
+  setAccessTokenCookie,
+  clearAuthCookies,
+  getRefreshToken,
+} from '@/lib/auth/cookie';
+import {
+  createSession,
+  rotateRefreshToken,
+  logoutSession,
+  RefreshRotationError,
+  detectAbnormalRotation,
+} from '@/lib/auth/refresh-rotation';
 
 export async function POST(req: NextRequest, { params }: { params: { action: string } }) {
   const action = params.action;
@@ -73,22 +87,15 @@ async function handleRegister(req: NextRequest): Promise<NextResponse> {
 
     const didIdentity = await provisionRegistrationDid(user.id);
 
-    const tokens = await generateTokenPair({
+    // P0-9: 使用 Refresh Token Rotation 创建 session
+    const { tokens } = await createSession({
       userId: user.id,
-      username: user.username,
-      userType: user.userType,
-    });
-
-    await sessionRepository.create({
-      userId: user.id,
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    } as any);
+    });
 
-    return success({
+    // P0-8: 设置 HttpOnly Cookie
+    const res = success({
       user: {
         id: user.id,
         username: user.username,
@@ -100,8 +107,11 @@ async function handleRegister(req: NextRequest): Promise<NextResponse> {
         createdAt: user.createdAt,
       },
       did: didIdentity,
+      // 同时返回 tokens（兼容旧客户端）
+      // 新客户端可忽略此字段，从 cookie 自动读取
       ...tokens,
     });
+    return setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
   } catch (e: any) {
     console.error('[Register Error]', e);
     return internalError(e.message || 'Registration failed');
@@ -184,25 +194,18 @@ async function handleLogin(req: NextRequest): Promise<NextResponse> {
       return unauthorized('Invalid credentials');
     }
 
-    const tokens = await generateTokenPair({
+    // P0-9: 使用 Refresh Token Rotation 创建 session
+    const { tokens } = await createSession({
       userId: user.id,
-      username: user.username,
-      userType: user.userType,
-    });
-
-    await sessionRepository.create({
-      userId: user.id,
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
       ipAddress: getClientIp(req),
       userAgent: getUserAgent(req),
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    } as any);
+    });
 
     await userRepository.update(user.id, { lastLoginAt: new Date() } as any);
     await auditLoginLogRepository.logSuccess(user.id, user.username, getClientIp(req), getUserAgent(req));
 
-    return success({
+    // P0-8: 设置 HttpOnly Cookie
+    const res = success({
       user: {
         id: user.id,
         username: user.username,
@@ -216,8 +219,10 @@ async function handleLogin(req: NextRequest): Promise<NextResponse> {
         depositEnabled: user.depositEnabled,
         referralCode: user.referralCode,
       },
+      // 同时返回 tokens（兼容旧客户端）
       ...tokens,
     });
+    return setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
   } catch (e: any) {
     console.error('[Login Error]', e);
     return internalError(e.message || 'Login failed');
@@ -226,41 +231,59 @@ async function handleLogin(req: NextRequest): Promise<NextResponse> {
 
 async function handleRefresh(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = await req.json();
-    const { refreshToken } = body;
+    // P0-8: 优先从 HttpOnly Cookie 读取 refreshToken
+    let refreshToken = getRefreshToken(req);
+
+    // 兜底：从 body 读取（兼容旧客户端）
+    if (!refreshToken) {
+      const body = await req.json().catch(() => ({}));
+      refreshToken = body?.refreshToken;
+    }
 
     if (!refreshToken) {
-      return badRequest('Refresh token is required');
+      return badRequest('Refresh token is required (cookie or body)');
     }
 
-    const payload = await verifyRefreshToken(refreshToken);
-    if (!payload) {
-      return unauthorized('Invalid refresh token');
+    // P0-9: Refresh Token Rotation
+    try {
+      const result = await rotateRefreshToken({
+        refreshToken,
+        ipAddress: getClientIp(req),
+        userAgent: getUserAgent(req),
+      });
+
+      // 检查异常（短时间多次旋转）
+      const session = await sessionRepository.findByRefreshToken(refreshToken);
+      if (session) {
+        const abnormal = await detectAbnormalRotation(session.userId);
+        if (abnormal) {
+          logger.warn(
+            `[refresh-rotation] Abnormal rotation detected for user ${session.userId} - possible attack`,
+          );
+          // 仍然返回成功（不阻断合法用户），但记录到审计
+        }
+      }
+
+      // P0-8: 设置新的 HttpOnly Cookie
+      const res = success({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        tokenType: result.tokenType,
+        expiresIn: result.expiresIn,
+        rotationCount: result.rotationCount,
+      });
+      return setAuthCookies(res, result.accessToken, result.refreshToken);
+    } catch (e: any) {
+      if (e instanceof RefreshRotationError) {
+        // P0-9 重放攻击：吊销整族后清除 cookie
+        if (e.familyRevoked) {
+          const res = errorResponse(e.code, e.message, e.httpStatus);
+          return clearAuthCookies(res);
+        }
+        return errorResponse(e.code, e.message, e.httpStatus);
+      }
+      throw e;
     }
-
-    const session = await sessionRepository.findByRefreshToken(refreshToken);
-    if (!session || session.status !== 'active') {
-      return unauthorized('Session is not valid');
-    }
-
-    const user = await userRepository.findById(payload.userId);
-    if (!user || user.status !== 'active') {
-      return unauthorized('User not found or not active');
-    }
-
-    const tokens = await generateTokenPair({
-      userId: user.id,
-      username: user.username,
-      userType: user.userType,
-    });
-
-    await sessionRepository.update(session.id, {
-      token: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    } as any);
-
-    return success(tokens);
   } catch (e: any) {
     console.error('[Refresh Error]', e);
     return internalError(e.message || 'Token refresh failed');
@@ -269,17 +292,21 @@ async function handleRefresh(req: NextRequest): Promise<NextResponse> {
 
 async function handleLogout(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = await req.json();
-    const { refreshToken } = body;
-
-    if (refreshToken) {
-      const session = await sessionRepository.findByRefreshToken(refreshToken);
-      if (session) {
-        await sessionRepository.update(session.id, { status: 'revoked' } as any);
-      }
+    // P0-8: 优先从 cookie 读取 refreshToken
+    let refreshToken = getRefreshToken(req);
+    if (!refreshToken) {
+      const body = await req.json().catch(() => ({}));
+      refreshToken = body?.refreshToken;
     }
 
-    return success({ message: 'Logged out successfully' });
+    if (refreshToken) {
+      // P0-9: 标记 session 为 revoked（不影响其他设备）
+      await logoutSession(refreshToken);
+    }
+
+    // P0-8: 清除 HttpOnly Cookie
+    const res = success({ message: 'Logged out successfully' });
+    return clearAuthCookies(res);
   } catch (e: any) {
     return internalError(e.message || 'Logout failed');
   }
