@@ -1,26 +1,3 @@
-/**
- * MoonPay Webhook 接收端
- *
- * 路由：POST /api/webhooks/moonpay
- * Header: moonpay-signature: <hex hmac-sha256>
- *
- * 部署：
- *   1. 在 MoonPay Dashboard 创建 Webhook
- *   2. 配置环境变量 MOONPAY_WEBHOOK_SECRET
- *   3. 配置回调 URL = https://your-domain/api/webhooks/moonpay
- *   4. MoonPay Dashboard 设置订阅事件：
- *      - transactionCreated
- *      - transactionUpdated
- *      - transactionCompleted
- *      - transactionFailed
- *
- * 演示降级：未配置 secret 时返回 503，但不影响其他端点。
- *
- * 入账：
- *   - 业务系统可通过 manager.onOrderUpdate(handler) 订阅 'completed' 状态
- *   - 在 handler 内调用充值入账服务
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { handleMoonPayWebhook } from '@/lib/onramp/webhook-handler';
 import {
@@ -28,14 +5,53 @@ import {
   MoonPayTransactionManager,
   type BuyOrder,
 } from '@/lib/onramp';
-
-// =============================================================================
-// 单例 manager（避免每个请求都重新构造）
-// =============================================================================
+import prisma from '@/lib/prisma';
+import { depositCreditService, DepositCreditError } from '@/lib/wallet/deposit-credit-service';
 
 declare global {
   // eslint-disable-next-line no-var
   var __smyMoonPayManager: MoonPayTransactionManager | undefined;
+}
+
+async function creditCompletedMoonPayOrder(order: BuyOrder) {
+  if (order.status !== 'completed') return null;
+
+  const address = await prisma.walletAddress.findUnique({
+    where: { address: order.walletAddress },
+    include: { currency: true },
+  });
+
+  if (!address || address.status !== 'active') {
+    console.warn(`[moonpay] completed order uses unassigned wallet address: ${order.walletAddress}`);
+    return null;
+  }
+
+  if (address.userId !== order.userId) {
+    console.warn(`[moonpay] completed order user mismatch: order=${order.userId} addressOwner=${address.userId}`);
+    return null;
+  }
+
+  const txHash = `moonpay:${order.moonpayTxId || order.id}`;
+  const requiredConfirmations = Math.max(1, address.currency.confirmationCount || 1);
+
+  try {
+    return await depositCreditService.ingestDeposit({
+      userId: order.userId,
+      currency: address.currency.symbol,
+      chain: address.tag || address.currency.blockchain,
+      address: address.address,
+      txHash,
+      amount: order.cryptoAmount,
+      fee: order.fee || 0,
+      confirmations: requiredConfirmations,
+    });
+  } catch (error) {
+    if (error instanceof DepositCreditError) {
+      console.warn(`[moonpay] deposit credit rejected [${error.code}]: ${error.message}`);
+      return null;
+    }
+    throw error;
+  }
 }
 
 function getManager(): MoonPayTransactionManager {
@@ -43,20 +59,16 @@ function getManager(): MoonPayTransactionManager {
     const client = new MoonPayClient();
     const mgr = new MoonPayTransactionManager({ client });
 
-    // 业务订阅：订单进入 'completed' 状态时自动入账
-    mgr.onOrderUpdate(async (order: BuyOrder) => {
+    mgr.onOrderUpdate((order: BuyOrder) => {
       if (order.status === 'completed') {
-        // eslint-disable-next-line no-console
         console.info(
-          `[moonpay] COMPLETED order=${order.id} user=${order.userId} ` +
-          `credit ${order.cryptoAmount} ${order.crypto} to ${order.walletAddress}`,
+          `[moonpay] COMPLETED order=${order.id} user=${order.userId} `
+          + `credit ${order.cryptoAmount} ${order.crypto} to ${order.walletAddress}`,
         );
-        // 业务系统可在此处：
-        //  1. 调 ledger.credit(order.userId, order.crypto, order.cryptoAmount)
-        //  2. 落库 deposit 记录
-        //  3. 推送到账通知（SMS / push / email）
+        void creditCompletedMoonPayOrder(order).catch((error) => {
+          console.error('[moonpay] failed to credit completed order:', error);
+        });
       } else if (order.status === 'failed') {
-        // eslint-disable-next-line no-console
         console.warn(
           `[moonpay] FAILED order=${order.id} user=${order.userId} reason=${order.errorMessage ?? 'unknown'}`,
         );
@@ -68,10 +80,6 @@ function getManager(): MoonPayTransactionManager {
   return globalThis.__smyMoonPayManager;
 }
 
-// =============================================================================
-// POST 处理器
-// =============================================================================
-
 export async function POST(req: NextRequest): Promise<NextResponse> {
   const secret = process.env.MOONPAY_WEBHOOK_SECRET;
   if (!secret) {
@@ -81,18 +89,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     );
   }
 
-  // 1. 读取 raw body（必须原文以匹配签名）
   const rawBody = await req.text();
   const signature =
-    req.headers.get('moonpay-signature') ||
-    req.headers.get('Moonpay-Signature') ||
-    '';
+    req.headers.get('moonpay-signature-v2')
+    || req.headers.get('Moonpay-Signature-V2')
+    || req.headers.get('moonpay-signature')
+    || req.headers.get('Moonpay-Signature')
+    || '';
 
-  // 2. 校验 + 处理
   const manager = getManager();
   const result = await handleMoonPayWebhook(rawBody, signature, secret, manager);
 
-  // 3. 返回
   if (!result.ok) {
     const isSig = result.errors.some((e) => e.includes('SIGNATURE'));
     const status = isSig ? 401 : 400;
@@ -101,16 +108,23 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       { status },
     );
   }
+
+  const credited = await Promise.all(
+    result.events
+      .filter((event) => event.status === 'completed')
+      .map((event) => {
+        const order = manager.getOrder(event.orderId);
+        return order ? creditCompletedMoonPayOrder(order) : Promise.resolve(null);
+      }),
+  );
+
   return NextResponse.json({
     ok: true,
     processed: result.processed,
+    credited: credited.filter(Boolean).length,
     events: result.events,
   });
 }
-
-// =============================================================================
-// 健康检查（GET）
-// =============================================================================
 
 export async function GET(): Promise<NextResponse> {
   const manager = getManager();
