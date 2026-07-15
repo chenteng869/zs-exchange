@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, badRequest, notFound } from '@/lib/api/response';
+import { success, badRequest } from '@/lib/api/response';
 import { requireAuth, AuthContext } from '@/lib/api/auth';
 import { addressBookRepository } from '@/repositories/address-book.repository';
 import { parsePagination, formatPaginatedResult } from '@/lib/api/pagination';
@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { chainType, chainId, assetSymbol, address, label } = body;
 
-    if (!chainType || !address || !label) {
-      return badRequest('chainType, address, and label are required');
+    if (!chainType || !chainId || !assetSymbol || !address || !label) {
+      return badRequest('chainType, chainId, assetSymbol, address, and label are required');
     }
 
     const exists = await addressBookRepository.findByUserIdAndAddress(ctx.userId, address);
@@ -38,32 +38,14 @@ export async function POST(req: NextRequest) {
 
     const entry = await addressBookRepository.create({
       userId: ctx.userId,
-      chainType: chainType as any,
-      chainId: chainId || null as any,
-      assetSymbol: assetSymbol || null as any,
+      chainType,
+      chainId,
+      assetSymbol,
       address,
       label,
-      isBlacklisted: false as any,
-      createdAt: new Date() as any,
+      isBlacklisted: false,
     } as any);
 
     return success(entry);
-  });
-}
-
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
-  return requireAuth(req, async (ctx: AuthContext) => {
-    const entry = await addressBookRepository.findById(params.id);
-    if (!entry) {
-      return notFound('Address book entry not found');
-    }
-
-    if (entry.userId !== ctx.userId) {
-      return badRequest('You can only delete your own address book entries');
-    }
-
-    await addressBookRepository.delete(params.id);
-
-    return success({ message: 'Address book entry deleted' });
   });
 }

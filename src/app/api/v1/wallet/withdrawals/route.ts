@@ -5,6 +5,8 @@ import { withdrawalRepository } from '@/repositories/withdrawal.repository';
 import { balanceRepository } from '@/repositories/balance.repository';
 import { walletCurrencyRepository } from '@/repositories/wallet-currency.repository';
 import { parsePagination, formatPaginatedResult } from '@/lib/api/pagination';
+import { requireMfaForAmount, clearMfaVerified } from '@/lib/auth/mfa-middleware';
+import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   return requireAuth(req, async (ctx: AuthContext) => {
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const currency = String(body.currency || '').toUpperCase();
-    const { amount, address, memo } = body;
+    const { amount, address, memo, mfaCode } = body;
 
     if (!currency || !amount || !address) {
       return badRequest('Currency, amount, and address are required');
@@ -63,6 +65,19 @@ export async function POST(req: NextRequest) {
       return badRequest(`Insufficient balance (includes fee: ${fee})`);
     }
 
+    // ============================================================
+    // P0-7.3 MFA 强制拦截 (高额交易分级)
+    //  - < $1000: 不强制（小额日常提币）
+    //  - $1000-$10000: 要求最近 5 分钟内 MFA verify
+    //  - > $10000: 强制请求体 mfaCode
+    // 注：此处用 amountNum 作为 USD 估算（生产环境应实时汇率转换）
+    // ============================================================
+    const mfaCheck = await requireMfaForAmount(ctx, amountNum, body);
+    if (!mfaCheck.allowed) {
+      logger.warn(`[withdrawal] MFA check failed for user ${ctx.userId}: ${mfaCheck.reason}`);
+      return mfaCheck.response!;
+    }
+
     const withdrawal = await withdrawalRepository.create({
       userId: ctx.userId,
       currencyId: walletCurrency.id,
@@ -76,6 +91,11 @@ export async function POST(req: NextRequest) {
     } as any);
 
     await balanceRepository.lockBalance(ctx.userId, currency, totalAmount);
+
+    // 提币完成后清除 MFA 状态（防 TTL 内二次提币）
+    if (mfaCode) {
+      await clearMfaVerified(ctx.userId);
+    }
 
     return success(withdrawal);
   });

@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { success, badRequest } from '@/lib/api/response';
+import { success, badRequest, forbidden } from '@/lib/api/response';
 import { requireAuth, AuthContext } from '@/lib/api/auth';
 import { depositRepository } from '@/repositories/deposit.repository';
 import { walletCurrencyRepository } from '@/repositories/wallet-currency.repository';
@@ -49,25 +49,12 @@ export async function POST(req: NextRequest) {
           minDepositAmount: result.currency.minDepositAmount,
           requiredConfirmations: result.currency.confirmationCount,
           reused: result.reused,
+          addressSource: result.source,
         });
       }
 
       if (action === 'ingest' || action === 'simulate') {
-        const result = await depositCreditService.ingestDeposit({
-          userId: ctx.userId,
-          currency,
-          chain,
-          address: body.address,
-          txHash: body.txHash,
-          amount: body.amount,
-          confirmations: body.confirmations,
-          blockNumber: body.blockNumber,
-          fee: body.fee,
-          logIndex: body.logIndex,
-          eventIndex: body.eventIndex,
-        });
-
-        return success(result);
+        return forbidden('Deposit ingestion is reserved for trusted webhook and scanner workers');
       }
 
       return badRequest('Unsupported deposit action');
