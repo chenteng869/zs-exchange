@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, badRequest, notFound, serverError } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth, withAdminAuth } from '@/lib/api/middleware';
 import { liquidationService } from '@/lib/perp/services';
 import { logger } from '@/lib/logger';
@@ -30,8 +31,7 @@ async function getUserLiquidations(req: NextRequest, userId: string) {
     const liquidations = await liquidationService.getUserLiquidations(userId, symbol, limit);
     return success({ list: liquidations, total: liquidations.length });
   } catch (e: any) {
-    logger.error('[api:perp/liquidations] user list error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/liquidations user list');
   }
 }
 
@@ -45,8 +45,7 @@ async function getLiquidationDetail(req: NextRequest, userId: string) {
     if (liq.userId !== userId) return badRequest('Unauthorized');
     return success(liq);
   } catch (e: any) {
-    logger.error('[api:perp/liquidations] detail error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/liquidations detail');
   }
 }
 
@@ -71,8 +70,7 @@ async function getLiquidationStats(req: NextRequest) {
       },
     });
   } catch (e: any) {
-    logger.error('[api:perp/liquidations] stats error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/liquidations stats');
   }
 }
 
@@ -89,7 +87,6 @@ async function adminListLiquidations(req: NextRequest) {
     const result = await liquidationService.list({ symbol, userId, status, adlTriggered, page, pageSize });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/liquidations] admin list error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/liquidations admin list');
   }
 }

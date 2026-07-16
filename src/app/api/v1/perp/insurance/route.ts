@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, badRequest, notFound, serverError } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth, withAdminAuth } from '@/lib/api/middleware';
 import { insuranceService } from '@/lib/perp/services';
 import { logger } from '@/lib/logger';
@@ -46,8 +47,7 @@ async function getBalance(req: NextRequest) {
       updatedAt: Date.now(),
     });
   } catch (e: any) {
-    logger.error('[api:perp/insurance] balance error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/insurance balance');
   }
 }
 
@@ -72,8 +72,7 @@ async function getSummary(req: NextRequest) {
       utilizationRate: summary.utilizationRate.toString(),
     });
   } catch (e: any) {
-    logger.error('[api:perp/insurance] summary error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/insurance summary');
   }
 }
 
@@ -91,8 +90,7 @@ async function getAllFunds() {
       total: funds.length,
     });
   } catch (e: any) {
-    logger.error('[api:perp/insurance] all funds error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/insurance all funds');
   }
 }
 
@@ -119,8 +117,7 @@ async function getFundState(req: NextRequest) {
       lastUpdateTime: Date.now(),
     });
   } catch (e: any) {
-    logger.error('[api:perp/insurance] state error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/insurance state');
   }
 }
 
@@ -142,8 +139,7 @@ async function contribute(req: NextRequest) {
       totalContributed: fund.totalContributed,
     });
   } catch (e: any) {
-    logger.error('[api:perp/insurance] contribute error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/insurance contribute');
   }
 }
 
@@ -164,7 +160,6 @@ async function consumeFund(req: NextRequest) {
       totalUsed: fund.totalUsed,
     });
   } catch (e: any) {
-    logger.error('[api:perp/insurance] use fund error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/insurance use fund');
   }
 }

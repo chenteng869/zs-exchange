@@ -3,6 +3,8 @@ import { success, badRequest } from '@/lib/api/response';
 import { requireAuth, AuthContext } from '@/lib/api/auth';
 import { userRepository } from '@/repositories/user.repository';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
+import { requireMfaCode, clearMfaVerified } from '@/lib/auth/mfa-middleware';
+import { logger } from '@/lib/logger';
 
 export async function GET(req: NextRequest) {
   return requireAuth(req, async (ctx: AuthContext) => {
@@ -58,6 +60,17 @@ export async function PUT(req: NextRequest) {
         return badRequest('New password must be at least 8 characters');
       }
 
+      // ============================================================
+      // P0-7.3 MFA 强制拦截 (改密场景)
+      //  - 如果用户已启用 MFA，必须在 body 中提供 mfaCode
+      //  - 如果用户未启用 MFA，则跳过（向后兼容老用户）
+      // ============================================================
+      const mfaCheck = await requireMfaCode(ctx, body);
+      if (!mfaCheck.allowed) {
+        logger.warn(`[profile/password] MFA check failed for user ${ctx.userId}: ${mfaCheck.reason}`);
+        return mfaCheck.response!;
+      }
+
       updateData.passwordHash = await hashPassword(newPassword);
     }
 
@@ -66,6 +79,11 @@ export async function PUT(req: NextRequest) {
     }
 
     const updatedUser = await userRepository.update(ctx.userId, updateData);
+
+    // 改密后清除 MFA verify 状态
+    if (newPassword) {
+      await clearMfaVerified(ctx.userId);
+    }
 
     return success({
       id: updatedUser.id,

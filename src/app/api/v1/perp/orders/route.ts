@@ -1,9 +1,14 @@
 import { NextRequest } from 'next/server';
-import { success, badRequest, notFound, serverError } from '@/lib/api/response';
+import { success, badRequest, notFound } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth, withAdminAuth } from '@/lib/api/middleware';
-import { orderService, contractService } from '@/lib/perp/services';
-import { logger } from '@/lib/logger';
+import { orderService, contractService, accountService } from '@/lib/perp/services';
+import { accountRepo, positionRepo, orderRepo, prisma } from '@/lib/perp/repos';
+import { MarginCalculator } from '@/lib/perp/margin-calculator';
+import { tickerService } from '@/lib/crypto/services';
 import { Prisma } from '@prisma/client';
+
+const marginCalculator = new MarginCalculator();
 
 export async function GET(req: NextRequest) {
   const p = req.nextUrl.searchParams;
@@ -53,8 +58,7 @@ async function listOrders(req: NextRequest, userId: string) {
     const result = await orderService.list({ userId, symbol, side, status, page, pageSize });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/orders] list error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders list');
   }
 }
 
@@ -64,8 +68,7 @@ async function getOpenOrders(req: NextRequest, userId: string) {
     const orders = await orderService.getUserOrders(userId, symbol, 'open');
     return success({ orders, total: orders.length });
   } catch (e: any) {
-    logger.error('[api:perp/orders] get open orders error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders get open orders');
   }
 }
 
@@ -84,8 +87,7 @@ async function getOrderHistory(req: NextRequest, userId: string) {
     });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/orders] history error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders history');
   }
 }
 
@@ -99,11 +101,16 @@ async function getOrderDetail(req: NextRequest, userId: string) {
     if (order.userId !== userId) return badRequest('Unauthorized');
     return success(order);
   } catch (e: any) {
-    logger.error('[api:perp/orders] detail error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders detail');
   }
 }
 
+/**
+ * 下单。
+ *  - 市价单：立即按真实标记价（src/lib/crypto 行情源）成交 —— 计算名义价值/初始保证金，
+ *    校验账户可用余额，冻结保证金，开仓/加仓，订单标记为 filled。
+ *  - 限价单：暂不支持自动撮合，仅挂单（status=open），与此前行为一致。
+ */
 async function placeOrder(req: NextRequest, userId: string) {
   try {
     const body = await req.json();
@@ -115,6 +122,8 @@ async function placeOrder(req: NextRequest, userId: string) {
 
     const qty = new Prisma.Decimal(quantity);
     const priceDecimal = price ? new Prisma.Decimal(price) : undefined;
+    const mode: 'isolated' | 'cross' = marginMode === 'cross' ? 'cross' : 'isolated';
+    const lev = Number(leverage);
 
     const validation = await orderService.validateOrder({
       userId,
@@ -122,8 +131,8 @@ async function placeOrder(req: NextRequest, userId: string) {
       side,
       qty,
       price: priceDecimal,
-      leverage: Number(leverage),
-      marginMode: marginMode || 'isolated',
+      leverage: lev,
+      marginMode: mode,
       orderType: type,
     });
     if (!validation.valid) return badRequest(validation.reason || 'Validation failed');
@@ -131,53 +140,160 @@ async function placeOrder(req: NextRequest, userId: string) {
     const contract = await contractService.getBySymbol(symbol);
     if (!contract) return notFound('Contract not found');
 
+    const account = await accountService.getOrCreate(userId, 'USDT', 'cross');
+    const positionSide = side === 'buy' ? 'long' : 'short';
     const isMarket = type === 'market';
-    const order = await orderService.placeOrder({
-      userId,
-      contractId: contract.id,
-      symbol,
-      side,
-      positionSide: side === 'buy' ? 'long' : 'short',
-      orderType: type,
-      qty: quantity,
-      price: price || '0',
-      leverage: Number(leverage),
-      marginMode: marginMode || 'isolated',
-      stopPrice: stopLoss || '0',
-      triggerPrice: takeProfit || '0',
-      clientOrderId: clientOrderId || null,
-      reduceOnly: reduceOnly || false,
-      status: isMarket ? 'filled' : 'open',
-      filledQty: isMarket ? quantity : '0',
-      avgFillPrice: isMarket ? (price || '0') : '0',
-      account: { connect: { id: '' } },
-      contract: { connect: { id: contract.id } },
-    } as any);
 
-    return success({
-      orderId: order.id,
-      orderNo: order.orderNo,
-      clientOrderId: order.clientOrderId,
-      symbol: order.symbol,
-      side: order.side,
-      type: order.orderType,
-      quantity: order.qty,
-      price: order.price,
-      leverage: order.leverage,
-      marginMode: order.marginMode,
-      reduceOnly: order.reduceOnly,
-      status: order.status,
-      filledQty: order.filledQty,
-      avgFillPrice: order.avgFillPrice,
-      stopPrice: order.stopPrice,
-      triggerPrice: order.triggerPrice,
-      createdAt: order.createdAt.getTime(),
-      updatedAt: order.updatedAt.getTime(),
+    if (!isMarket) {
+      // 限价单：仅挂单，不立即成交
+      const order = await orderRepo.create({
+        orderNo: `PO${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        userId,
+        account: { connect: { id: account.id } },
+        contract: { connect: { id: contract.id } },
+        symbol,
+        side,
+        positionSide,
+        orderType: type,
+        price: priceDecimal || new Prisma.Decimal(0),
+        qty,
+        filledQty: new Prisma.Decimal(0),
+        avgFillPrice: new Prisma.Decimal(0),
+        leverage: lev,
+        marginMode: mode,
+        reduceOnly: !!reduceOnly,
+        stopPrice: stopLoss ? new Prisma.Decimal(stopLoss) : new Prisma.Decimal(0),
+        triggerPrice: takeProfit ? new Prisma.Decimal(takeProfit) : new Prisma.Decimal(0),
+        clientOrderId: clientOrderId || null,
+        status: 'open',
+        source: 'api',
+      });
+      return success(formatOrder(order));
+    }
+
+    // 市价单：取真实标记价立即成交
+    const ticker = await tickerService.getTicker(contract.baseAsset);
+    if (!ticker || !ticker.price) {
+      return badRequest('Market price unavailable, please retry');
+    }
+    const fillPrice = new Prisma.Decimal(ticker.price);
+
+    const notional = qty.mul(fillPrice);
+    const contractLike = {
+      maxLeverage: contract.maxLeverage,
+      initialMarginRate: Number(contract.initialMarginRate),
+      maintenanceMarginRate: Number(contract.maintenanceMarginRate),
+    } as any;
+    const initialMargin = new Prisma.Decimal(
+      marginCalculator.calculateInitialMargin(notional.toString(), lev, mode, contractLike)
+    );
+
+    if (account.availableBalance.lt(initialMargin)) {
+      return badRequest(`Insufficient margin: need ${initialMargin.toString()} USDT, available ${account.availableBalance.toString()} USDT`);
+    }
+
+    const { order } = await prisma.$transaction(async (tx) => {
+      await accountRepo.freezeBalance(account.id, initialMargin, tx);
+
+      const existing = await positionRepo.findByUserSymbolSideMargin(userId, symbol, positionSide, mode);
+      let position;
+      if (existing && existing.status === 'active') {
+        const nextQty = existing.positionQty.add(qty);
+        const nextEntry = new Prisma.Decimal(
+          marginCalculator.calculateWeightedEntryPrice(
+            existing.positionQty.toString(), existing.entryPrice.toString(), qty.toString(), fillPrice.toString(),
+          ),
+        );
+        const nextMargin = existing.positionMargin.add(initialMargin);
+        const liqPrice = new Prisma.Decimal(
+          marginCalculator.calculateLiquidationPrice(positionSide, nextEntry.toString(), lev, Number(contract.maintenanceMarginRate), mode),
+        );
+        position = await positionRepo.update(existing.id, {
+          positionQty: nextQty,
+          entryPrice: nextEntry,
+          markPrice: fillPrice,
+          liquidationPrice: liqPrice,
+          leverage: lev,
+          isolatedMargin: mode === 'isolated' ? nextMargin : new Prisma.Decimal(0),
+          positionMargin: nextMargin,
+        }, tx);
+      } else {
+        const liqPrice = new Prisma.Decimal(
+          marginCalculator.calculateLiquidationPrice(positionSide, fillPrice.toString(), lev, Number(contract.maintenanceMarginRate), mode),
+        );
+        position = await positionRepo.create({
+          userId,
+          account: { connect: { id: account.id } },
+          contract: { connect: { id: contract.id } },
+          symbol,
+          side: positionSide,
+          positionQty: qty,
+          entryPrice: fillPrice,
+          markPrice: fillPrice,
+          liquidationPrice: liqPrice,
+          leverage: lev,
+          marginMode: mode,
+          isolatedMargin: mode === 'isolated' ? initialMargin : new Prisma.Decimal(0),
+          positionMargin: initialMargin,
+          status: 'active',
+        }, tx);
+      }
+
+      const createdOrder = await orderRepo.create({
+        orderNo: `PO${Date.now()}${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+        userId,
+        account: { connect: { id: account.id } },
+        contract: { connect: { id: contract.id } },
+        position: { connect: { id: position.id } },
+        symbol,
+        side,
+        positionSide,
+        orderType: type,
+        price: priceDecimal || fillPrice,
+        qty,
+        filledQty: qty,
+        avgFillPrice: fillPrice,
+        leverage: lev,
+        marginMode: mode,
+        reduceOnly: !!reduceOnly,
+        stopPrice: stopLoss ? new Prisma.Decimal(stopLoss) : new Prisma.Decimal(0),
+        triggerPrice: takeProfit ? new Prisma.Decimal(takeProfit) : new Prisma.Decimal(0),
+        clientOrderId: clientOrderId || null,
+        status: 'filled',
+        source: 'api',
+      }, tx);
+
+      return { order: createdOrder, position };
     });
+
+    return success(formatOrder(order));
   } catch (e: any) {
-    logger.error('[api:perp/orders] place error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders place');
   }
+}
+
+function formatOrder(order: any) {
+  return {
+    orderId: order.id,
+    orderNo: order.orderNo,
+    clientOrderId: order.clientOrderId,
+    symbol: order.symbol,
+    side: order.side,
+    type: order.orderType,
+    quantity: order.qty,
+    price: order.price,
+    leverage: order.leverage,
+    marginMode: order.marginMode,
+    reduceOnly: order.reduceOnly,
+    status: order.status,
+    filledQty: order.filledQty,
+    avgFillPrice: order.avgFillPrice,
+    stopPrice: order.stopPrice,
+    triggerPrice: order.triggerPrice,
+    positionId: order.positionId ?? null,
+    createdAt: order.createdAt.getTime(),
+    updatedAt: order.updatedAt.getTime(),
+  };
 }
 
 async function cancelOrder(req: NextRequest, userId: string) {
@@ -203,8 +319,7 @@ async function cancelOrder(req: NextRequest, userId: string) {
       cancelledAt: Date.now(),
     });
   } catch (e: any) {
-    logger.error('[api:perp/orders] cancel error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders cancel');
   }
 }
 
@@ -223,8 +338,7 @@ async function cancelAllOrders(req: NextRequest, userId: string) {
 
     return success({ cancelled, failed, total: openOrders.length });
   } catch (e: any) {
-    logger.error('[api:perp/orders] cancel-all error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders cancel-all');
   }
 }
 
@@ -241,7 +355,6 @@ async function adminListOrders(req: NextRequest) {
     const result = await orderService.list({ userId, symbol, side, status, page, pageSize });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/orders] admin list error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/orders admin list');
   }
 }

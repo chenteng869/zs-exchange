@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, badRequest, notFound, serverError } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth, withAdminAuth } from '@/lib/api/middleware';
 import { AdvancedMarginCalculator } from '@/lib/perp/advanced-margin-calculator';
 import { accountService, riskService, positionService } from '@/lib/perp/services';
@@ -95,8 +96,7 @@ async function estimateMargin(req: NextRequest) {
       fees: result.fees,
     });
   } catch (e: any) {
-    logger.error('[api:margin] estimate error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:margin estimate');
   }
 }
 
@@ -127,8 +127,7 @@ async function getCrossMarginAccount(req: NextRequest) {
         positionCount: positions.length,
       });
     } catch (e: any) {
-      logger.error('[api:perp/margin] cross account error', e);
-      return serverError(e.message);
+      return handleApiError(e, 'api:perp/margin cross account');
     }
   });
 }
@@ -143,8 +142,7 @@ async function adjustLeverage(req: NextRequest) {
       const result = perpEngine.adjustLeverage(positionId, Number(newLeverage));
       return success({ success: true, ...result });
     } catch (e: any) {
-      logger.error('[api:margin] adjust leverage error', e);
-      return serverError(e.message);
+      return handleApiError(e, 'api:margin adjust leverage');
     }
   });
 }
@@ -159,8 +157,7 @@ async function addMargin(req: NextRequest) {
       const result = perpEngine.adjustMargin(positionId, amount);
       return success({ success: true, addedAmount: amount, ...result });
     } catch (e: any) {
-      logger.error('[api:margin] add margin error', e);
-      return serverError(e.message);
+      return handleApiError(e, 'api:margin add margin');
     }
   });
 }
@@ -175,8 +172,7 @@ async function reduceMargin(req: NextRequest) {
       const result = perpEngine.adjustMargin(positionId, `-${amount}`);
       return success({ success: true, reducedAmount: amount, ...result });
     } catch (e: any) {
-      logger.error('[api:margin] reduce margin error', e);
-      return serverError(e.message);
+      return handleApiError(e, 'api:margin reduce margin');
     }
   });
 }

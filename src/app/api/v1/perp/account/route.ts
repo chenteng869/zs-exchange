@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, badRequest, serverError } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth, withAdminAuth } from '@/lib/api/middleware';
 import { accountService, ledgerService, riskService } from '@/lib/perp/services';
 import { logger } from '@/lib/logger';
@@ -64,8 +65,7 @@ async function getAccountSummary(req: NextRequest, userId: string) {
 
     return success({ ...summary, risk });
   } catch (e: any) {
-    logger.error('[api:perp/account] summary error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account summary');
   }
 }
 
@@ -82,8 +82,7 @@ async function getBalance(req: NextRequest, userId: string) {
       unrealizedPnl: account.unrealizedPnl,
     });
   } catch (e: any) {
-    logger.error('[api:perp/account] balance error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account balance');
   }
 }
 
@@ -106,8 +105,7 @@ async function getLedger(req: NextRequest, userId: string) {
     });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/account] ledger error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account ledger');
   }
 }
 
@@ -123,8 +121,7 @@ async function getAccountRisk(req: NextRequest, userId: string) {
       riskLevel: risk.riskLevel,
     });
   } catch (e: any) {
-    logger.error('[api:perp/account] risk error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account risk');
   }
 }
 
@@ -153,8 +150,7 @@ async function deposit(req: NextRequest, userId: string) {
       availableBalance: account.availableBalance,
     });
   } catch (e: any) {
-    logger.error('[api:perp/account] deposit error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account deposit');
   }
 }
 
@@ -183,8 +179,7 @@ async function withdraw(req: NextRequest, userId: string) {
       availableBalance: account.availableBalance,
     });
   } catch (e: any) {
-    logger.error('[api:perp/account] withdraw error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account withdraw');
   }
 }
 
@@ -200,7 +195,6 @@ async function adminListAccounts(req: NextRequest) {
     const result = await accountService.list({ userId, asset, status, page, pageSize });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/account] admin list error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/account admin list');
   }
 }

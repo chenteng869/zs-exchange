@@ -81,11 +81,17 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   return requireAuth(req, async (ctx: AuthContext) => {
     try {
-      const body = await req.json();
-      const { orderId } = body;
-
+      // 2026-07-11 修复：orderId 优先从 query 读取，body 兜底
+      const searchParams = req.nextUrl.searchParams;
+      let orderId = searchParams.get('orderId');
       if (!orderId) {
-        return badRequest('Order ID is required');
+        try {
+          const body = await req.json();
+          orderId = body.orderId;
+        } catch { /* body may be empty for DELETE */ }
+      }
+      if (!orderId) {
+        return badRequest('Order ID is required (query: orderId)');
       }
 
       const order = await spotOrderService.getById(orderId);

@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, badRequest, serverError } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth, withAdminAuth } from '@/lib/api/middleware';
 import { riskService, contractService } from '@/lib/perp/services';
 import { AdvancedMarginCalculator } from '@/lib/perp/advanced-margin-calculator';
@@ -51,8 +52,7 @@ async function getAccountRisk(req: NextRequest, userId: string) {
       riskLevel: risk.riskLevel,
     });
   } catch (e: any) {
-    logger.error('[api:perp/risk] account risk error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/risk account risk');
   }
 }
 
@@ -87,8 +87,7 @@ async function estimateMargin(req: NextRequest, _userId: string) {
       fees: result.fees,
     });
   } catch (e: any) {
-    logger.error('[api:perp/risk] estimate error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/risk estimate');
   }
 }
 
@@ -127,8 +126,7 @@ async function checkCanOpen(req: NextRequest, userId: string) {
 
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp/risk] check-open error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/risk check-open');
   }
 }
 
@@ -159,8 +157,7 @@ async function calculateLiquidationPrice(req: NextRequest) {
       liquidationPrice: liqPrice.toString(),
     });
   } catch (e: any) {
-    logger.error('[api:perp/risk] liquidation price error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/risk liquidation price');
   }
 }
 
@@ -190,7 +187,6 @@ async function getContractRisk(req: NextRequest) {
       })),
     });
   } catch (e: any) {
-    logger.error('[api:perp/risk] contract risk error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp/risk contract risk');
   }
 }

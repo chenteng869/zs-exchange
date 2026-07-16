@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { success, badRequest, notFound, serverError } from '@/lib/api/response';
+import { handleApiError } from '@/lib/api/error-handler';
 import { withAuth } from '@/lib/api/middleware';
 import { perpEngine } from '@/lib/perp/engine-singleton';
 import {
@@ -201,8 +202,7 @@ async function getPositions(req: NextRequest, userId: string) {
     const positions = await positionService.getUserPositions(userId, symbol);
     return success({ positions, total: positions.length });
   } catch (e: any) {
-    logger.error('[api:perp] get positions error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp get positions');
   }
 }
 
@@ -221,8 +221,7 @@ async function getFundingHistory(req: NextRequest, userId: string) {
     });
     return success(result);
   } catch (e: any) {
-    logger.error('[api:perp] funding history error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp funding history');
   }
 }
 
@@ -291,8 +290,7 @@ async function placeOrder(req: NextRequest, userId: string) {
       createdAt: order.createdAt.getTime(),
     });
   } catch (e: any) {
-    logger.error('[api:perp] place order error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp place order');
   }
 }
 
@@ -318,8 +316,7 @@ async function cancelOrder(req: NextRequest, userId: string) {
       cancelledAt: Date.now(),
     });
   } catch (e: any) {
-    logger.error('[api:perp] cancel order error', e);
-    return serverError(e.message);
+    return handleApiError(e, 'api:perp cancel order');
   }
 }
 
@@ -343,9 +340,8 @@ async function openPosition(req: NextRequest, userId: string) {
     });
 
     return success(result);
-  } catch (e: any) {
-    logger.error('[api:perp] open position error', e);
-    return serverError(e.message);
+  } catch (e) {
+    return handleApiError(e, 'api:perp/market open-position');
   }
 }
 
@@ -367,8 +363,7 @@ async function closePosition(req: NextRequest, userId: string) {
     );
 
     return success(result);
-  } catch (e: any) {
-    logger.error('[api:perp] close position error', e);
-    return serverError(e.message);
+  } catch (e) {
+    return handleApiError(e, 'api:perp/market close-position');
   }
 }
