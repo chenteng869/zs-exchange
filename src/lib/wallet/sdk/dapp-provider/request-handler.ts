@@ -14,6 +14,7 @@ import type {
 } from '../sdk.types';
 import { SignConfirmManager } from '../sign-confirm/sign-confirm-manager';
 import { NetworkManager } from '../network-manager/network-manager';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 /**
  * 请求上下文
@@ -515,8 +516,24 @@ export class RequestHandler {
     }
 
     const address = params[0];
-    const typedData = typeof params[1] === 'string' ? JSON.parse(params[1]) : params[1];
-    const rawMessage = typeof params[1] === 'string' ? params[1] : JSON.stringify(typedData);
+    let typedData: unknown;
+    let rawMessage: string;
+    if (typeof params[1] === 'string') {
+      const parsed = safeJsonParse(params[1], {
+        context: 'wallet-request-handler-typedData',
+        maxBytes: 64 * 1024,
+        defaultValue: null,
+        silent: true,
+      });
+      if (!parsed) {
+        throw new Error('Invalid wallet request typedData');
+      }
+      typedData = parsed;
+      rawMessage = params[1];
+    } else {
+      typedData = params[1];
+      rawMessage = JSON.stringify(typedData);
+    }
 
     const signType: SignType = method === 'eth_signTypedData_v4'
       ? 'ethSignTypedDataV4'

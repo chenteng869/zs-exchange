@@ -13,6 +13,7 @@
 
 import { randomBytes, scryptSync, createCipheriv, createDecipheriv, createHmac } from 'crypto';
 import { secureZero, secureEqual, type EncryptedKey } from './private-key';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 // ============================================================================
 // 类型定义
@@ -309,7 +310,16 @@ export class DataEncryption {
 
   static decryptObject<T>(encrypted: EncryptedData, key: Uint8Array): T {
     const json = this.decrypt(encrypted, key);
-    return JSON.parse(json);
+    const parsed = safeJsonParse<T>(json, {
+      context: 'wallet-decrypt-object',
+      maxBytes: 5 * 1024 * 1024,
+      silent: true,
+      defaultValue: null,
+    });
+    if (parsed === null) {
+      throw new Error('Failed to parse decrypted object');
+    }
+    return parsed;
   }
 }
 
@@ -462,7 +472,15 @@ export class WalletStorage {
       throw new Error('Storage not initialized');
     }
 
-    const { verifier, salt, iterations } = JSON.parse(stored);
+    const { verifier, salt, iterations } = safeJsonParse<{ verifier: any; salt: string; iterations: number }>(stored, {
+      context: 'wallet-storage-verify',
+      maxBytes: 8 * 1024,
+      silent: true,
+      defaultValue: null,
+    }) ?? { verifier: null, salt: '', iterations: 0 };
+    if (!verifier) {
+      throw new Error('Storage corrupted');
+    }
     const saltBytes = new Uint8Array(Buffer.from(salt, 'base64'));
 
     const masterKey = this.masterKeyManager.deriveMasterKey(password, saltBytes);
@@ -580,7 +598,13 @@ export class WalletStorage {
   private async loadWalletList(): Promise<void> {
     const stored = await this.backend.getItem(this.options.storagePrefix + 'wallets');
     if (stored) {
-      this.walletList = JSON.parse(stored);
+      const parsed = safeJsonParse<WalletMeta[]>(stored, {
+        context: 'wallet-storage-list',
+        maxBytes: 1 * 1024 * 1024,
+        silent: true,
+        defaultValue: null,
+      });
+      if (Array.isArray(parsed)) this.walletList = parsed;
     }
   }
 
@@ -656,8 +680,15 @@ export class WalletStorage {
     if (!masterKey) return null;
 
     try {
+      const encrypted = safeJsonParse<any>(stored, {
+        context: 'wallet-storage-get',
+        maxBytes: 1 * 1024 * 1024,
+        silent: true,
+        defaultValue: null,
+      });
+      if (!encrypted) return null;
       const wallet = DataEncryption.decryptObject<StoredWallet>(
-        JSON.parse(stored),
+        encrypted,
         masterKey.key
       );
       this.walletCache.set(walletId, wallet);
@@ -721,11 +752,13 @@ export class WalletStorage {
   async getSettings(): Promise<WalletSettings> {
     const stored = await this.backend.getItem(this.options.storagePrefix + 'settings');
     if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        // fall through
-      }
+      const parsed = safeJsonParse<WalletSettings>(stored, {
+        context: 'wallet-storage-settings',
+        maxBytes: 64 * 1024,
+        silent: true,
+        defaultValue: null,
+      });
+      if (parsed) return parsed;
     }
     return { ...DEFAULT_SETTINGS };
   }
@@ -733,7 +766,15 @@ export class WalletStorage {
   private getSettingsSync(): WalletSettings {
     try {
       const stored = localStorage.getItem(this.options.storagePrefix + 'settings');
-      if (stored) return JSON.parse(stored);
+      if (stored) {
+        const parsed = safeJsonParse<WalletSettings>(stored, {
+          context: 'wallet-storage-settings-sync',
+          maxBytes: 64 * 1024,
+          silent: true,
+          defaultValue: null,
+        });
+        if (parsed) return parsed;
+      }
     } catch {
       // ignore
     }
@@ -791,7 +832,15 @@ export class WalletStorage {
     const unlocked = await this.unlock(password);
     if (!unlocked) throw new Error('Invalid password');
 
-    const importData = JSON.parse(data);
+    const importData = safeJsonParse<{ wallets?: any[]; settings?: any }>(data, {
+      context: 'wallet-import-data',
+      maxBytes: 10 * 1024 * 1024,
+      silent: true,
+      defaultValue: null,
+    });
+    if (!importData || !Array.isArray(importData.wallets)) {
+      throw new Error('Invalid import data');
+    }
     let imported = 0;
 
     for (const wallet of importData.wallets as StoredWallet[]) {
