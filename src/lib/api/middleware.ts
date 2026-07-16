@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auditApiAccessLogRepository } from '@/repositories/audit.repository';
-import { forbidden } from './response';
-import { AuthContext, requireAuth } from './auth';
-
+import { forbidden, unauthorized } from './response';
+import { AuthContext, requireAuth as _coreRequireAuth, authenticate } from './auth';
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+/**
+ * 兼容旧调用约定的 requireAuth(req) → { ok, user, userId } | { ok, response }
+ * 新代码请使用 withAuth(req, handler) 包装器
+ */
+export async function requireAuth(
+  req: NextRequest,
+): Promise<
+  | { ok: true; user: AuthContext['user']; userId: AuthContext['userId']; token: string; response?: undefined }
+  | { ok: false; user?: undefined; userId?: undefined; token?: undefined; response: NextResponse }
+> {
+  const result = await authenticate(req);
+  if ('status' in result) {
+    return { ok: false, response: result } as const;
+  }
+  return { ok: true, user: result.user, userId: result.userId, token: result.token } as const;
+}
 
 export function rateLimit(
   key: string,
@@ -102,19 +118,69 @@ export async function withAuth(
   req: NextRequest,
   handler: (ctx: AuthContext) => Promise<NextResponse>,
 ): Promise<NextResponse> {
-  return requireAuth(req, handler);
+  return _coreRequireAuth(req, handler);
 }
 
+// ============================================================
+// withAdminAuth - 同时支持 (handler) HOC 与 (req, handler) 双参数
+// ============================================================
+
+/** HOC 形式：支持 Next.js 15 动态路由 `(req, { params })` 签名 */
+export function withAdminAuth(
+  handler: (req: NextRequest, ctx: any) => Promise<NextResponse>
+): (req: NextRequest, ctx?: any) => Promise<NextResponse>;
+
+/** 双参数形式：`return withAdminAuth(req, async (ctx) => {...})` */
 export async function withAdminAuth(
   req: NextRequest,
-  handler: (ctx: AuthContext) => Promise<NextResponse>,
-): Promise<NextResponse> {
-  return requireAuth(req, async (ctx) => {
+  handler: (ctx: AuthContext) => Promise<NextResponse>
+): Promise<NextResponse>;
+
+/** 实现 */
+export function withAdminAuth(
+  arg1: any,
+  arg2?: any
+): any {
+  if (typeof arg1 === 'function') {
+    // HOC 形式：withAdminAuth(handler) -> (req, ctx?) => handler(req, ctx)
+    return async (req: NextRequest, ctx?: any) => {
+      return _coreRequireAuth(req, async (authCtx) => {
+        if (authCtx.user?.userType !== 'admin') {
+          return forbidden('Admin permission is required');
+        }
+        return arg1(req, ctx ?? authCtx);
+      });
+    };
+  }
+  // 双参数形式：withAdminAuth(req, handler)
+  return _coreRequireAuth(arg1, async (ctx) => {
     if (ctx.user?.userType !== 'admin') {
       return forbidden('Admin permission is required');
     }
-    return handler(ctx);
+    return arg2(ctx);
   });
+}
+
+/**
+ * 别名：与 withAuth 等价（兼容旧调用约定）
+ * 也支持 HOC 形式：withUserAuth(handler)
+ */
+export function withUserAuth(
+  handler: (req: NextRequest, ctx: any) => Promise<NextResponse>
+): (req: NextRequest, ctx?: any) => Promise<NextResponse>;
+
+export async function withUserAuth(
+  req: NextRequest,
+  handler: (ctx: AuthContext) => Promise<NextResponse>
+): Promise<NextResponse>;
+
+export function withUserAuth(arg1: any, arg2?: any): any {
+  if (typeof arg1 === 'function') {
+    return async (req: NextRequest, ctx?: any) => {
+      return _coreRequireAuth(req, async (authCtx) => arg1(req, ctx ?? authCtx));
+    };
+  }
+  return _coreRequireAuth(arg1, arg2);
 }
 
 function getIpFromRequest(req: NextRequest): string {

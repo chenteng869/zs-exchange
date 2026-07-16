@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { unauthorized, forbidden, internalError } from './response';
 import { verifyToken } from '@/lib/auth/jwt';
 import { userRepository } from '@/repositories/user.repository';
+import { getAccessToken } from '@/lib/auth/cookie';
 
 export interface AuthContext {
   userId: string;
@@ -10,18 +11,13 @@ export interface AuthContext {
 }
 
 export async function authenticate(req: NextRequest): Promise<AuthContext | NextResponse> {
-  const authHeader = req.headers.get('authorization') || req.headers.get('Authorization');
+  // P0-8: 支持从 HttpOnly Cookie 或 Authorization Header 读取 token
+  // 优先 cookie（新客户端），然后 Authorization header（兼容旧客户端）
+  const token = getAccessToken(req);
 
-  if (!authHeader) {
-    return unauthorized('Authorization header is required');
+  if (!token) {
+    return unauthorized('Authorization header or access_token cookie is required');
   }
-
-  const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0] !== 'Bearer') {
-    return unauthorized('Invalid authorization format');
-  }
-
-  const token = parts[1];
 
   try {
     const payload = await verifyToken(token);
@@ -35,8 +31,9 @@ export async function authenticate(req: NextRequest): Promise<AuthContext | Next
       payload.userId === 'dev-admin'
     ) {
       return {
-        userId: 'dev-admin',
-        user: { id: 'dev-admin', userType: 'admin', status: 'active', username: payload.username },
+        // dev-admin 在 DB 中映射为一个固定 UUID（用于满足 schema 的 @db.Uuid 字段）
+        userId: '00000000-0000-0000-0000-00000000d3a0', // 0xDEV = dev-admin
+        user: { id: '00000000-0000-0000-0000-00000000d3a0', userType: 'admin', status: 'active', username: payload.username },
         token,
       };
     }

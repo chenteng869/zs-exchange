@@ -117,6 +117,7 @@ export class AuditLoginLogRepository extends BaseRepository<
         ipAddress,
         userAgent,
         status: 'success',
+        createdAt: new Date(),
       },
     });
   }
@@ -129,6 +130,7 @@ export class AuditLoginLogRepository extends BaseRepository<
         userAgent,
         status: 'failed',
         errorMessage,
+        createdAt: new Date(),
       },
     });
   }
