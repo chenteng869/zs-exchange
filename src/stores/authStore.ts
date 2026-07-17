@@ -393,6 +393,14 @@ export const useAuthStore = create<AuthState>()(
         if (isJWTExpired(state.token.accessToken)) {
           get().logout('timeout');
         } else {
+          tokenManager.setTokens(state.token.accessToken, state.token.refreshToken);
+          set({
+            isAuthenticated: true,
+            isAuthenticating: false,
+            twoFARequired: false,
+            twoFAVerified: true,
+            lastError: null,
+          });
           get().startSessionTimer();
         }
       },
@@ -402,6 +410,7 @@ export const useAuthStore = create<AuthState>()(
       partialize: (s) => ({
         user: s.user,
         token: s.token,
+        isAuthenticated: s.isAuthenticated,
         twoFAVerified: s.twoFAVerified,
         sessionExpiryAt: s.sessionExpiryAt,
         permissions: s.permissions,

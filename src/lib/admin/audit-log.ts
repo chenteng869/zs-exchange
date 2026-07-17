@@ -10,6 +10,7 @@
 
 import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/stores/authStore';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 export type AuditLogModule =
   | 'users'
@@ -132,7 +133,8 @@ const loadLogsFromStorage = (): AuditLogEntry[] => {
   try {
     const stored = localStorage.getItem(LOG_STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = safeJsonParse<AuditLogEntry[]>(stored, { context: 'audit-log-storage' });
+      if (Array.isArray(parsed)) return parsed;
     }
   } catch (e) {
     logger.error('[AuditLog] 加载日志失败', e);

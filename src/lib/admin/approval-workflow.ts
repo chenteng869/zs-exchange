@@ -10,6 +10,7 @@
 
 import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/stores/authStore';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 import { createAuditLog } from './audit-log';
 
 export type ApprovalType =
@@ -131,7 +132,8 @@ const loadFromStorage = () => {
   try {
     const stored = localStorage.getItem(APPROVAL_STORAGE_KEY);
     if (stored) {
-      approvals = JSON.parse(stored);
+      const parsed = safeJsonParse<ApprovalRecord[]>(stored, { context: 'approval-storage' });
+      if (Array.isArray(parsed)) approvals = parsed;
     }
   } catch (e) {
     logger.error('[Approval] 加载审批数据失败', e);

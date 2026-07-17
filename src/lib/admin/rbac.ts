@@ -11,6 +11,7 @@
 
 import { logger } from '@/lib/logger';
 import { useAuthStore } from '@/stores/authStore';
+import { safeJsonParse } from '@/lib/security/safe-json-parse';
 
 export type PermissionAction =
   | 'view'
@@ -357,12 +358,14 @@ const loadFromStorage = () => {
   try {
     const storedRoles = localStorage.getItem(ROLE_STORAGE_KEY);
     if (storedRoles) {
-      roles = JSON.parse(storedRoles);
+      const parsed = safeJsonParse<Role[]>(storedRoles, { context: 'rbac-roles' });
+      if (Array.isArray(parsed)) roles = parsed;
     }
 
     const storedAdmins = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (storedAdmins) {
-      admins = JSON.parse(storedAdmins);
+      const parsed = safeJsonParse<AdminUser[]>(storedAdmins, { context: 'rbac-admins' });
+      if (Array.isArray(parsed)) admins = parsed;
     }
   } catch (e) {
     logger.error('[RBAC] 加载权限数据失败', e);
