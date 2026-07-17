@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from './client';
+import { apiGet, apiPost, apiDelete } from './client';
 
 export interface WalletBalance {
   id: string;
@@ -91,8 +91,36 @@ export interface WalletTransferOverview {
   pageSize: number;
 }
 
+export interface AddressBookEntry {
+  id: string;
+  userId: string;
+  chainType: 'evm' | 'tron' | 'solana';
+  chainId: string;
+  assetSymbol: string;
+  contractAddress?: string | null;
+  address: string;
+  label: string;
+  isBlacklisted: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export const walletApi = {
   getBalances: () => apiGet<WalletBalance[]>('/api/v1/wallet/balances'),
+
+  getAddressBook: () =>
+    apiGet<{ list: AddressBookEntry[]; total: number }>('/api/v1/wallet/address-book?page=1&pageSize=100'),
+
+  createAddressBookEntry: (input: {
+    chainType: 'evm' | 'tron' | 'solana';
+    chainId: string;
+    assetSymbol: string;
+    address: string;
+    label: string;
+  }) => apiPost<AddressBookEntry>('/api/v1/wallet/address-book', input),
+
+  deleteAddressBookEntry: (id: string) =>
+    apiDelete<{ message: string }>(`/api/v1/wallet/address-book/${id}`),
 
   getTransfers: (currency: string = 'USDT') =>
     apiGet<WalletTransferOverview>(

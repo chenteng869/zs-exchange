@@ -46,8 +46,9 @@ export class OrderRepository extends BaseRepository {
     return toPaginatedResult(items, total, page, pageSize);
   }
 
-  async create(data: Prisma.PerpOrderCreateInput): Promise<PerpOrder> {
-    return this.prisma.perpOrder.create({ data });
+  async create(data: Prisma.PerpOrderCreateInput, tx?: Prisma.TransactionClient): Promise<PerpOrder> {
+    const client = tx || this.prisma;
+    return client.perpOrder.create({ data });
   }
 
   async update(id: string, data: Prisma.PerpOrderUpdateInput): Promise<PerpOrder> {

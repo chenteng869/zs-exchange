@@ -53,12 +53,14 @@ export class PositionRepository extends BaseRepository {
     return toPaginatedResult(items, total, page, pageSize);
   }
 
-  async create(data: Prisma.PerpPositionCreateInput): Promise<PerpPosition> {
-    return this.prisma.perpPosition.create({ data });
+  async create(data: Prisma.PerpPositionCreateInput, tx?: Prisma.TransactionClient): Promise<PerpPosition> {
+    const client = tx || this.prisma;
+    return client.perpPosition.create({ data });
   }
 
-  async update(id: string, data: Prisma.PerpPositionUpdateInput): Promise<PerpPosition> {
-    return this.prisma.perpPosition.update({ where: { id }, data });
+  async update(id: string, data: Prisma.PerpPositionUpdateInput, tx?: Prisma.TransactionClient): Promise<PerpPosition> {
+    const client = tx || this.prisma;
+    return client.perpPosition.update({ where: { id }, data });
   }
 
   async setStatus(id: string, status: string, closeTime?: Date): Promise<PerpPosition> {

@@ -5,6 +5,7 @@ import { userAssetBalanceRepo } from './repos/user-asset-balance.repo';
 import { chainCursorRepo } from './repos/chain-cursor.repo';
 import { chainTransactionRepo } from './repos/chain-transaction.repo';
 import { ChainConfig } from './types';
+import prisma from '@/lib/prisma';
 
 export interface DetectedDeposit {
   chainType: TransferChainType;
