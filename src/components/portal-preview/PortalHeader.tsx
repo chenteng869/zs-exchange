@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { label: 'Earn', href: '/portal-preview/earn' },
   { label: '公告', href: '/portal-preview/announcement' },
   { label: '关于', href: '/portal-preview/about' },
+  { label: '浏览器', href: '/portal-preview/explorer' },
 ];
 
 export function PortalHeader() {
