@@ -18,12 +18,14 @@
  *   - 失败 fallback 到 summary=0/rows=[]
  */
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { adminPrisma } from '@/lib/admin/admin-db';
 import {
   successResponse,
   errorResponse,
 } from '@/lib/admin/api-response-schema';
+import { withAdminAuth } from '@/lib/api/middleware';
+import { AuthContext } from '@/lib/api/auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -47,7 +49,8 @@ function safeNum(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  return withAdminAuth(req, async (_ctx: AuthContext) => {
   try {
     const url = new URL(req.url);
     const take = Math.min(
@@ -112,4 +115,5 @@ export async function GET(req: Request) {
       { status: 500 },
     );
   }
+  });
 }
