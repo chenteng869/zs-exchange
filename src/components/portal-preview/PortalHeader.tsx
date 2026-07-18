@@ -211,6 +211,8 @@ export function PortalHeader() {
               <div className="grid grid-cols-2 gap-2">
                 {[
                   { label: '首页', href: '/portal-preview' },
+                  { label: '买币', href: '/portal-preview/buy-crypto' },
+                  { label: '行情中心', href: '/portal-preview/market' },
                   { label: '关于我们', href: '/portal-preview/about' },
                   { label: '公告中心', href: '/portal-preview/announcements' },
                   { label: '费率说明', href: '/portal-preview/fees' },
