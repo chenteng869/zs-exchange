@@ -1,13 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Card, Row, Col, Table, Tag, Button, Space, Modal, Form, Input, InputNumber, Select, Badge, Statistic, Progress, Switch } from 'antd';
-import { TrophyOutlined, PlusOutlined, EditOutlined, UserOutlined, ArrowUpOutlined, SettingOutlined } from '@ant-design/icons';
+import { useEffect, useState, useCallback } from 'react';
+import {
+  Card, Row, Col, Table, Tag, Button, Space, Modal, Form, Input, InputNumber,
+  Badge, Statistic, Progress, Switch, Alert, App,
+} from 'antd';
+import {
+  TrophyOutlined, PlusOutlined, EditOutlined,
+  SettingOutlined, ReloadOutlined,
+} from '@ant-design/icons';
 import SafeECharts from '@/components/admin/SafeECharts';
 import AdminLayout from '@/components/admin/AdminLayout';
+import { adminFetch } from '@/lib/admin/admin-fetch';
 
-const { Option } = Select;
-
+// Q04-3.12.b2.1: 等级配置 (static config, 暂不 API 化)
+// h0 决策: 保留 mockLevels 作为系统策略展示, 不扩 b1 route, 不改 schema/seed
 const mockLevels = [
   { id: '1', name: '普通会员', level: 'LV1', minPoints: 0, maxPoints: 999, discount: 0, feeRate: 0.2, benefits: ['基础功能', '每日签到'], userCount: 15800, status: 'active', icon: '🥉', color: '#d9d9d9' },
   { id: '2', name: '白银会员', level: 'LV2', minPoints: 1000, maxPoints: 4999, discount: 5, feeRate: 0.18, benefits: ['LV1权益', '交易手续费折扣', '专属客服'], userCount: 3200, status: 'active', icon: '🥈', color: '#c0c0c0' },
@@ -17,13 +24,13 @@ const mockLevels = [
   { id: '6', name: '皇冠会员', level: 'LV6', minPoints: 100000, maxPoints: null, discount: 25, feeRate: 0.08, benefits: ['LV5权益', '专属经理', '董事会列席', '定制权益'], userCount: 12, status: 'active', icon: '👑', color: '#ffd700' },
 ];
 
-
+// ECharts 静态策略展示 (与 mockLevels 对应, 标注为策略示例)
 const levelDistributionOption = {
   tooltip: { trigger: 'item' },
   legend: { bottom: '5%', left: 'center' },
   series: [
     {
-      name: '等级分布',
+      name: '等级分布 (策略示例)',
       type: 'pie',
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,
@@ -49,77 +56,95 @@ const pointsTrendOption = {
   xAxis: { type: 'category', data: ['05-08', '05-09', '05-10', '05-11', '05-12', '05-13'] },
   yAxis: { type: 'value' },
   series: [
-    { name: '新增积分', type: 'bar', data: [8500, 12000, 9500, 15000, 11000, 13500], itemStyle: { color: '#1677FF' } },
-    { name: '消耗积分', type: 'line', data: [3200, 4500, 3800, 5200, 4100, 4800], itemStyle: { color: '#DC2626' } },
+    { name: '新增积分 (策略示例)', type: 'bar',  data: [8500, 12000, 9500, 15000, 11000, 13500], itemStyle: { color: '#1677FF' } },
+    { name: '消耗积分 (策略示例)', type: 'line', data: [3200, 4500,  3800,  5200,  4100,  4800],  itemStyle: { color: '#DC2626' } },
   ],
 };
 
 export default function UserLevelsPage() {
+  const { message } = App.useApp();
   const [isLevelModalVisible, setIsLevelModalVisible] = useState(false);
   const [editingLevel, setEditingLevel] = useState<any>(null);
   const [form] = Form.useForm();
   const [activeTab, setActiveTab] = useState('config');
   const [userLevels, setUserLevels] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [summary, setSummary] = useState<any>(null);
 
-  useEffect(() => {
+  // Q04-3.12.b2.1: GET read-only realification for user tab
+  // endpoint: /api/v1/admin/users/levels
+  // 字段映射: walletAddress 缺失 -> fallback id.slice; userLevel 缺失 -> "未分级" 显式标注
+  const loadUsers = useCallback(async () => {
     setLoadingUsers(true);
-    fetch('/api/admin/users?pageSize=100', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d) => {
-        const items = (d?.data?.items ?? []).map((u: any) => ({
-          id: u.id,
-          user: u.walletAddress || u.id.slice(0, 8) + '...' + u.id.slice(-4),
-          username: u.username,
-                    level: `LV${Math.max(1, u.userLevel || 1)}`,
-          points: 0,
-                    nextLevel: `LV${Math.min(6, Math.max(1, u.userLevel || 1) + 1)}`,
-          pointsToNext: 0,
-          registerDate: u.createdAt?.slice(0, 10) ?? '-',
-          lastActive: u.updatedAt?.slice(0, 10) ?? '-',
-          status: u.isActive ? 'active' : 'inactive',
-        }));
-        setUserLevels(items);
-      })
-      .catch(() => setUserLevels([]))
-      .finally(() => setLoadingUsers(false));
-  }, []);
+    try {
+      const res = await adminFetch<{ summary: any; rows: any[]; pagination: any }>(
+        '/api/v1/admin/users/levels?take=100'
+      );
+      // 字段降级映射: route 不返回 walletAddress / userLevel / updatedAt / isActive
+      const items = (Array.isArray(res?.rows) ? res.rows : []).map((u: any) => ({
+        id: u.id,
+        user: u.id?.slice(0, 8) + '...' + (u.id?.slice(-4) ?? ''),  // fallback: 无 walletAddress
+        username: u.username ?? '-',
+        level: '未分级',                                             // route 显式不返 per-user level
+        nextLevel: '-',                                              // 无法派生 (无 per-user level)
+        points: 0,                                                   // route 不返积分, 静态占位
+        pointsToNext: 0,                                             // route 不返, 静态占位
+        registerDate: u.createdAt?.slice(0, 10) ?? '-',
+        lastActive: '-',                                             // route 不返 updatedAt
+        status: (u.status === 'active' || u.status === 'ACTIVE') ? 'active' : 'inactive',
+      }));
+      setUserLevels(items);
+      setSummary(res?.summary ?? null);
+      message.success('用户数据已刷新');
+    } catch (e: any) {
+      message.error(e?.message || '用户数据加载失败');
+      setUserLevels([]);
+      setSummary(null);
+    } finally {
+      setLoadingUsers(false);
+    }
+  }, [message]);
 
-  const totalUsers = mockLevels.reduce((sum, l) => sum + l.userCount, 0);
-  const avgLevel = 'LV2';
+  useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  // 4 个 Statistic Card 数据源:
+  //   总用户数 <- route.summary.users (真实)
+  //   等级数量 <- mockLevels.length (策略示例, 标注)
+  //   平均等级 <- 静态 'LV2' (占位, 标注)
+  //   最高等级用户 <- mockLevels[5].userCount (策略示例, 标注)
+  const totalUsers = summary?.users ?? mockLevels.reduce((sum, l) => sum + l.userCount, 0);
+  const avgLevel = 'LV2 (静态)';
 
   const levelColumns = [
-    { 
-      title: '等级图标', 
-      key: 'icon', 
+    {
+      title: '等级图标',
+      key: 'icon',
       width: 80,
-      render: (_: any, record: any) => (
-        <div className="text-3xl">{record.icon}</div>
-      ),
+      render: (_: any, record: any) => <div className="text-3xl">{record.icon}</div>,
     },
     { title: '等级名称', dataIndex: 'name', key: 'name' },
     { title: '等级标识', dataIndex: 'level', key: 'level', render: (text: string) => <Tag color="orange">{text}</Tag> },
-    { 
-      title: '积分范围', 
-      key: 'points', 
+    {
+      title: '积分范围',
+      key: 'points',
       render: (_: any, record: any) => (
         <span>{record.minPoints.toLocaleString()} - {record.maxPoints ? record.maxPoints.toLocaleString() : '∞'}</span>
       ),
     },
     { title: '手续费折扣', dataIndex: 'discount', key: 'discount', render: (val: number) => <span className="text-green-600">{val}%</span> },
     { title: '手续费率', dataIndex: 'feeRate', key: 'feeRate', render: (val: number) => <span>{val}%</span> },
-    { title: '用户数', dataIndex: 'userCount', key: 'userCount', render: (val: number) => val.toLocaleString() },
-    { 
-      title: '状态', 
-      dataIndex: 'status', 
-      key: 'status', 
+    { title: '用户数 (策略示例)', dataIndex: 'userCount', key: 'userCount', render: (val: number) => val.toLocaleString() },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
       render: (status: string) => (
         <Badge status={status === 'active' ? 'success' : 'default'} text={status === 'active' ? '启用' : '禁用'} />
       ),
     },
-    { 
-      title: '操作', 
-      key: 'action', 
+    {
+      title: '操作',
+      key: 'action',
       render: (_: any, record: any) => (
         <Space size="small">
           <Button type="link" size="small" icon={<EditOutlined />} onClick={() => handleEditLevel(record)}>编辑</Button>
@@ -129,56 +154,45 @@ export default function UserLevelsPage() {
   ];
 
   const userColumns = [
-    { title: '用户地址', dataIndex: 'user', key: 'user', render: (text: string) => <span className="font-mono">{text}</span> },
+    { title: '用户 ID (fallback)', dataIndex: 'user', key: 'user', render: (text: string) => <span className="font-mono">{text}</span> },
     { title: '用户名', dataIndex: 'username', key: 'username' },
-    { 
-      title: '当前等级', 
-      dataIndex: 'level', 
-      key: 'level', 
-      render: (text: string) => {
-        const level = mockLevels.find(l => l.level === text);
-        return (
-          <Tag color={level?.color || 'orange'}>
-            {level?.icon} {text}
-          </Tag>
-        );
-      },
+    {
+      title: '当前等级',
+      dataIndex: 'level',
+      key: 'level',
+      render: (text: string) => <Tag color="default">{text}</Tag>,
     },
-    { 
-      title: '当前积分', 
-      dataIndex: 'points', 
-      key: 'points', 
-      render: (val: number, record: any) => {
-        const level = mockLevels.find(l => l.level === record.level);
-        const nextLevel = mockLevels.find(l => l.level === record.nextLevel);
-        const total = nextLevel?.minPoints || val * 2;
-        const percent = (val / total) * 100;
-        return (
-          <div>
-            <div className="flex justify-between mb-1">
-              <span>{val.toLocaleString()}</span>
-              <span className="text-gray-400">{record.nextLevel} 还需 {record.pointsToNext.toLocaleString()}</span>
-            </div>
-            <Progress percent={percent} size="small" strokeColor="#1677FF" />
+    {
+      title: '当前积分 (静态占位)',
+      dataIndex: 'points',
+      key: 'points',
+      render: (val: number, record: any) => (
+        <div>
+          <div className="flex justify-between mb-1">
+            <span>{val.toLocaleString()}</span>
+            <span className="text-gray-400">{record.nextLevel}</span>
           </div>
-        );
-      },
+          <Progress percent={0} size="small" strokeColor="#1677FF" />
+        </div>
+      ),
     },
     { title: '注册时间', dataIndex: 'registerDate', key: 'registerDate' },
-    { title: '最后活跃', dataIndex: 'lastActive', key: 'lastActive' },
-    { 
-      title: '状态', 
-      dataIndex: 'status', 
-      key: 'status', 
-      render: (status: string) => <Badge status={status === 'active' ? 'success' : 'default'} text={status === 'active' ? '活跃' : '休眠'} />,
+    { title: '最后活跃', dataIndex: 'lastActive', key: 'lastActive', render: (v: string) => v || '-' },
+    {
+      title: '状态',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Badge status={status === 'active' ? 'success' : 'default'} text={status === 'active' ? '活跃' : '休眠'} />
+      ),
     },
-    { 
-      title: '操作', 
-      key: 'action', 
-      render: (_: any, record: any) => (
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: any) => (
         <Space size="small">
-          <Button type="link" size="small">调整积分</Button>
-          <Button type="link" size="small">变更等级</Button>
+          <Button type="link" size="small" disabled>调整积分</Button>
+          <Button type="link" size="small" disabled>变更等级</Button>
         </Space>
       ),
     },
@@ -196,13 +210,15 @@ export default function UserLevelsPage() {
     setIsLevelModalVisible(true);
   };
 
+  // Q04-3.12.b2.1: 等级配置保存不接真实 API, 仅前端 mock + 写接口提示
   const handleSaveLevel = () => {
     form.validateFields().then((values) => {
       Modal.success({
-        title: editingLevel ? '等级更新成功' : '等级创建成功',
-        content: '操作已完成！',
+        title: editingLevel ? '等级更新提示' : '等级创建提示',
+        content: '等级配置为系统策略展示，写操作待 b1+ 等级管理接口阶段开放。',
       });
       setIsLevelModalVisible(false);
+      message.warning('等级保存接口待 b1+ 阶段开放');
     });
   };
 
@@ -215,54 +231,71 @@ export default function UserLevelsPage() {
             <h1 className="text-2xl font-bold m-0">等级管理</h1>
           </div>
           <Space>
+            <Button icon={<ReloadOutlined />} onClick={loadUsers} loading={loadingUsers}>刷新</Button>
             <Button icon={<SettingOutlined />}>系统设置</Button>
           </Space>
         </div>
 
+        {/* Q04-3.12.b2.1: 等级配置为系统策略展示, 写操作待 b1+ 阶段开放 */}
+        <Alert
+          type="warning"
+          showIcon
+          message="等级配置为系统策略展示，非实时数据库配置"
+          description="本节展示的等级体系、积分范围、手续费率为预定义策略示例，等级配置的写操作待 b1+ 等级管理接口阶段开放；用户等级列表已对接 GET 接口。"
+        />
+
         <Row gutter={[16, 16]}>
           <Col xs={24} sm={12} md={6}>
             <Card>
-              <Statistic title="总用户数" value={totalUsers} valueStyle={{ color: '#1677FF' }} />
-              <div className="text-gray-400 text-sm mt-1">平台用户总数</div>
+              <Statistic
+                title="总用户数 (来自 GET 接口)"
+                value={typeof totalUsers === 'number' ? totalUsers.toLocaleString() : totalUsers}
+                valueStyle={{ color: '#1677FF' }}
+              />
+              <div className="text-gray-400 text-sm mt-1">来自 /api/v1/admin/users/levels summary</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card>
-              <Statistic title="等级数量" value={mockLevels.length} valueStyle={{ color: '#16A34A' }} />
-              <div className="text-gray-400 text-sm mt-1">当前等级体系</div>
+              <Statistic title="等级数量 (策略示例)" value={mockLevels.length} valueStyle={{ color: '#16A34A' }} />
+              <div className="text-gray-400 text-sm mt-1">当前等级体系 (静态策略)</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card>
-              <Statistic title="平均等级" value={avgLevel} valueStyle={{ color: '#F59E0B' }} />
-              <div className="text-gray-400 text-sm mt-1">用户平均等级</div>
+              <Statistic title="平均等级 (占位)" value={avgLevel} valueStyle={{ color: '#F59E0B' }} />
+              <div className="text-gray-400 text-sm mt-1">route 不提供 per-user level, 静态占位</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Card>
-              <Statistic title="最高等级用户" value={mockLevels[mockLevels.length - 1].userCount} valueStyle={{ color: '#7C3AED' }} />
-              <div className="text-gray-400 text-sm mt-1">LV6 用户数</div>
+              <Statistic
+                title="最高等级用户 (策略示例)"
+                value={mockLevels[mockLevels.length - 1].userCount}
+                valueStyle={{ color: '#7C3AED' }}
+              />
+              <div className="text-gray-400 text-sm mt-1">LV6 用户数 (静态策略)</div>
             </Card>
           </Col>
         </Row>
 
         <Row gutter={[16, 16]}>
           <Col xs={24} md={12}>
-            <Card title="用户等级分布">
-              <SafeECharts option={levelDistributionOption} style={{ height: 300 }} title="用户等级分布" />
+            <Card title="用户等级分布 (策略示例)">
+              <SafeECharts option={levelDistributionOption} style={{ height: 300 }} title="用户等级分布 (策略示例)" />
             </Card>
           </Col>
           <Col xs={24} md={12}>
-            <Card title="积分趋势">
-              <SafeECharts option={pointsTrendOption} style={{ height: 300 }} title="积分趋势" />
+            <Card title="积分趋势 (策略示例)">
+              <SafeECharts option={pointsTrendOption} style={{ height: 300 }} title="积分趋势 (策略示例)" />
             </Card>
           </Col>
         </Row>
 
         <Card
           tabList={[
-            { key: 'config', tab: '等级配置' },
-            { key: 'users', tab: '用户等级' },
+            { key: 'config', tab: '等级配置 (策略展示)' },
+            { key: 'users',  tab: '用户等级 (GET /api/v1/admin/users/levels)' },
           ]}
           activeTabKey={activeTab}
           onTabChange={setActiveTab}
@@ -284,7 +317,7 @@ export default function UserLevelsPage() {
           ) : (
             <Table
               dataSource={userLevels}
-            loading={loadingUsers}
+              loading={loadingUsers}
               columns={userColumns}
               pagination={{ pageSize: 10 }}
               rowKey="id"
@@ -293,12 +326,19 @@ export default function UserLevelsPage() {
         </Card>
 
         <Modal
-          title={editingLevel ? '编辑等级' : '新增等级'}
+          title={editingLevel ? '编辑等级 (策略展示)' : '新增等级 (策略展示)'}
           open={isLevelModalVisible}
           onOk={handleSaveLevel}
           onCancel={() => setIsLevelModalVisible(false)}
           width={600}
         >
+          <Alert
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+            message="写操作提示"
+            description="等级配置为系统策略展示，保存接口待 b1+ 阶段开放。当前提交仅为前端展示，不写入数据库。"
+          />
           <Form form={form} layout="vertical">
             <Row gutter={16}>
               <Col span={12}>
