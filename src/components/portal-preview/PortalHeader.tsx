@@ -25,7 +25,7 @@ const NAV: NavItem[] = [
   { label: '钱包', href: '/portal-preview/wallet', status: 'soon' },
   { label: '树图公链', href: '/portal-preview/discover', status: 'beta' },
   { label: 'Launch', href: '/portal-preview/launch', status: 'soon' },
-  { label: 'Earn', href: '/portal-preview/earn', status: 'soon' },
+  { label: 'Earn', href: '/portal-preview/earn' },
 ];
 
 export function PortalHeader() {
