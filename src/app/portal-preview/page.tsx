@@ -98,7 +98,7 @@ export default function PortalPreviewHomePage() {
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: ShieldCheck, title: '合规先行', desc: '重点研究萨摩亚、马耳他、新加坡等地区的合规路径，按业务线逐步对接合规要求。' },
+            { icon: ShieldCheck, title: '合规先行', desc: '按业务线逐步对接国际主要市场的合规要求，构建多法域合规研究与观察体系。' },
             { icon: TrendingUp, title: '深度撮合', desc: '自研撮合引擎，亚毫秒级响应，承载高频量化与机构交易需求。' },
             { icon: Sparkles, title: 'AI 风控', desc: '基于 AI 的异常交易识别与链上追踪能力，覆盖账户、资产、行为三层。' },
           ].map((it) => {
