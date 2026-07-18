@@ -51,13 +51,13 @@ export function PortalInstitutionSection() {
       <div
         className="rounded-3xl p-8 md:p-12 relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.primaryDim} 100%)`,
-          color: '#fff',
+          background: `linear-gradient(135deg, ${BRAND.primaryContainer} 0%, ${BRAND.primaryDim} 100%)`,
+          color: BRAND.onPrimary,
         }}
       >
         <div
           className="absolute -right-20 -top-20 w-72 h-72 rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #fff 0%, transparent 70%)' }}
+          style={{ background: `radial-gradient(circle, ${BRAND.primary}33 0%, transparent 70%)` }}
         />
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 mb-4">

@@ -11,23 +11,23 @@ import { BRAND } from './brand';
 import { PortalStatusBadge } from './PortalStatusBadge';
 
 const VALUES = [
-  { icon: ShieldCheck, title: '合规先行', desc: '萨摩亚持牌经营，主动接受监管与第三方审计。' },
+  { icon: ShieldCheck, title: '合规先行', desc: '持续推进合规治理与跨境合规研究，主动引入第三方安全审计。' },
   { icon: Globe, title: '全球视野', desc: '立足亚太，辐射全球，连接传统金融与数字资产。' },
   { icon: Heart, title: '用户为本', desc: '透明费率、24/7 客服、用户资产安全高于一切。' },
   { icon: Sparkles, title: '技术创新', desc: '持续投入 AI、风控、链上清算等基础设施。' },
 ];
 
 const TIMELINE = [
-  { year: '2024.03', event: '中萨数字科技集团在萨摩亚注册成立。' },
-  { year: '2024.08', event: '获得萨摩亚金融业监管局 DSAEX 数字资产交易牌照。' },
+  { year: '2024.03', event: '中萨数字科技集团完成初始业务团队组建。' },
+  { year: '2024.08', event: '启动跨境合规研究与多地合规路径评估。' },
   { year: '2025.02', event: '与树图 Conflux 达成战略合作，CFX/USDT 交易对上线。' },
   { year: '2025.11', event: '平台进入公测阶段，启动内测用户招募。' },
   { year: '2026.05', event: '启动 2.0 品牌升级，发布全新官网门户预览版。' },
 ];
 
-const LICENSES = [
-  { code: 'DSAEX-2024-001', name: '数字资产交易牌照', issuer: '萨摩亚 MSA' },
-  { code: 'DSAST-2024-002', name: '数字资产托管牌照', issuer: '萨摩亚 MSA' },
+const COMPLIANCE_TRACKS = [
+  { code: 'TRACK-01', name: '合规治理', desc: '持续完善 KYC / AML / 反洗钱框架，覆盖账户、资产、行为三层。' },
+  { code: 'TRACK-02', name: '跨境合规研究', desc: '按业务线逐步评估多地合规路径，对接外部法律与审计资源。' },
 ];
 
 export function PortalAboutSection() {
@@ -37,7 +37,7 @@ export function PortalAboutSection() {
       <div
         className="rounded-3xl p-8 md:p-12 relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${BRAND.bg} 0%, #ffffff 100%)`,
+          background: `linear-gradient(135deg, ${BRAND.bgAlt} 0%, ${BRAND.bg} 100%)`,
           border: `1px solid ${BRAND.border}`,
         }}
       >
@@ -53,8 +53,8 @@ export function PortalAboutSection() {
             <span style={{ color: BRAND.primary }}>数字资产世界</span>
           </h1>
           <p className="text-sm md:text-base leading-relaxed" style={{ color: BRAND.textSub }}>
-            中萨数字科技交易所（ZSDEX）由中萨数字科技集团于 2024 年在萨摩亚注册成立，
-            是面向全球用户的合规数字资产交易平台。我们以"合规、透明、安全"为基石，
+            中萨数字科技交易所（ZSDEX）由中萨数字科技集团发起，
+            是面向国际化场景的数字资产交易与风控服务平台。我们以"合规、透明、安全"为基石，
             为用户提供现货、合约、OTC、做市、托管等一站式数字资产服务。
           </p>
         </div>
@@ -131,13 +131,13 @@ export function PortalAboutSection() {
         </div>
       </div>
 
-      {/* 牌照 */}
-      <div id="license">
+      {/* 合规研究方向 */}
+      <div id="compliance">
         <h2 className="text-xl font-extrabold mb-4" style={{ color: BRAND.text }}>
-          牌照与合规
+          合规研究方向
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {LICENSES.map((l) => (
+          {COMPLIANCE_TRACKS.map((l) => (
             <div
               key={l.code}
               className="rounded-2xl p-5 flex items-start gap-4"
@@ -157,7 +157,7 @@ export function PortalAboutSection() {
                   {l.name}
                 </h3>
                 <p className="text-xs" style={{ color: BRAND.textSub }}>
-                  发证机构：{l.issuer}
+                  {l.desc}
                 </p>
               </div>
               <PortalStatusBadge status="OPEN" size="sm" />

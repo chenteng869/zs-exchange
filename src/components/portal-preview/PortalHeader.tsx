@@ -4,7 +4,7 @@
  * PortalHeader - 桌面端顶部导航（2026-07-18）
  *
  * 结构来源：Stitch _1 TopNavBar
- * 亮色转化：暗色 #11131c → #F8FAFC，主色 #1652F0
+ * 主题：2026-07-18 暗色版（与 brand.ts 一致）
  * 交互：搜索聚焦（/）、Esc 关闭、登录/注册
  */
 
@@ -57,10 +57,10 @@ export function PortalHeader() {
     <header
       className="sticky top-0 z-50 w-full transition-shadow"
       style={{
-        backgroundColor: scrolled ? 'rgba(255,255,255,0.92)' : '#ffffff',
+        backgroundColor: scrolled ? BRAND.headerBg : BRAND.bg,
         backdropFilter: scrolled ? 'blur(12px)' : 'none',
         borderBottom: `1px solid ${BRAND.border}`,
-        boxShadow: scrolled ? '0 1px 3px rgba(15,23,42,0.04)' : 'none',
+        boxShadow: scrolled ? BRAND.shadow : 'none',
       }}
     >
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -78,8 +78,10 @@ export function PortalHeader() {
               <a
                 key={item.label}
                 href={item.href}
-                className="text-sm font-medium transition-colors hover:text-[#1652F0] flex items-center gap-1"
+                className="text-sm font-medium transition-colors flex items-center gap-1"
                 style={{ color: BRAND.textSub }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = BRAND.primary)}
+                onMouseLeave={(e) => (e.currentTarget.style.color = BRAND.textSub)}
               >
                 {item.label}
                 {item.status === 'beta' && (
@@ -163,7 +165,7 @@ export function PortalHeader() {
           <a
             href="/auth/register"
             className="px-4 h-9 inline-flex items-center text-sm font-bold rounded-lg transition-all active:scale-95"
-            style={{ backgroundColor: BRAND.primary, color: '#fff' }}
+            style={{ backgroundColor: BRAND.primaryContainer, color: BRAND.onPrimary }}
           >
             注册
           </a>
@@ -174,12 +176,12 @@ export function PortalHeader() {
       {searchOpen && (
         <div
           className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4"
-          style={{ backgroundColor: 'rgba(15,23,42,0.4)' }}
+          style={{ backgroundColor: BRAND.overlay }}
           onClick={() => setSearchOpen(false)}
         >
           <div
             className="w-full max-w-2xl rounded-2xl shadow-2xl"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
+            style={{ backgroundColor: BRAND.cardElevated, border: `1px solid ${BRAND.border}` }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: BRAND.border }}>

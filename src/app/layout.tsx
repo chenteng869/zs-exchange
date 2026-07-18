@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { safeJsonLd } from '@/lib/security/xss-guard';
 import './globals.css';
 
 const inter = Inter({
@@ -21,15 +22,14 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.zs-exchange.com'),
   title: {
-    default: 'ZS Exchange - 中萨数字科技交易所 | 萨摩亚持牌 · 全球数字金融新枢纽',
+    default: 'ZS Exchange - 中萨数字科技交易所 | 持续推进合规治理与跨境合规研究',
     template: '%s | ZS Exchange',
   },
   description:
-    '中萨数字科技集团旗下，萨摩亚政府双牌照(交易所+证券交易所)合规数字资产交易平台。三地协同运营：海南AIOPC基地 · 萨摩亚金融枢纽 · 香港资本通道。',
+    '中萨数字科技集团旗下，面向国际化场景的数字资产交易与风控服务平台。',
   keywords: [
     'ZS Exchange',
     '中萨数科',
-    '萨摩亚牌照',
     '数字货币交易所',
     '加密货币',
     '区块链',
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'ZS Exchange - 中萨数字科技交易所',
     description:
-      '中萨数字科技集团旗下，萨摩亚政府双牌照合规数字资产交易平台。三地协同运营：海南AIOPC基地 · 萨摩亚金融枢纽 · 香港资本通道。',
+      '中萨数字科技集团旗下，面向国际化场景的数字资产交易与风控服务平台。',
     type: 'website',
     locale: 'zh_CN',
     siteName: 'ZS Exchange 中萨数字科技交易所',
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'ZS Exchange - 中萨数字科技交易所',
     description:
-      '萨摩亚政府双牌照合规数字资产交易平台。全球数字金融新枢纽。',
+      '面向国际化场景的数字资产交易与风控服务平台。',
   },
   robots: {
     index: true,
@@ -64,7 +64,7 @@ const jsonLd = {
   name: 'ZS Exchange 中萨数字科技交易所',
   url: 'https://www.zs-exchange.com',
   logo: 'https://www.zs-exchange.com/logo.png',
-  description: '萨摩亚政府双牌照合规数字资产交易平台',
+  description: '面向国际化场景的数字资产交易与风控服务平台',
   address: [
     { '@type': 'PostalAddress', addressLocality: '海口', addressCountry: 'CN' },
     { '@type': 'PostalAddress', addressLocality: 'Apia', addressCountry: 'WS' },
@@ -82,7 +82,7 @@ export default function RootLayout({
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
         />
       </head>
       <body className={`${inter.variable} font-sans`}>

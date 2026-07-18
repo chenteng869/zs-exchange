@@ -94,13 +94,13 @@ export default function PortalPreviewHomePage() {
         spacing="md"
         eyebrow="WHY ZSDEX"
         title="为什么选择 ZSDEX"
-        description="合规牌照 + 安全体系 + 极致体验，为用户打造真正可信赖的数字资产服务"
+        description="合规体系 + 安全架构 + 极致体验，为用户打造真正可信赖的数字资产服务"
       >
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[
-            { icon: ShieldCheck, title: '合规先行', desc: '萨摩亚 MSA 持牌，主动接受监管与第三方审计。' },
-            { icon: TrendingUp, title: '深度撮合', desc: '自研撮合引擎，亚毫秒级响应，承载高频量化。' },
-            { icon: Sparkles, title: 'AI 风控', desc: '基于 AI 的异常交易识别与链上追踪能力。' },
+            { icon: ShieldCheck, title: '合规先行', desc: '重点研究萨摩亚、马耳他、新加坡等地区的合规路径，按业务线逐步对接合规要求。' },
+            { icon: TrendingUp, title: '深度撮合', desc: '自研撮合引擎，亚毫秒级响应，承载高频量化与机构交易需求。' },
+            { icon: Sparkles, title: 'AI 风控', desc: '基于 AI 的异常交易识别与链上追踪能力，覆盖账户、资产、行为三层。' },
           ].map((it) => {
             const Icon = it.icon;
             return (
@@ -128,12 +128,12 @@ export default function PortalPreviewHomePage() {
       </PortalSection>
 
       {/* CTA */}
-      <PortalSection background="white" spacing="md">
+      <PortalSection background="card" spacing="md">
         <div
           className="rounded-3xl p-8 md:p-12 text-center relative overflow-hidden"
           style={{
-            background: `linear-gradient(135deg, ${BRAND.primary} 0%, ${BRAND.primaryDim} 100%)`,
-            color: '#fff',
+            background: `linear-gradient(135deg, ${BRAND.primaryContainer} 0%, ${BRAND.primaryDim} 100%)`,
+            color: BRAND.onPrimary,
           }}
         >
           <h2 className="text-2xl md:text-3xl font-extrabold mb-3">
@@ -146,14 +146,14 @@ export default function PortalPreviewHomePage() {
             <a
               href="/auth/register"
               className="inline-flex items-center gap-2 px-6 h-12 rounded-xl text-sm font-bold"
-              style={{ backgroundColor: '#fff', color: BRAND.primary }}
+              style={{ backgroundColor: BRAND.card, color: BRAND.primary }}
             >
               立即注册 <ArrowRight className="w-4 h-4" />
             </a>
             <a
               href="/portal-preview/about"
               className="inline-flex items-center gap-2 px-6 h-12 rounded-xl text-sm font-bold"
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)', color: '#fff' }}
+              style={{ backgroundColor: BRAND.cardGlass, color: BRAND.onPrimary }}
             >
               了解我们
             </a>

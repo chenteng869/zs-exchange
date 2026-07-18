@@ -1,10 +1,14 @@
 'use client';
 
 /**
- * PortalFooter - 桌面端底部（2026-07-18）
+ * PortalFooter - 桌面端底部（2026-07-19 P3.1b 重写）
  *
  * 4 大区块：品牌信息、四大栏目、订阅、合规说明
  * 全部静态展示，无真实 API
+ *
+ * 合规要点（Q05 官网硬约束）：
+ * - 不出现监管资质包装类措辞
+ * - 注册地址不作监管资质包装
  */
 
 import React from 'react';
@@ -16,7 +20,7 @@ const COLUMNS = [
     title: '关于我们',
     items: [
       { label: '关于中萨', href: '/portal-preview/about' },
-      { label: '牌照与合规', href: '/portal-preview/about#license' },
+      { label: '合规研究方向', href: '/portal-preview/about#compliance' },
       { label: '安全保障', href: '/portal-preview/risk' },
       { label: '新闻动态', href: '/portal-preview/announcements' },
     ],
@@ -63,13 +67,13 @@ export function PortalFooter() {
       >
         <div className="max-w-7xl mx-auto px-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-1">
           <span className="inline-flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5" style={{ color: BRAND.success }} /> 萨摩亚持牌
+            <Shield className="w-3.5 h-3.5" style={{ color: BRAND.success }} /> 合规研究
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <FileText className="w-3.5 h-3.5" style={{ color: BRAND.info }} /> MSA 监管
+            <FileText className="w-3.5 h-3.5" style={{ color: BRAND.info }} /> 合规观察
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <Lock className="w-3.5 h-3.5" style={{ color: BRAND.primary }} /> 冷钱包 95%+ 储备
+            <Lock className="w-3.5 h-3.5" style={{ color: BRAND.primary }} /> 冷钱包多重签名储备
           </span>
           <span className="inline-flex items-center gap-1.5">
             <AlertTriangle className="w-3.5 h-3.5" style={{ color: BRAND.warning }} /> 数字资产价格波动较大，请理性投资
@@ -85,7 +89,7 @@ export function PortalFooter() {
               ZSDEX
             </div>
             <p className="text-xs mb-4 leading-relaxed" style={{ color: BRAND.textSub }}>
-              中萨数字科技交易所 · 萨摩亚持牌数字资产交易平台
+              中萨数字科技交易所 · 面向国际化场景的数字资产交易与风控服务平台
             </p>
             <div className="flex items-center gap-2 mb-4">
               <a
@@ -122,7 +126,7 @@ export function PortalFooter() {
               </a>
             </div>
             <div className="text-[10px] leading-relaxed" style={{ color: BRAND.textMute }}>
-              注册地址：Level 2, Samoa Pacific Centre, Beach Road, Apia, Samoa
+              运营主体信息以正式披露文件为准
             </div>
           </div>
 
@@ -155,11 +159,9 @@ export function PortalFooter() {
           style={{ borderTop: `1px solid ${BRAND.border}` }}
         >
           <div className="text-xs" style={{ color: BRAND.textMute }}>
-            © 2024–2026 中萨数字科技集团 / SinoSamoa Digital Technology Group · All rights reserved.
+            © 2024–2026 中萨数字科技集团 · All rights reserved.
           </div>
           <div className="text-[10px] flex flex-wrap gap-3" style={{ color: BRAND.textMute }}>
-            <span>牌照：DSAEX-2024-001 / DSAST-2024-002</span>
-            <span>·</span>
             <span>ICP 备案：待公示</span>
             <span>·</span>
             <span>v 1.0.0</span>

@@ -24,7 +24,7 @@ export function PortalMobileBottomTabs({ active = 'home' }: { active?: string })
       style={{
         backgroundColor: BRAND.card,
         borderTop: `1px solid ${BRAND.border}`,
-        boxShadow: '0 -4px 12px rgba(15,23,42,0.04)',
+        boxShadow: BRAND.shadowMd,
       }}
     >
       {TABS.map((t) => {

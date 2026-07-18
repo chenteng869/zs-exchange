@@ -21,10 +21,10 @@ interface PortalSectionProps {
 }
 
 const bgMap = {
-  white: '#FFFFFF',
-  bg: BRAND.bg,
-  card: BRAND.card,
-  primaryLt: BRAND.primaryLt,
+  white: BRAND.card,        // 暗色模式：主卡片色
+  bg: BRAND.bg,             // 暗色模式：主背景
+  card: BRAND.bgCard,       // 暗色模式：容器卡片
+  primaryLt: BRAND.primaryLt, // 暗色模式：主色 10% 透明
 } as const;
 
 const spacingMap = {

@@ -12,7 +12,7 @@ import { BRAND } from './brand';
 import { PortalStatusBadge } from './PortalStatusBadge';
 
 const ALL = [
-  { id: 1, cat: 'platform', title: '关于萨摩亚金融业监管牌照 DSAEX-2024-001 续期公告', date: '2026-07-12', pinned: true },
+  { id: 1, cat: 'platform', title: '合规治理与信息披露机制更新公告', date: '2026-07-12', pinned: true },
   { id: 2, cat: 'platform', title: '新版用户协议与隐私政策更新说明', date: '2026-07-08', pinned: true },
   { id: 3, cat: 'market', title: '关于行情服务接入进度的官方说明', date: '2026-07-05', pinned: false },
   { id: 4, cat: 'report', title: '中萨数字科技交易所 2026 年第二季度透明度报告', date: '2026-06-30', pinned: false },
@@ -75,7 +75,7 @@ export function PortalAnnouncementList() {
               className="px-3 h-9 rounded-lg text-xs font-semibold transition-colors"
               style={{
                 backgroundColor: active === c.key ? BRAND.primary : BRAND.bg,
-                color: active === c.key ? '#fff' : BRAND.textSub,
+                color: active === c.key ? BRAND.onPrimary : BRAND.textSub,
                 border: `1px solid ${active === c.key ? BRAND.primary : BRAND.border}`,
               }}
             >

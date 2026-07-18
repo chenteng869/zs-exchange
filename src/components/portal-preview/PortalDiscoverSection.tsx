@@ -48,7 +48,7 @@ export function PortalDiscoverSection() {
               style={{
                 backgroundColor: idx === 0 ? BRAND.card : 'transparent',
                 color: idx === 0 ? BRAND.primary : BRAND.textSub,
-                boxShadow: idx === 0 ? '0 1px 2px rgba(15,23,42,0.04)' : 'none',
+                boxShadow: idx === 0 ? BRAND.shadow : 'none',
               }}
             >
               <Icon className="w-3.5 h-3.5" /> {t.label}

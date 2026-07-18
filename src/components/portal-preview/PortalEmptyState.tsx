@@ -74,7 +74,7 @@ export function PortalEmptyState({
         <button
           onClick={onCtaClick}
           className="mt-4 px-5 py-2 rounded-lg text-sm font-semibold transition-all active:scale-95"
-          style={{ backgroundColor: BRAND.primary, color: '#fff' }}
+          style={{ backgroundColor: BRAND.primaryContainer, color: BRAND.onPrimary }}
         >
           {ctaLabel}
         </button>

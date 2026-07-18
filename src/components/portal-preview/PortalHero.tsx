@@ -15,7 +15,7 @@ export function PortalHero() {
     <section
       className="relative w-full overflow-hidden"
       style={{
-        background: `linear-gradient(180deg, ${BRAND.bg} 0%, #ffffff 100%)`,
+        background: `linear-gradient(180deg, ${BRAND.bgAlt} 0%, ${BRAND.bg} 100%)`,
         borderBottom: `1px solid ${BRAND.border}`,
       }}
     >
@@ -42,7 +42,7 @@ export function PortalHero() {
               className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight"
               style={{ color: BRAND.text }}
             >
-              面向全球的<br />
+              为交易者打造的<br />
               <span style={{ color: BRAND.primary }}>专业级</span>
               数字资产<br />
               基础设施
@@ -51,15 +51,16 @@ export function PortalHero() {
               className="text-base md:text-lg max-w-xl leading-relaxed"
               style={{ color: BRAND.textSub }}
             >
-              基于树图 Conflux 生态打造，结合 AI 智算与分布式安全协议，
-              为全球交易者提供亚毫秒级撮合、终端级风控与全链上透明储备证明。
+              基于树图 Conflux 生态构建，结合 AI 智算与分布式安全协议，
+              为交易者提供亚毫秒级撮合、终端级风控与透明化储备机制，
+              助力机构与个人安全参与全球数字资产生态。
             </p>
 
             <div className="flex flex-wrap gap-3 pt-2">
               <a
                 href="/auth/register"
                 className="inline-flex items-center gap-2 px-6 h-12 rounded-xl text-sm font-bold transition-all active:scale-95"
-                style={{ backgroundColor: BRAND.primary, color: '#fff', boxShadow: `0 8px 20px ${BRAND.primary}33` }}
+                style={{ backgroundColor: BRAND.gold, color: BRAND.onGold, boxShadow: BRAND.shadowGold }}
               >
                 立即注册 <ArrowRight className="w-4 h-4" />
               </a>
@@ -75,9 +76,9 @@ export function PortalHero() {
             {/* 信任要素行 */}
             <div className="grid grid-cols-3 gap-3 pt-6 max-w-xl">
               {[
-                { icon: ShieldCheck, label: '萨摩亚持牌', value: 'DSAEX-2024-001' },
-                { icon: TrendingUp, label: '24h 成交额', value: '数据接入中', isStatus: true },
-                { icon: Sparkles, label: '币种数量', value: '数据接入中', isStatus: true },
+                { icon: ShieldCheck, label: '合规研究方向', value: '国际化合规观察' },
+                { icon: TrendingUp, label: '撮合能力', value: '亚毫秒级响应' },
+                { icon: Sparkles, label: 'AI 风控', value: '全链路异常识别' },
               ].map((it) => {
                 const Icon = it.icon;
                 return (
@@ -106,15 +107,20 @@ export function PortalHero() {
           </div>
 
           {/* 右侧示例数据卡（占位 + 状态） */}
-          <div className="lg:col-span-5">
+          <div className="lg:col-span-5 relative z-20">
             <div
-              className="rounded-3xl p-6 space-y-4"
+              className="rounded-3xl p-6 space-y-4 relative overflow-hidden"
               style={{
                 backgroundColor: BRAND.card,
-                border: `1px solid ${BRAND.border}`,
-                boxShadow: '0 24px 48px -12px rgba(15,23,42,0.08)',
+                border: `1px solid ${BRAND.primary}55`,
+                boxShadow: `0 0 0 1px ${BRAND.primary}22, 0 24px 48px -12px rgba(0,0,0,0.75), 0 0 60px ${BRAND.primary}1A`,
               }}
             >
+              {/* 顶部品牌光带 */}
+              <div
+                className="absolute top-0 left-0 right-0 h-[2px]"
+                style={{ background: `linear-gradient(90deg, transparent 0%, ${BRAND.primary} 50%, transparent 100%)` }}
+              />
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <div
