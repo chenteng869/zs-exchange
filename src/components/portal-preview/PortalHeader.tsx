@@ -20,8 +20,8 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { label: '买币', href: '/portal-preview/buy-crypto' },
-  { label: '行情', href: '/portal-preview/market', status: 'soon' },
-  { label: '交易', href: '/portal-preview/spot-guide', status: 'soon' },
+  { label: '行情', href: '/portal-preview/market' },
+  { label: '交易', href: '/portal-preview/trade' },
   { label: '钱包', href: '/portal-preview/wallet', status: 'soon' },
   { label: '树图公链', href: '/portal-preview/discover', status: 'beta' },
   { label: 'Launch', href: '/portal-preview/launch', status: 'soon' },
@@ -213,6 +213,7 @@ export function PortalHeader() {
                   { label: '首页', href: '/portal-preview' },
                   { label: '买币', href: '/portal-preview/buy-crypto' },
                   { label: '行情中心', href: '/portal-preview/market' },
+                  { label: '交易大厅', href: '/portal-preview/trade' },
                   { label: '关于我们', href: '/portal-preview/about' },
                   { label: '公告中心', href: '/portal-preview/announcements' },
                   { label: '费率说明', href: '/portal-preview/fees' },
