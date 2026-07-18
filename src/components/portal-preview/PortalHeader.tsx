@@ -19,7 +19,7 @@ interface NavItem {
 }
 
 const NAV: NavItem[] = [
-  { label: '买币', href: '/portal-preview/fees' },
+  { label: '买币', href: '/portal-preview/buy-crypto' },
   { label: '行情', href: '/portal-preview/market', status: 'soon' },
   { label: '交易', href: '/portal-preview/spot-guide', status: 'soon' },
   { label: '钱包', href: '/portal-preview/wallet', status: 'soon' },
