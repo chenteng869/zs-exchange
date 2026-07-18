@@ -18,6 +18,7 @@
  */
 
 import { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import { adminFetch } from '@/lib/admin/admin-fetch';
 import {
   Card, Row, Col, Tag, Button, Input, Space, Drawer, Progress, Statistic,
   Tabs, Tooltip, Badge, Empty, Skeleton, App, Avatar, Descriptions, Timeline,
@@ -209,13 +210,12 @@ export default function OrdersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      // 业务域 API 对接（根据 domain 自动选择）
-      // TODO: 替换为真实 API
-      await new Promise(r => setTimeout(r, 300));
-      setData([]);
+      const res = await adminFetch<{ summary: any; rows: any[]; pagination: any }>('/api/v1/admin/fujian/orders?take=50');
+      setData(Array.isArray(res?.rows) ? res.rows : []);
       message.success('数据已刷新');
     } catch (e: any) {
       message.error(e?.message || '加载失败');
+      setData([]);
     } finally {
       setLoading(false);
     }
