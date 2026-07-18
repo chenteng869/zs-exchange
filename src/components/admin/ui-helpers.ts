@@ -9,6 +9,13 @@
  *  - useLiveFloat 实时数据波动 hook
  *  - staggerDelay 错位入场动画延迟计算
  *  - hashFnv32a 简易 hash（用于稳定 key/颜色）
+ *
+ * 2026-07-18 追加（Q04-3.11.b 真实化底座，向后兼容）：
+ *  - useMounted 客户端挂载状态 hook（用于 Hydration guard）
+ *  - formatSafeTime 服务端/客户端均可安全调用的时间格式化
+ *  - formatServerTime 强制 server-side 时间格式化
+ *  - emptyStr 统一空值占位
+ *  - DEFAULT_PLACEHOLDER 默认 loading 占位串
  */
 
 import { useEffect, useRef, useState, CSSProperties } from 'react';
@@ -180,4 +187,74 @@ export function fmtTimeAgo(ts: number): string {
 export function fmtDate(d: Date | string | number): string {
   const date = typeof d === 'string' || typeof d === 'number' ? new Date(d) : d;
   return date.toLocaleString('zh-CN');
+}
+
+// =============================================================================
+// 2026-07-18 追加（Q04-3.11.b 真实化底座，向后兼容）
+// =============================================================================
+
+/**
+ * 默认 loading 占位串（用于 SSR/CSR 一致渲染）
+ *  使用字面量字符串，避免 hydration 期间返回不同内容
+ */
+export const DEFAULT_PLACEHOLDER = '—';
+
+/**
+ * 统一空值占位
+ */
+export const emptyStr = DEFAULT_PLACEHOLDER;
+
+/**
+ * 客户端挂载状态 hook
+ *
+ * 用途：解决 hydration 不一致（SSR 时返回 false，CSR mount 后返回 true）
+ *
+ *  使用场景：
+ *  ```tsx
+ *  const mounted = useMounted();
+ *  return <div>{mounted ? liveData : DEFAULT_PLACEHOLDER}</div>;
+ *  ```
+ */
+export function useMounted(): boolean {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  return mounted;
+}
+
+/**
+ * 服务端/客户端均可安全调用的时间格式化
+ *
+ * 规则：
+ *  - 输入是 Date | string | number | null | undefined
+ *  - 输出固定 zh-CN locale
+ *  - 不使用 Date.now()（避免 hydration 不一致）
+ *  - 不可用时返回 DEFAULT_PLACEHOLDER
+ *
+ * 注：本函数不调用 Date.now()，传入的时间戳可来自 server-side 序列化（ISO string）
+ *      或 client-side fetch 后的 ISO string，确保 SSR/CSR 一致。
+ */
+export function formatSafeTime(
+  input: Date | string | number | null | undefined,
+  fallback: string = DEFAULT_PLACEHOLDER,
+): string {
+  if (input === null || input === undefined || input === '') return fallback;
+  const date = typeof input === 'string' || typeof input === 'number' ? new Date(input) : input;
+  if (Number.isNaN(date.getTime())) return fallback;
+  return date.toLocaleString('zh-CN');
+}
+
+/**
+ * 强制 server-side 时间格式化（不依赖客户端环境）
+ *
+ * 用于 server component / server action 内部直接格式化数据库时间字段。
+ * 输出固定格式：YYYY-MM-DD HH:mm:ss
+ */
+export function formatServerTime(input: Date | string | number | null | undefined): string {
+  if (input === null || input === undefined || input === '') return DEFAULT_PLACEHOLDER;
+  const date = typeof input === 'string' || typeof input === 'number' ? new Date(input) : input;
+  if (Number.isNaN(date.getTime())) return DEFAULT_PLACEHOLDER;
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
