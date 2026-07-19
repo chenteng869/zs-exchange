@@ -1,1193 +1,1245 @@
 'use client';
 
 /**
- * PortalWallet - 钱包总览（2026-07-19 Q05 P3.5）
+ * PortalWallet - 钱包服务中心 (2026-07-19 Q05 P3.33)
  *
  * 页面定位：
- * - 中萨数字科技交易所钱包总览入口
- * - 6 个子模块：总资产 / 充值 / 提现 / 资金流水 / 地址管理 / 安全中心
- * - 多币种余额 + 资产分布 + 充值网络 + 最近流水
+ * - 中萨数字科技交易所 钱包服务中心
+ * - 钱包总览 / 现货钱包 / 合约钱包 / DeFi 钱包 / NFT 钱包 / 跨链钱包 / 硬件钱包 / 历史记录
+ * - 与 P3.4 现货 + P3.25 做市 + P3.26 衍生品 + P3.27 量化 + P3.28 NFT +
+ *   P3.29 DeFi + P3.30 跨链 + P3.31 节点 + P3.32 数据形成"用户-钱包-资产-链上"全场景闭环
  *
  * L4 工业级设计标准：
  * - 暗色 v6 纯黑 #000000 + 卡片 #141414 + ZSDEX 绿 primary #14B881
- * - 至少 5 个区块（Hero / 快捷 / 资产分布 / 多币种 / 充值网络 / 流水 / 安全）
- * - 至少 5 项交互（搜索 / 排序 / Tab / Drawer / 快捷键 / 隐藏小额）
- * - 1+ Drawer（资产详情 / 充值网络 / 提现说明）
- * - 1+ 实时数据波动（余额估值 ticker 2-5s 漂移）
- * - 3+ 动画（Stagger / CountUp / Hover / 涨跌色闪）
+ * - 9 Tabs：总览 / 现货钱包 / 合约钱包 / DeFi 钱包 / NFT 钱包 / 跨链钱包 / 硬件钱包 / 历史记录 / 帮助
+ * - 10+ 区块、9+ 交互、7+ Drawer、4+ 实时数据、5+ 动画
  *
  * 合规要点（Q05 硬约束）：
- * - 不接真实 API，余额/价格使用 mock 占位
- * - 状态徽章统一枚举
- * - 不修改旧官网 / 旧 H5 / disabled pages
+ * - 所有钱包 / 余额 / 充值 / 提现 / 交易数据使用 mock 占位
+ * - 严格规避"承诺收益 / 保本 / 刚兑 / 稳赚 / 担保 / 萨摩亚持牌 / MSA / DSAEX"等高风险词
+ * - 明确"数字资产钱包与用户资产管理研究方向"定性
+ * - 不修改旧官网 / 旧 H5 / disabled pages / brand.ts / SPEC.md
  */
 
-import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import {
   Search,
-  TrendingUp,
-  TrendingDown,
   X,
   ChevronRight,
   ChevronUp,
   ChevronDown,
   Filter,
-  ArrowUpRight,
+  Wallet,
+  Coins,
+  CircleDollarSign,
+  CreditCard,
+  Banknote,
+  Banknote as CashIcon,
+  ArrowDownToLine,
+  ArrowUpToLine,
   ArrowDownLeft,
+  ArrowUpRight,
+  ArrowRight,
   ArrowLeftRight,
+  Plus,
+  Minus,
+  Check,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  AlertTriangle,
+  AlertOctagon,
   Eye,
   EyeOff,
-  Wallet,
-  Plus,
-  Check,
-  AlertTriangle,
-  Sparkles,
-  Layers,
-  Info,
-  Copy,
-  Shield,
-  Clock,
-  RefreshCw,
-  Send,
+  Copy as CopyIcon,
+  ExternalLink,
+  QrCode,
   Download,
-  BookOpen,
-  Activity,
-  Percent,
-  CircleDot,
-  CircleDashed,
-  CheckCircle2,
-  Globe2,
+  Upload,
+  FileText,
+  FileCode,
+  Code2,
+  Terminal,
+  Database,
+  Server,
+  Cloud,
   Network,
-  Bitcoin,
-  Coins,
+  Zap,
+  Rocket,
+  Flame,
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Lock,
+  Unlock,
+  KeyRound,
+  KeySquare,
+  Hash,
+  Settings,
+  Sliders,
+  Bell,
+  BellOff,
+  Mail,
+  HelpCircle,
   Keyboard,
+  BookOpen,
+  GraduationCap,
+  Lightbulb,
+  Sparkles,
+  Star,
+  Crown,
+  Trophy,
+  Award,
+  Calendar,
+  Clock,
+  User,
+  Users,
+  UserCheck,
+  UserPlus,
+  Building2,
+  Briefcase,
+  Handshake,
+  Tag,
+  Tags,
+  Layers,
+  Box,
+  Boxes,
+  Cpu,
+  Hexagon,
+  Diamond,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  PieChart as PieIcon,
+  LineChart as LineIcon,
+  Activity,
+  Gauge,
+  Target,
+  Compass,
+  MapPin,
+  Globe2,
+  Globe,
+  Heart,
+  ThumbsUp,
+  ThumbsDown,
+  Flag,
+  Bookmark,
+  Phone,
+  MessageCircle,
+  MessageSquare,
+  Gift,
+  Send,
 } from 'lucide-react';
 import { BRAND, STATUS } from './brand';
 
 // ============== 类型 ==============
 
-type AssetCategory = 'major' | 'stable' | 'defi' | 'layer2' | 'meme' | 'treegraph' | 'other';
-type SortKey = 'rank' | 'name' | 'balance' | 'valueUsdt' | 'change' | 'allocation';
-type SortDir = 'asc' | 'desc';
-type FilterKey = 'all' | AssetCategory;
-type TimeRange = '24h' | '7d' | '30d' | 'all';
+type Tab = 'overview' | 'spot' | 'perp' | 'defi' | 'nft' | 'bridge' | 'hardware' | 'history' | 'help';
+type WalletType = 'spot' | 'perp' | 'defi' | 'nft' | 'bridge' | 'hardware' | 'savings' | 'funding';
+type ChainNetwork = 'eth' | 'bsc' | 'polygon' | 'arbitrum' | 'optimism' | 'avalanche' | 'solana' | 'bitcoin' | 'tron' | 'zs-chain';
+type AssetType = 'crypto' | 'stable' | 'wrapped' | 'lp' | 'nft' | 'rwa';
+type TxType = 'deposit' | 'withdraw' | 'trade' | 'transfer' | 'stake' | 'unstake' | 'claim' | 'borrow' | 'repay' | 'lend' | 'mint' | 'burn' | 'bridge' | 'swap';
+type TxStatus = 'completed' | 'pending' | 'failed' | 'confirmed' | 'processing';
+type RiskLevel = 'low' | 'medium' | 'high';
+type DrawerType = 'asset' | 'position' | 'deposit' | 'withdraw' | 'transfer' | 'backup' | 'history' | 'hardware' | 'help' | null;
 
 interface Asset {
+  id: string;
   symbol: string;
   name: string;
+  chain: ChainNetwork;
+  type: AssetType;
   balance: number;
-  priceUsdt: number;
+  price: number;
+  value: number;
   change24h: number;
-  allocation: number; // 占比 %
-  category: AssetCategory;
-  available: number;
-  frozen: number;
-  rank: number;
-  networks: string[];
+  allocation: number;
+  icon: string;
+  contract?: string;
+  decimals: number;
+  apy?: number;
 }
 
-interface FlowRecord {
+interface Position {
   id: string;
-  type: 'deposit' | 'withdraw' | 'trade' | 'transfer' | 'reward';
-  asset: string;
-  amount: number;
-  status: 'success' | 'pending' | 'failed';
-  network: string;
-  time: string;
-  hash?: string;
+  symbol: string;
+  type: 'long' | 'short';
+  size: number;
+  entryPrice: number;
+  markPrice: number;
+  leverage: number;
+  margin: number;
+  pnl: number;
+  pnlPct: number;
+  liquidationPrice: number;
+  funding: number;
+  openedAt: string;
+  chain: ChainNetwork;
 }
 
-// ============== Mock 数据（不接真实 API）==============
+interface LpPosition {
+  id: string;
+  pool: string;
+  protocol: string;
+  chain: ChainNetwork;
+  token0: string;
+  token1: string;
+  value: number;
+  apr: number;
+  fees24h: number;
+  rewards: { symbol: string; amount: number; value: number }[];
+  impermanentLoss: number;
+  age: number;
+  status: 'active' | 'concentrated' | 'stable';
+}
+
+interface NftHolding {
+  id: string;
+  name: string;
+  collection: string;
+  tokenId: string;
+  chain: ChainNetwork;
+  estimatedValue: number;
+  acquiredAt: string;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
+  lastSale: number;
+  image: string;
+  usedAsCollateral: boolean;
+  loanId?: string;
+}
+
+interface BridgeHolding {
+  id: string;
+  asset: string;
+  chain: ChainNetwork;
+  balance: number;
+  value: number;
+  bridge: string;
+  bridgedAt: string;
+  originalChain: ChainNetwork;
+  isCanonical: boolean;
+}
+
+interface HardwareDevice {
+  id: string;
+  brand: 'Ledger' | 'Trezor' | 'Keystone' | 'BitBox' | 'GridPlus' | 'imToken';
+  model: string;
+  firmware: string;
+  connected: boolean;
+  pairedAt: string;
+  addressCount: number;
+  chains: ChainNetwork[];
+  backupVerified: boolean;
+  pinSet: boolean;
+  passphrase: boolean;
+  lastSync: string;
+  status: 'active' | 'idle' | 'disconnected' | 'locked';
+}
+
+interface Transaction {
+  id: string;
+  type: TxType;
+  asset: string;
+  chain: ChainNetwork;
+  amount: number;
+  value: number;
+  fee: number;
+  time: string;
+  status: TxStatus;
+  txHash: string;
+  from: string;
+  to: string;
+  block: number;
+  note?: string;
+  tags: string[];
+}
+
+interface KpiSnapshot {
+  totalValue: number;
+  totalValue24hChange: number;
+  spotValue: number;
+  perpValue: number;
+  defiValue: number;
+  nftValue: number;
+  bridgeValue: number;
+  unrealizedPnl: number;
+  realizedPnl24h: number;
+  totalFeesPaid: number;
+  totalRewards: number;
+  netDeposit: number;
+  zsdPrice: number;
+}
+
+interface DrawerState {
+  open: boolean;
+  type: DrawerType;
+  payload: string | null;
+}
+
+// ============== 工具 ==============
+
+const CHAIN_LABELS: Record<ChainNetwork, string> = {
+  'eth': 'Ethereum',
+  'bsc': 'BNB Chain',
+  'polygon': 'Polygon',
+  'arbitrum': 'Arbitrum',
+  'optimism': 'Optimism',
+  'avalanche': 'Avalanche',
+  'solana': 'Solana',
+  'bitcoin': 'Bitcoin',
+  'tron': 'Tron',
+  'zs-chain': 'ZS-Chain',
+};
+
+const CHAIN_COLORS: Record<ChainNetwork, string> = {
+  'eth': '#627EEA',
+  'bsc': '#F3BA2F',
+  'polygon': '#8247E5',
+  'arbitrum': '#28A0F0',
+  'optimism': '#FF0420',
+  'avalanche': '#E84142',
+  'solana': '#14F195',
+  'bitcoin': '#F7931A',
+  'tron': '#FF060A',
+  'zs-chain': BRAND.primary,
+};
+
+const TX_TYPE_LABELS: Record<TxType, string> = {
+  deposit: '充值', withdraw: '提现', trade: '交易', transfer: '转账',
+  stake: '质押', unstake: '解质押', claim: '领奖',
+  borrow: '借入', repay: '偿还', lend: '出借',
+  mint: '铸造', burn: '销毁',
+  bridge: '跨链', swap: '兑换',
+};
+
+const TX_STATUS_LABELS: Record<TxStatus, string> = {
+  completed: '已完成', pending: '待确认', failed: '失败', confirmed: '已确认', processing: '处理中',
+};
+
+function formatCurrency(n: number): string {
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${((n) / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `$${((n) / 1e3).toFixed(2)}K`;
+  return `$${n.toFixed(2)}`;
+}
+
+function formatBalance(n: number, decimals: number = 4): string {
+  return n.toFixed(decimals);
+}
+
+function changeColor(c: number): string {
+  if (c > 0) return BRAND.primary;
+  if (c < 0) return '#FF5050';
+  return BRAND.textMuted;
+}
+
+function shortenAddress(addr: string, head: number = 6, tail: number = 4): string {
+  if (addr.length <= head + tail) return addr;
+  return `${addr.slice(0, head)}...${addr.slice(-tail)}`;
+}
+
+function statusBadge(s: TxStatus): { bg: string; fg: string; label: string } {
+  if (s === 'completed' || s === 'confirmed') return { bg: 'rgba(20,184,129,0.10)', fg: BRAND.primary, label: TX_STATUS_LABELS[s] };
+  if (s === 'pending' || s === 'processing') return { bg: 'rgba(255,180,0,0.10)', fg: '#FFB400', label: TX_STATUS_LABELS[s] };
+  if (s === 'failed') return { bg: 'rgba(255,80,80,0.10)', fg: '#FF5050', label: TX_STATUS_LABELS[s] };
+  return { bg: 'rgba(176,176,176,0.10)', fg: BRAND.textMuted, label: TX_STATUS_LABELS[s] };
+}
+
+// ============== Mock 数据 ==============
 
 const ASSETS: Asset[] = [
-  { symbol: 'BTC', name: 'Bitcoin', balance: 0.4523, priceUsdt: 96800, change24h: 2.34, allocation: 32.5, category: 'major', available: 0.4523, frozen: 0, rank: 1, networks: ['BTC', 'Lightning'] },
-  { symbol: 'ETH', name: 'Ethereum', balance: 5.823, priceUsdt: 3450, change24h: 3.12, allocation: 14.9, category: 'major', available: 5.0, frozen: 0.823, rank: 2, networks: ['ERC20', 'Layer2'] },
-  { symbol: 'USDT', name: 'Tether', balance: 28500, priceUsdt: 1.0, change24h: 0.01, allocation: 21.1, category: 'stable', available: 25000, frozen: 3500, rank: 3, networks: ['ERC20', 'TRC20', 'Conflux Core', 'BSC'] },
-  { symbol: 'USDC', name: 'USD Coin', balance: 8500, priceUsdt: 1.0, change24h: -0.01, allocation: 6.3, category: 'stable', available: 8500, frozen: 0, rank: 4, networks: ['ERC20', 'Solana'] },
-  { symbol: 'BNB', name: 'BNB', balance: 12.5, priceUsdt: 720, change24h: 1.56, allocation: 0.7, category: 'major', available: 12.5, frozen: 0, rank: 5, networks: ['BEP20'] },
-  { symbol: 'SOL', name: 'Solana', balance: 85, priceUsdt: 178, change24h: 5.23, allocation: 1.1, category: 'major', available: 80, frozen: 5, rank: 6, networks: ['Solana'] },
-  { symbol: 'TREEG', name: 'TreeGraph', balance: 5200, priceUsdt: 1.85, change24h: 12.45, allocation: 7.1, category: 'treegraph', available: 5000, frozen: 200, rank: 7, networks: ['Conflux Core'] },
-  { symbol: 'CFX', name: 'Conflux', balance: 12000, priceUsdt: 0.18, change24h: 4.85, allocation: 1.6, category: 'treegraph', available: 11000, frozen: 1000, rank: 8, networks: ['Conflux Core'] },
-  { symbol: 'UNI', name: 'Uniswap', balance: 145, priceUsdt: 14.2, change24h: -0.85, allocation: 1.5, category: 'defi', available: 145, frozen: 0, rank: 9, networks: ['ERC20'] },
-  { symbol: 'LINK', name: 'Chainlink', balance: 285, priceUsdt: 23.5, change24h: 1.92, allocation: 5.0, category: 'defi', available: 285, frozen: 0, rank: 10, networks: ['ERC20'] },
-  { symbol: 'AVAX', name: 'Avalanche', balance: 78, priceUsdt: 38.5, change24h: 4.21, allocation: 2.2, category: 'layer2', available: 78, frozen: 0, rank: 11, networks: ['C-Chain'] },
-  { symbol: 'MATIC', name: 'Polygon', balance: 3200, priceUsdt: 0.55, change24h: 2.78, allocation: 1.3, category: 'layer2', available: 3200, frozen: 0, rank: 12, networks: ['Polygon'] },
-  { symbol: 'ARB', name: 'Arbitrum', balance: 580, priceUsdt: 0.92, change24h: -2.78, allocation: 0.4, category: 'layer2', available: 580, frozen: 0, rank: 13, networks: ['Arbitrum One'] },
-  { symbol: 'OP', name: 'Optimism', balance: 420, priceUsdt: 2.15, change24h: 1.85, allocation: 0.7, category: 'layer2', available: 420, frozen: 0, rank: 14, networks: ['Optimism'] },
-  { symbol: 'DOGE', name: 'Dogecoin', balance: 8500, priceUsdt: 0.32, change24h: 8.12, allocation: 2.0, category: 'meme', available: 8500, frozen: 0, rank: 15, networks: ['Dogecoin'] },
-  { symbol: 'PEPE', name: 'Pepe', balance: 285000000, priceUsdt: 0.0000123, change24h: 12.45, allocation: 0.3, category: 'meme', available: 285000000, frozen: 0, rank: 16, networks: ['ERC20'] },
-  { symbol: 'SHIB', name: 'Shiba Inu', balance: 5200000, priceUsdt: 0.0000245, change24h: -3.45, allocation: 0.1, category: 'meme', available: 5200000, frozen: 0, rank: 17, networks: ['ERC20'] },
-  { symbol: 'DOT', name: 'Polkadot', balance: 285, priceUsdt: 7.85, change24h: -3.12, allocation: 1.7, category: 'layer2', available: 285, frozen: 0, rank: 18, networks: ['Polkadot'] },
+  { id: 'a-001', symbol: 'BTC', name: 'Bitcoin', chain: 'bitcoin', type: 'crypto', balance: 2.842, price: 67842.32, value: 192812.43, change24h: 2.84, allocation: 32.4, icon: '₿', decimals: 8 },
+  { id: 'a-002', symbol: 'ETH', name: 'Ethereum', chain: 'eth', type: 'crypto', balance: 28.42, price: 3842.18, value: 109202.36, change24h: 1.42, allocation: 18.4, icon: 'Ξ', decimals: 18 },
+  { id: 'a-003', symbol: 'SOL', name: 'Solana', chain: 'solana', type: 'crypto', balance: 824.0, price: 184.62, value: 152127.88, change24h: 4.24, allocation: 25.6, icon: '◎', decimals: 9 },
+  { id: 'a-004', symbol: 'ZSD', name: 'ZSD Token', chain: 'zs-chain', type: 'crypto', balance: 84200.0, price: 1.0, value: 84200.0, change24h: 0.18, allocation: 14.2, icon: 'Z', decimals: 18 },
+  { id: 'a-005', symbol: 'USDT', name: 'Tether', chain: 'eth', type: 'stable', balance: 28420.0, price: 1.0, value: 28420.0, change24h: -0.01, allocation: 4.8, icon: '₮', decimals: 6 },
+  { id: 'a-006', symbol: 'USDC', name: 'USD Coin', chain: 'eth', type: 'stable', balance: 18420.0, price: 1.0, value: 18420.0, change24h: 0.0, allocation: 3.1, icon: '$', decimals: 6 },
+  { id: 'a-007', symbol: 'WETH', name: 'Wrapped ETH', chain: 'eth', type: 'wrapped', balance: 4.82, price: 3842.18, value: 18519.31, change24h: 1.42, allocation: 3.1, icon: 'Ξ', decimals: 18, contract: '0xC02a...' },
+  { id: 'a-008', symbol: 'stETH', name: 'Lido Staked ETH', chain: 'eth', type: 'wrapped', balance: 2.84, price: 3842.18, value: 10911.79, change24h: 1.42, allocation: 1.8, icon: 'Ξ', decimals: 18, apy: 3.4 },
+  { id: 'a-009', symbol: 'BNB', name: 'BNB', chain: 'bsc', type: 'crypto', balance: 18.42, price: 612.42, value: 11280.78, change24h: 1.84, allocation: 1.9, icon: 'B', decimals: 18 },
+  { id: 'a-010', symbol: 'AVAX', name: 'Avalanche', chain: 'avalanche', type: 'crypto', balance: 248.0, price: 38.42, value: 9528.16, change24h: -1.84, allocation: 1.6, icon: 'A', decimals: 18 },
+  { id: 'a-011', symbol: 'MATIC', name: 'Polygon', chain: 'polygon', type: 'crypto', balance: 8420.0, price: 0.74, value: 6230.8, change24h: 2.18, allocation: 1.0, icon: 'M', decimals: 18 },
+  { id: 'a-012', symbol: 'ARB', name: 'Arbitrum', chain: 'arbitrum', type: 'crypto', balance: 8420.0, price: 0.84, value: 7072.8, change24h: 4.84, allocation: 1.2, icon: 'A', decimals: 18 },
 ];
 
-const FLOWS: FlowRecord[] = [
-  { id: 'F-2026-0719-001', type: 'deposit', asset: 'USDT', amount: 5000, status: 'success', network: 'TRC20', time: '2026-07-19 14:32' },
-  { id: 'F-2026-0719-002', type: 'trade', asset: 'BTC', amount: -0.0125, status: 'success', network: 'Spot', time: '2026-07-19 11:15' },
-  { id: 'F-2026-0719-003', type: 'withdraw', asset: 'ETH', amount: -1.5, status: 'pending', network: 'ERC20', time: '2026-07-19 09:48' },
-  { id: 'F-2026-0718-004', type: 'reward', asset: 'TREEG', amount: 25.5, status: 'success', network: 'Earn', time: '2026-07-18 23:00' },
-  { id: 'F-2026-0718-005', type: 'transfer', asset: 'USDC', amount: -2000, status: 'success', network: 'Internal', time: '2026-07-18 18:20' },
-  { id: 'F-2026-0718-006', type: 'deposit', asset: 'BTC', amount: 0.15, status: 'success', network: 'BTC', time: '2026-07-18 15:42' },
-  { id: 'F-2026-0718-007', type: 'trade', asset: 'ETH', amount: 0.5, status: 'success', network: 'Spot', time: '2026-07-18 13:08' },
-  { id: 'F-2026-0717-008', type: 'withdraw', asset: 'USDT', amount: -1500, status: 'failed', network: 'ERC20', time: '2026-07-17 22:15' },
+const POSITIONS: Position[] = [
+  { id: 'p-001', symbol: 'BTC-PERP', type: 'long', size: 0.5, entryPrice: 65800, markPrice: 67842, leverage: 10, margin: 3290, pnl: 1021, pnlPct: 31.04, liquidationPrice: 59220, funding: -2.4, openedAt: '2026-07-12 10:18:42', chain: 'eth' },
+  { id: 'p-002', symbol: 'ETH-PERP', type: 'long', size: 8, entryPrice: 3640, markPrice: 3842, leverage: 5, margin: 5824, pnl: 1616, pnlPct: 27.75, liquidationPrice: 2912, funding: 1.2, openedAt: '2026-07-15 14:42:08', chain: 'eth' },
+  { id: 'p-003', symbol: 'SOL-PERP', type: 'short', size: 200, entryPrice: 192, markPrice: 184.62, leverage: 3, margin: 12800, pnl: 1476, pnlPct: 11.53, liquidationPrice: 256, funding: 0.8, openedAt: '2026-07-16 12:24:18', chain: 'solana' },
+  { id: 'p-004', symbol: 'ZSD-PERP', type: 'long', size: 50000, entryPrice: 0.98, markPrice: 1.0, leverage: 5, margin: 9800, pnl: 1020, pnlPct: 10.41, liquidationPrice: 0.78, funding: 0.1, openedAt: '2026-07-18 08:18:42', chain: 'zs-chain' },
 ];
 
-const NETWORKS = [
-  { key: 'conflux', label: 'Conflux Core', desc: '树图公链主网，约 1 分钟到账', fee: '0 CFX', time: '~1 min', status: 'OPEN' as const },
-  { key: 'erc20', label: 'ERC20 (Ethereum)', desc: '以太坊主网，约 5-15 分钟到账', fee: '~$3.5', time: '~5-15 min', status: 'OPEN' as const },
-  { key: 'trc20', label: 'TRC20 (Tron)', desc: '波场主网，约 2 分钟到账', fee: '1 TRX', time: '~2 min', status: 'OPEN' as const },
-  { key: 'bsc', label: 'BSC (BEP20)', desc: '币安智能链，约 3 分钟到账', fee: '~$0.8', time: '~3 min', status: 'OPEN' as const },
-  { key: 'solana', label: 'Solana', desc: 'Solana 主网，约 30 秒到账', fee: '~$0.01', time: '~30s', status: 'OPEN' as const },
-  { key: 'lightning', label: 'Bitcoin Lightning', desc: '闪电网络，即时到账', fee: '< $0.01', time: '~instant', status: 'BETA' as const },
+const LP_POSITIONS: LpPosition[] = [
+  { id: 'lp-001', pool: 'ETH/USDC 0.05%', protocol: 'Uniswap V3', chain: 'eth', token0: 'ETH', token1: 'USDC', value: 84200, apr: 18.4, fees24h: 124, rewards: [{ symbol: 'UNI', amount: 12.4, value: 159.2 }], impermanentLoss: -2.4, age: 28, status: 'concentrated' },
+  { id: 'lp-002', pool: 'ETH/stETH', protocol: 'Curve', chain: 'eth', token0: 'ETH', token1: 'stETH', value: 48000, apr: 4.2, fees24h: 18, rewards: [{ symbol: 'CRV', amount: 8.2, value: 3.4 }], impermanentLoss: 0.1, age: 84, status: 'stable' },
+  { id: 'lp-003', pool: 'WBTC/ETH', protocol: 'Uniswap V3', chain: 'eth', token0: 'WBTC', token1: 'ETH', value: 38000, apr: 24.8, fees24h: 84, rewards: [{ symbol: 'UNI', amount: 4.8, value: 61.6 }], impermanentLoss: -1.8, age: 14, status: 'concentrated' },
+  { id: 'lp-004', pool: 'ZSD/USDT', protocol: 'ZSDEX', chain: 'zs-chain', token0: 'ZSD', token1: 'USDT', value: 24000, apr: 8.4, fees24h: 12, rewards: [{ symbol: 'ZSD', amount: 24, value: 24 }], impermanentLoss: 0, age: 42, status: 'stable' },
 ];
 
-// ============== 子组件 ==============
+const NFT_HOLDINGS: NftHolding[] = [
+  { id: 'n-001', name: 'CryptoPunk #8420', collection: 'CryptoPunks', tokenId: '8420', chain: 'eth', estimatedValue: 32000, acquiredAt: '2025-12-18', rarity: 'legendary', lastSale: 32000, image: '👾', usedAsCollateral: true, loanId: 'loan-001' },
+  { id: 'n-002', name: 'BAYC #1248', collection: 'BAYC', tokenId: '1248', chain: 'eth', estimatedValue: 14800, acquiredAt: '2025-08-22', rarity: 'rare', lastSale: 14800, image: '🐵', usedAsCollateral: false },
+  { id: 'n-003', name: 'Doodle #2842', collection: 'Doodles', tokenId: '2842', chain: 'eth', estimatedValue: 1420, acquiredAt: '2026-01-15', rarity: 'rare', lastSale: 1420, image: '🎨', usedAsCollateral: false },
+  { id: 'n-004', name: 'Azuki #842', collection: 'Azuki', tokenId: '842', chain: 'eth', estimatedValue: 4840, acquiredAt: '2026-03-08', rarity: 'epic', lastSale: 4840, image: '🌸', usedAsCollateral: false },
+  { id: 'n-005', name: 'Pudgy Penguin #1824', collection: 'Pudgy Penguins', tokenId: '1824', chain: 'eth', estimatedValue: 6840, acquiredAt: '2026-04-12', rarity: 'epic', lastSale: 6840, image: '🐧', usedAsCollateral: false },
+];
 
-function QuickAction({
-  icon: Icon,
-  label,
-  desc,
-  href,
-  status,
-}: {
-  icon: React.ElementType;
-  label: string;
-  desc: string;
-  href: string;
-  status?: keyof typeof STATUS;
-}) {
-  const s = status ? STATUS[status] : null;
-  return (
-    <a
-      href={href}
-      className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] block group"
-      style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <div
-          className="w-9 h-9 rounded-xl flex items-center justify-center transition-transform group-hover:scale-110"
-          style={{ backgroundColor: BRAND.primaryLt, color: BRAND.primary }}
-        >
-          <Icon className="w-4 h-4" />
-        </div>
-        {s && (
-          <span
-            className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase"
-            style={{ backgroundColor: s.bg, color: s.color }}
-          >
-            {s.label}
-          </span>
-        )}
-      </div>
-      <div className="text-sm font-bold mb-0.5" style={{ color: BRAND.text }}>
-        {label}
-      </div>
-      <div className="text-[10px]" style={{ color: BRAND.textMute }}>
-        {desc}
-      </div>
-    </a>
-  );
-}
+const BRIDGE_HOLDINGS: BridgeHolding[] = [
+  { id: 'b-001', asset: 'ETH', chain: 'arbitrum', balance: 4.2, value: 16137.16, bridge: 'ZSDEX Bridge', bridgedAt: '2026-07-10 14:18:42', originalChain: 'eth', isCanonical: true },
+  { id: 'b-002', asset: 'USDC', chain: 'polygon', balance: 8420, value: 8420, bridge: 'LayerZero', bridgedAt: '2026-07-08 10:24:08', originalChain: 'eth', isCanonical: false },
+  { id: 'b-003', asset: 'ZSD', chain: 'bsc', balance: 24000, value: 24000, bridge: 'ZSDEX Bridge', bridgedAt: '2026-07-05 16:42:18', originalChain: 'zs-chain', isCanonical: true },
+  { id: 'b-004', asset: 'USDT', chain: 'optimism', balance: 4200, value: 4200, bridge: 'Stargate', bridgedAt: '2026-07-12 12:18:42', originalChain: 'eth', isCanonical: false },
+];
 
-function NetworkRow({
-  net,
-  selected,
-  onClick,
-}: {
-  net: typeof NETWORKS[number];
-  selected: boolean;
-  onClick: () => void;
-}) {
-  const s = STATUS[net.status];
-  return (
-    <button
-      onClick={onClick}
-      className="w-full rounded-xl p-3 flex items-center justify-between text-left transition-all"
-      style={{
-        backgroundColor: selected ? BRAND.primaryLt : BRAND.card,
-        border: `1px solid ${selected ? BRAND.primary : BRAND.border}`,
-      }}
-    >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
-        <div
-          className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: selected ? BRAND.primary : BRAND.bgAlt, color: selected ? BRAND.onPrimary : BRAND.textMute }}
-        >
-          <Network className="w-4 h-4" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
-            <span className="text-sm font-bold" style={{ color: BRAND.text }}>
-              {net.label}
-            </span>
-            <span
-              className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase"
-              style={{ backgroundColor: s.bg, color: s.color }}
-            >
-              {s.label}
-            </span>
-          </div>
-          <div className="text-[10px] truncate" style={{ color: BRAND.textMute }}>
-            {net.desc}
-          </div>
-        </div>
-      </div>
-      <div className="text-right shrink-0 ml-2">
-        <div className="text-[10px] font-mono" style={{ color: BRAND.textSub }}>
-          {net.time}
-        </div>
-        <div className="text-[10px] font-mono" style={{ color: BRAND.textMute }}>
-          {net.fee}
-        </div>
-      </div>
-    </button>
-  );
-}
+const HARDWARE_DEVICES: HardwareDevice[] = [
+  { id: 'hw-001', brand: 'Ledger', model: 'Nano X Plus', firmware: 'v2.2.1', connected: true, pairedAt: '2025-06-12', addressCount: 28, chains: ['eth', 'bsc', 'polygon', 'arbitrum', 'optimism', 'avalanche', 'solana', 'bitcoin'], backupVerified: true, pinSet: true, passphrase: true, lastSync: '2026-07-19 14:18:42', status: 'active' },
+  { id: 'hw-002', brand: 'Trezor', model: 'Safe 3', firmware: 'v1.4.0', connected: false, pairedAt: '2025-08-22', addressCount: 12, chains: ['eth', 'bsc', 'bitcoin', 'solana'], backupVerified: true, pinSet: true, passphrase: false, lastSync: '2026-07-18 22:42:18', status: 'idle' },
+  { id: 'hw-003', brand: 'Keystone', model: 'Pro', firmware: 'v1.8.0', connected: false, pairedAt: '2026-02-08', addressCount: 8, chains: ['eth', 'bsc', 'polygon', 'arbitrum', 'bitcoin'], backupVerified: true, pinSet: true, passphrase: true, lastSync: '2026-07-15 18:42:18', status: 'disconnected' },
+];
 
-function FlowRow({ flow }: { flow: FlowRecord }) {
-  const typeMap = {
-    deposit: { icon: ArrowDownLeft, color: BRAND.success, label: '充值' },
-    withdraw: { icon: ArrowUpRight, color: BRAND.warning, label: '提现' },
-    trade: { icon: ArrowLeftRight, color: BRAND.info, label: '交易' },
-    transfer: { icon: ArrowLeftRight, color: BRAND.textSub, label: '转账' },
-    reward: { icon: Sparkles, color: BRAND.primary, label: '奖励' },
-  };
-  const t = typeMap[flow.type];
-  const Icon = t.icon;
-  const statusMap = {
-    success: { color: BRAND.success, label: '成功', Icon: CheckCircle2 },
-    pending: { color: BRAND.warning, label: '处理中', Icon: CircleDashed },
-    failed: { color: BRAND.danger, label: '失败', Icon: AlertTriangle },
-  };
-  const st = statusMap[flow.status];
-  const StatusIcon = st.Icon;
-  return (
-    <div
-      className="grid grid-cols-12 gap-2 px-3 py-2.5 items-center text-xs hover:bg-opacity-50 transition-colors"
-      style={{ borderBottom: `1px solid ${BRAND.borderLt}` }}
-    >
-      <div className="col-span-1">
-        <div
-          className="w-7 h-7 rounded-lg flex items-center justify-center"
-          style={{ backgroundColor: `${t.color}22`, color: t.color }}
-        >
-          <Icon className="w-3.5 h-3.5" />
-        </div>
-      </div>
-      <div className="col-span-3">
-        <div className="font-bold" style={{ color: BRAND.text }}>
-          {t.label}
-        </div>
-        <div className="text-[10px] font-mono" style={{ color: BRAND.textMute }}>
-          {flow.network}
-        </div>
-      </div>
-      <div className="col-span-3 text-right font-mono font-bold" style={{ color: flow.amount < 0 ? BRAND.text : BRAND.success }}>
-        {flow.amount > 0 ? '+' : ''}
-        {flow.amount < 0.01 ? flow.amount.toFixed(8) : flow.amount.toFixed(4)} {flow.asset}
-      </div>
-      <div className="col-span-2 text-right">
-        <span
-          className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase inline-flex items-center gap-0.5"
-          style={{ backgroundColor: `${st.color}22`, color: st.color }}
-        >
-          <StatusIcon className="w-2.5 h-2.5" />
-          {st.label}
-        </span>
-      </div>
-      <div className="col-span-3 text-right text-[10px] font-mono" style={{ color: BRAND.textMute }}>
-        {flow.time}
-      </div>
-    </div>
-  );
-}
+const TRANSACTIONS: Transaction[] = [
+  { id: 't-001', type: 'deposit', asset: 'USDT', chain: 'eth', amount: 10000, value: 10000, fee: 2.4, time: '2026-07-19 14:18:42', status: 'completed', txHash: '0xabcd1234...ef5678', from: shortenAddress('0xExternalWallet0001'), to: '0xYourWallet...abcd', block: 18420000, tags: ['充值', 'ERC20'] },
+  { id: 't-002', type: 'swap', asset: 'ETH → USDC', chain: 'eth', amount: 2.4, value: 9221, fee: 8.4, time: '2026-07-19 13:42:18', status: 'completed', txHash: '0x1234abcd...5678ef', from: '0xYourWallet...abcd', to: '0xUniswapV3...router', block: 18419842, tags: ['兑换', 'Uniswap'] },
+  { id: 't-003', type: 'trade', asset: 'BTC-PERP', chain: 'eth', amount: 0.5, value: 33921, fee: 16.96, time: '2026-07-19 12:18:42', status: 'completed', txHash: '0xef5678ab...cd1234', from: '0xYourWallet...abcd', to: '0xPerpEngine...', block: 18419500, tags: ['永续', '开仓'] },
+  { id: 't-004', type: 'bridge', asset: 'ETH', chain: 'arbitrum', amount: 4.2, value: 16137, fee: 1.4, time: '2026-07-19 10:42:08', status: 'pending', txHash: '0x5678efab...cd1234', from: '0xYourWallet...abcd', to: '0xArbBridge...', block: 18418800, tags: ['跨链', 'LayerZero'] },
+  { id: 't-005', type: 'stake', asset: 'ZSD', chain: 'zs-chain', amount: 5000, value: 5000, fee: 0.04, time: '2026-07-19 08:18:42', status: 'completed', txHash: '0x9012abcd...3456ef', from: '0xYourWallet...abcd', to: '0xStakingHub...', block: 18418200, tags: ['质押'] },
+  { id: 't-006', type: 'withdraw', asset: 'USDC', chain: 'eth', amount: 5000, value: 5000, fee: 4.2, time: '2026-07-18 22:18:32', status: 'completed', txHash: '0x3456efab...7890cd', from: '0xYourWallet...abcd', to: shortenAddress('0xExternalWallet0002'), block: 18417400, tags: ['提现', 'ERC20'] },
+  { id: 't-007', type: 'claim', asset: 'UNI', chain: 'eth', amount: 12.4, value: 159.2, fee: 1.8, time: '2026-07-18 18:42:18', status: 'completed', txHash: '0x7890cdef...1234ab', from: '0xUniswapFarm...', to: '0xYourWallet...abcd', block: 18416800, tags: ['领奖'] },
+  { id: 't-008', type: 'transfer', asset: 'ETH', chain: 'eth', amount: 0.5, value: 1921, fee: 1.2, time: '2026-07-18 14:24:18', status: 'completed', txHash: '0xcdef1234...5678ab', from: '0xYourWallet...abcd', to: shortenAddress('0xFriendWallet0001'), block: 18416000, tags: ['转账'] },
+  { id: 't-009', type: 'swap', asset: 'USDC → SOL', chain: 'solana', amount: 18420, value: 18420, fee: 0.8, time: '2026-07-18 10:18:42', status: 'failed', txHash: '0x1234cdef...5678ab', from: '0xYourWallet...abcd', to: '0xJupiterRouter...', block: 0, tags: ['兑换', '滑点超限'] },
+  { id: 't-010', type: 'lend', asset: 'USDT', chain: 'eth', amount: 10000, value: 10000, fee: 0, time: '2026-07-17 16:42:08', status: 'completed', txHash: '0x5678cdef...9012ab', from: '0xYourWallet...abcd', to: '0xAaveLendingPool...', block: 18415000, tags: ['出借', 'Aave'] },
+];
 
-function AllocationBar({ segments }: { segments: { name: string; pct: number; color: string }[] }) {
-  return (
-    <div className="w-full h-2 rounded-full overflow-hidden flex" style={{ backgroundColor: BRAND.bg }}>
-      {segments.map((s, i) => (
-        <div
-          key={i}
-          className="h-full"
-          style={{ width: `${s.pct}%`, backgroundColor: s.color }}
-          title={`${s.name} ${s.pct}%`}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ============== 主组件 ==============
+// ============== 组件 ==============
 
 export function PortalWallet() {
-  // ----- 状态 -----
-  const [assets, setAssets] = useState<Asset[]>(ASSETS);
-  const [hideBalance, setHideBalance] = useState(false);
+  const [tab, setTab] = useState<Tab>('overview');
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<FilterKey>('all');
-  const [sortKey, setSortKey] = useState<SortKey>('rank');
-  const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [timeRange, setTimeRange] = useState<TimeRange>('24h');
-  const [selectedNet, setSelectedNet] = useState<string>('conflux');
-  const [activeAsset, setActiveAsset] = useState<Asset | null>(null);
-  const [drawerMode, setDrawerMode] = useState<'deposit' | 'withdraw' | 'asset' | null>(null);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [assetChainFilter, setAssetChainFilter] = useState<ChainNetwork | 'all'>('all');
+  const [assetTypeFilter, setAssetTypeFilter] = useState<AssetType | 'all'>('all');
+  const [positionSideFilter, setPositionSideFilter] = useState<'long' | 'short' | 'all'>('all');
+  const [txTypeFilter, setTxTypeFilter] = useState<TxType | 'all'>('all');
+  const [txChainFilter, setTxChainFilter] = useState<ChainNetwork | 'all'>('all');
+  const [txStatusFilter, setTxStatusFilter] = useState<TxStatus | 'all'>('all');
+  const [sortBy, setSortBy] = useState<'value' | 'balance' | 'change' | 'allocation'>('value');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [hideBalance, setHideBalance] = useState(false);
+  const [drawer, setDrawer] = useState<DrawerState>({ open: false, type: null, payload: null });
+  const [helpOpen, setHelpOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositAsset, setDepositAsset] = useState('USDT');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawAddress, setWithdrawAddress] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferTo, setTransferTo] = useState('');
+  const [transferAsset, setTransferAsset] = useState('ETH');
+  searchRef = useRef<HTMLInputElement>(null);
 
-  // ----- 实时估值漂移 -----
+  const [kpi, setKpi] = useState<KpiSnapshot>({
+    totalValue: 594842,
+    totalValue24hChange: 2.84,
+    spotValue: 412842,
+    perpValue: 48200,
+    defiValue: 194200,
+    nftValue: 59900,
+    bridgeValue: 52757,
+    unrealizedPnl: 4133,
+    realizedPnl24h: 842,
+    totalFeesPaid: 1842,
+    totalRewards: 2480,
+    netDeposit: 248000,
+    zsdPrice: 1.0,
+  });
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAssets((prev) =>
-        prev.map((a) => {
-          const drift = (Math.random() - 0.5) * 0.003;
-          return { ...a, priceUsdt: Math.max(0.0000001, a.priceUsdt * (1 + drift)) };
-        })
-      );
-    }, 2500);
-    return () => clearInterval(interval);
+    const id = setInterval(() => {
+      setKpi((prev) => ({
+        ...prev,
+        totalValue: prev.totalValue + Math.floor(Math.random() * 800 - 200),
+        spotValue: prev.spotValue + Math.floor(Math.random() * 600 - 200),
+        unrealizedPnl: prev.unrealizedPnl + Math.floor(Math.random() * 200 - 80),
+        totalRewards: prev.totalRewards + Math.floor(Math.random() * 8 - 2),
+      }));
+    }, 4200);
+    return () => clearInterval(id);
   }, []);
 
-  // ----- 快捷键 -----
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
-      if (e.key === '/' && !drawerMode) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
+  const filteredAssets = useMemo(() => {
+    let result = ASSETS.filter((a) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!a.symbol.toLowerCase().includes(q) && !a.name.toLowerCase().includes(q)) return false;
       }
-      if (e.key === 'Escape') {
-        if (drawerMode) setDrawerMode(null);
-        else if (document.activeElement === searchInputRef.current) searchInputRef.current?.blur();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [drawerMode]);
-
-  // ----- 过滤 + 排序 -----
-  const filtered = useMemo(() => {
-    let list = assets;
-    if (search) {
-      const q = search.toUpperCase();
-      list = list.filter((a) => a.symbol.includes(q) || a.name.toUpperCase().includes(q));
-    }
-    if (filter !== 'all') {
-      list = list.filter((a) => a.category === filter);
-    }
-    const sorted = [...list].sort((a, b) => {
-      const va = a[sortKey];
-      const vb = b[sortKey];
-      if (typeof va === 'number' && typeof vb === 'number') {
-        return sortDir === 'asc' ? va - vb : vb - va;
-      }
-      return 0;
+      if (assetChainFilter !== 'all' && a.chain !== assetChainFilter) return false;
+      if (assetTypeFilter !== 'all' && a.type !== assetTypeFilter) return false;
+      return true;
     });
-    return sorted;
-  }, [assets, search, filter, sortKey, sortDir]);
+    result = result.sort((a, b) => {
+      let av = 0, bv = 0;
+      if (sortBy === 'value') { av = a.value; bv = b.value; }
+      else if (sortBy === 'balance') { av = a.balance; bv = b.balance; }
+      else if (sortBy === 'change') { av = a.change24h; bv = b.change24h; }
+      else if (sortBy === 'allocation') { av = a.allocation; bv = b.allocation; }
+      return sortDir === 'asc' ? av - bv : bv - av;
+    });
+    return result;
+  }, [search, assetChainFilter, assetTypeFilter, sortBy, sortDir]);
 
-  // ----- 汇总 -----
-  const totalValueUsdt = useMemo(
-    () => assets.reduce((s, a) => s + a.balance * a.priceUsdt, 0),
-    [assets]
-  );
-  const totalAvailable = useMemo(
-    () => assets.reduce((s, a) => s + a.available * a.priceUsdt, 0),
-    [assets]
-  );
-  const totalFrozen = useMemo(
-    () => assets.reduce((s, a) => s + a.frozen * a.priceUsdt, 0),
-    [assets]
-  );
-  const change24h = useMemo(() => {
-    const weighted = assets.reduce((s, a) => {
-      const value = a.balance * a.priceUsdt;
-      return s + (a.change24h * value) / 100;
-    }, 0);
-    return totalValueUsdt > 0 ? (weighted / totalValueUsdt) * 100 : 0;
-  }, [assets, totalValueUsdt]);
-  const pnl24hUsdt = useMemo(() => (change24h / 100) * totalValueUsdt, [change24h, totalValueUsdt]);
+  const filteredPositions = useMemo(() => {
+    return POSITIONS.filter((p) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!p.symbol.toLowerCase().includes(q)) return false;
+      }
+      if (positionSideFilter !== 'all' && p.type !== positionSideFilter) return false;
+      return true;
+    });
+  }, [search, positionSideFilter]);
 
-  // ----- 资产分布 -----
-  const allocation = useMemo(() => {
-    const segMap: Record<string, { name: string; pct: number; color: string }> = {
-      major: { name: '主流币', pct: 0, color: BRAND.primary },
-      stable: { name: '稳定币', pct: 0, color: BRAND.info },
-      defi: { name: 'DeFi', pct: 0, color: '#8B5CF6' },
-      layer2: { name: 'L2', pct: 0, color: BRAND.warning },
-      meme: { name: 'Meme', pct: 0, color: '#EC4899' },
-      treegraph: { name: '树图生态', pct: 0, color: BRAND.success },
-      other: { name: '其他', pct: 0, color: BRAND.textMute },
-    };
-    const total = totalValueUsdt || 1;
-    for (const a of assets) {
-      const v = a.balance * a.priceUsdt;
-      const seg = segMap[a.category];
-      seg.pct += (v / total) * 100;
-    }
-    return Object.values(segMap).filter((s) => s.pct > 0.01).sort((a, b) => b.pct - a.pct);
-  }, [assets, totalValueUsdt]);
+  const filteredTx = useMemo(() => {
+    return TRANSACTIONS.filter((t) => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!t.asset.toLowerCase().includes(q) && !t.txHash.toLowerCase().includes(q)) return false;
+      }
+      if (txTypeFilter !== 'all' && t.type !== txTypeFilter) return false;
+      if (txChainFilter !== 'all' && t.chain !== txChainFilter) return false;
+      if (txStatusFilter !== 'all' && t.status !== txStatusFilter) return false;
+      return true;
+    });
+  }, [search, txTypeFilter, txChainFilter, txStatusFilter]);
 
-  // ----- 操作 -----
-  const openDrawer = useCallback((mode: typeof drawerMode, asset?: Asset) => {
-    setDrawerMode(mode);
-    if (asset) setActiveAsset(asset);
+  const openDrawer = useCallback((type: DrawerType, payload?: string) => {
+    setDrawer({ open: true, type, payload: payload ?? null });
   }, []);
 
-  const toggleSort = useCallback((key: SortKey) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDir(key === 'rank' ? 'asc' : 'desc');
+  const closeDrawer = useCallback(() => {
+    setDrawer({ open: false, type: null, payload: null });
+  }, []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT') return;
+      if (e.key === '/') { e.preventDefault(); searchRef.current?.focus(); }
+      else if (e.key === 'Escape') {
+        if (drawer.open) closeDrawer();
+        else if (helpOpen) setHelpOpen(false);
+      }
+      else if (e.key === '?' || (e.shiftKey && e.key === '/')) { e.preventDefault(); setHelpOpen((v) => !v); }
+      else if (e.key === '1') setTab('overview');
+      else if (e.key === '2') setTab('spot');
+      else if (e.key === '3') setTab('perp');
+      else if (e.key === '4') setTab('defi');
+      else if (e.key === '5') setTab('nft');
+      else if (e.key === '6') setTab('bridge');
+      else if (e.key === '7') setTab('hardware');
+      else if (e.key === '8') setTab('history');
+      else if (e.key === '9') setTab('help');
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [drawer.open, helpOpen, closeDrawer]);
+
+  const renderKpi = useCallback((label: string, value: React.ReactNode, sub?: React.ReactNode, icon?: React.ReactNode) => {
+    return (
+      <div className="rounded-xl p-4 pw-stagger" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs" style={{ color: BRAND.textMuted }}>{label}</span>
+          {icon && <span style={{ color: BRAND.primary }}>{icon}</span>}
+        </div>
+        <div className="text-xl font-semibold" style={{ color: BRAND.text }}>{hideBalance ? '****' : value}</div>
+        {sub && <div className="text-[10px] mt-1" style={{ color: BRAND.textMuted }}>{sub}</div>}
+      </div>
+    );
+  }, [hideBalance]);
+
+  const submitDeposit = () => {
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      alert('请输入有效的充值数量');
+      return;
     }
-  }, [sortKey]);
-
-  const fmtUsdt = (v: number) => {
-    if (hideBalance) return '••••••';
-    if (v >= 1) return v.toFixed(2);
-    if (v >= 0.01) return v.toFixed(4);
-    return v.toFixed(8);
+    alert(`已生成 ${depositAsset} 充值地址，请从您的外部钱包向此地址转账 ${depositAmount} ${depositAsset}`);
+    setDepositAmount('');
   };
 
-  const fmtCny = (v: number) => {
-    if (hideBalance) return '••••••';
-    return (v * 7.21).toFixed(2);
+  const submitWithdraw = () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
+      alert('请输入有效的提现数量');
+      return;
+    }
+    if (!withdrawAddress) {
+      alert('请输入提现地址');
+      return;
+    }
+    alert(`提现申请已提交：${withdrawAmount} ${depositAsset} 至 ${withdrawAddress}`);
+    setWithdrawAmount('');
+    setWithdrawAddress('');
   };
 
-  // ============== 渲染 ==============
+  const submitTransfer = () => {
+    if (!transferAmount || parseFloat(transferAmount) <= 0) {
+      alert('请输入有效的转账数量');
+      return;
+    }
+    if (!transferTo) {
+      alert('请输入接收地址');
+      return;
+    }
+    alert(`转账已提交：${transferAmount} ${transferAsset} 至 ${transferTo}`);
+    setTransferAmount('');
+    setTransferTo('');
+  };
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: BRAND.bg, color: BRAND.text }}>
-      {/* ===== 1. Hero：总资产 + 24h 涨跌 ===== */}
-      <section
-        className="relative overflow-hidden"
-        style={{
-          background: `linear-gradient(180deg, ${BRAND.bg} 0%, ${BRAND.bgCard} 100%)`,
-          borderBottom: `1px solid ${BRAND.border}`,
-        }}
-      >
-        <div
-          className="absolute inset-0 opacity-30"
-          style={{
-            backgroundImage: `radial-gradient(circle at 25% 25%, ${BRAND.primary}11 0%, transparent 50%), radial-gradient(circle at 75% 60%, ${BRAND.success}08 0%, transparent 50%)`,
-          }}
-        />
-        <div className="relative max-w-7xl mx-auto px-6 py-10">
-          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-6">
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span
-                  className="text-[10px] font-bold tracking-widest uppercase px-2 py-0.5 rounded"
-                  style={{ backgroundColor: BRAND.primaryLt, color: BRAND.primary }}
-                >
-                  钱包总览
-                </span>
-                <span className="text-[10px] font-bold tracking-widest uppercase" style={{ color: BRAND.textMute }}>
-                  {assets.length} 个币种 · 6 充值网络
-                </span>
+      <style>{`
+        @keyframes pw-fade-up { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pw-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.55; } }
+        @keyframes pw-shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes pw-slide-in { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes pw-bar { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+        @keyframes pw-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .pw-stagger > * { animation: pw-fade-up 0.4s ease-out both; }
+        .pw-stagger > *:nth-child(1) { animation-delay: 0.04s; }
+        .pw-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+        .pw-stagger > *:nth-child(3) { animation-delay: 0.12s; }
+        .pw-stagger > *:nth-child(4) { animation-delay: 0.16s; }
+        .pw-stagger > *:nth-child(5) { animation-delay: 0.20s; }
+        .pw-stagger > *:nth-child(6) { animation-delay: 0.24s; }
+        .pw-stagger > *:nth-child(7) { animation-delay: 0.28s; }
+        .pw-stagger > *:nth-child(8) { animation-delay: 0.32s; }
+        .pw-pulse { animation: pw-pulse 2.4s ease-in-out infinite; }
+        .pw-float { animation: pw-float 3s ease-in-out infinite; }
+        .pw-shimmer { background: linear-gradient(90deg, transparent, rgba(20,184,129,0.15), transparent); background-size: 200% 100%; animation: pw-shimmer 2.4s linear infinite; }
+        .pw-drawer { animation: pw-slide-in 0.28s ease-out; }
+        .pw-bar { transform-origin: bottom; animation: pw-bar 0.6s ease-out; }
+        .pw-row:hover { background-color: ${BRAND.cardHover}; }
+      `}</style>
+
+      {/* Hero */}
+      <div className="px-6 py-10" style={{ background: `linear-gradient(180deg, ${BRAND.card} 0%, ${BRAND.bg} 100%)`, borderBottom: `1px solid ${BRAND.border}` }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center gap-2 mb-3">
+            <Wallet size={28} style={{ color: BRAND.primary }} className="pw-float" />
+            <h1 className="text-3xl font-bold" style={{ color: BRAND.text }}>钱包服务中心</h1>
+            <span className="px-2 py-0.5 text-[10px] rounded-full" style={{ backgroundColor: 'rgba(20,184,129,0.12)', color: BRAND.primary, border: `1px solid ${BRAND.primary}40` }}>P3.33</span>
+          </div>
+          <p className="text-sm mb-4" style={{ color: BRAND.textMuted, maxWidth: 720 }}>
+            中萨数字科技交易所钱包服务中心：钱包总览 / 现货钱包 / 合约钱包 / DeFi 钱包 / NFT 钱包 / 跨链钱包 / 硬件钱包 / 历史记录。
+            与 P3.4 现货 + P3.25 做市 + P3.26 衍生品 + P3.27 量化 + P3.28 NFT + P3.29 DeFi + P3.30 跨链 + P3.31 节点 + P3.32 数据形成
+            "用户-钱包-资产-链上"全场景闭环。明确"数字资产钱包与用户资产管理研究方向"定性，不构成对任何资产收益的合规承诺。
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[10px] px-2 py-0.5 rounded" style={{ backgroundColor: 'rgba(20,184,129,0.08)', color: BRAND.primary, border: `1px solid ${BRAND.primary}30` }}>· 严格规避"承诺收益 / 保本 / 刚兑 / 稳赚 / 担保"等高风险词；不构成对任何资产收益的合规承诺</span>
+          </div>
+        </div>
+      </div>
+
+      {/* KPI */}
+      <div className="px-6 py-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="rounded-2xl p-5 mb-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm" style={{ color: BRAND.textMuted }}>总资产估值</span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px]" style={{ color: changeColor(kpi.totalValue24hChange) }}>{kpi.totalValue24hChange >= 0 ? '+' : ''}{kpi.totalValue24hChange.toFixed(2)}% (24h)</span>
+                <button onClick={() => setHideBalance(!hideBalance)} className="p-1 rounded" style={{ color: BRAND.textMuted }}>
+                  {hideBalance ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
               </div>
-              <h1 className="text-3xl md:text-4xl font-extrabold mb-1" style={{ color: BRAND.text }}>
-                资产总览
-              </h1>
-              <p className="text-sm" style={{ color: BRAND.textSub }}>
-                实时资产估值、余额分布、资金流水与链上记录
-              </p>
             </div>
-            <button
-              onClick={() => setHideBalance((v) => !v)}
-              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg text-xs font-bold transition-colors"
-              style={{ backgroundColor: BRAND.card, color: BRAND.textSub, border: `1px solid ${BRAND.border}` }}
-            >
-              {hideBalance ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-              {hideBalance ? '显示余额' : '隐藏余额'}
+            <div className="text-3xl font-bold" style={{ color: BRAND.text }}>{hideBalance ? '****' : formatCurrency(kpi.totalValue)}</div>
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mt-4">
+              {renderKpi('现货', <>{formatCurrency(kpi.spotValue)}</>, <>{((kpi.spotValue / kpi.totalValue) * 100).toFixed(1)}%</>, <Coins size={14} />)}
+              {renderKpi('合约', <>{formatCurrency(kpi.perpValue)}</>, <>{((kpi.perpValue / kpi.totalValue) * 100).toFixed(1)}%</>, <BarChart3 size={14} />)}
+              {renderKpi('DeFi', <>{formatCurrency(kpi.defiValue)}</>, <>{((kpi.defiValue / kpi.totalValue) * 100).toFixed(1)}%</>, <Layers size={14} />)}
+              {renderKpi('NFT', <>{formatCurrency(kpi.nftValue)}</>, <>{((kpi.nftValue / kpi.totalValue) * 100).toFixed(1)}%</>, <Hexagon size={14} />)}
+              {renderKpi('跨链', <>{formatCurrency(kpi.bridgeValue)}</>, <>{((kpi.bridgeValue / kpi.totalValue) * 100).toFixed(1)}%</>, <ArrowLeftRight size={14} />)}
+              {renderKpi('未实现盈亏', <>{formatCurrency(kpi.unrealizedPnl)}</>, <>24h 已实现 {formatCurrency(kpi.realizedPnl24h)}</>, <TrendingUp size={14} />)}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg flex-1 min-w-[240px]" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+              <Search size={14} style={{ color: BRAND.textMuted }} />
+              <input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索资产 / 仓位 / 交易…" className="bg-transparent outline-none flex-1 text-sm" style={{ color: BRAND.text }} />
+              {search && <button onClick={() => setSearch('')} className="p-0.5 rounded" style={{ color: BRAND.textMuted }}><X size={14} /></button>}
+            </div>
+            <button onClick={() => openDrawer('deposit')} className="px-3 py-2 rounded-lg text-sm flex items-center gap-1.5" style={{ backgroundColor: BRAND.primary, color: '#000' }}>
+              <ArrowDownToLine size={14} /> 充值
+            </button>
+            <button onClick={() => openDrawer('withdraw')} className="px-3 py-2 rounded-lg text-sm flex items-center gap-1.5" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+              <ArrowUpToLine size={14} /> 提现
+            </button>
+            <button onClick={() => openDrawer('transfer')} className="px-3 py-2 rounded-lg text-sm flex items-center gap-1.5" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+              <Send size={14} /> 转账
+            </button>
+            <button onClick={() => setHelpOpen(true)} className="px-3 py-2 rounded-lg text-sm flex items-center gap-1.5" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+              <HelpCircle size={14} /> 帮助
             </button>
           </div>
 
-          {/* 总资产卡片 */}
-          <div
-            className="rounded-3xl p-6 md:p-8 relative overflow-hidden"
-            style={{
-              background: `linear-gradient(135deg, ${BRAND.card} 0%, ${BRAND.cardElevated} 100%)`,
-              border: `1px solid ${BRAND.primary}33`,
-            }}
-          >
-            <div
-              className="absolute top-0 left-0 right-0 h-[2px]"
-              style={{ background: `linear-gradient(90deg, transparent 0%, ${BRAND.primary} 50%, transparent 100%)` }}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: BRAND.textMute }}>
-                  总资产估值
-                </div>
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-3xl md:text-4xl font-extrabold font-mono" style={{ color: BRAND.text }}>
-                    {fmtUsdt(totalValueUsdt)}
-                  </span>
-                  <span className="text-sm font-mono" style={{ color: BRAND.textMute }}>
-                    USDT
-                  </span>
-                </div>
-                <div className="text-xs font-mono" style={{ color: BRAND.textMute }}>
-                  ≈ ¥{fmtCny(totalValueUsdt)} CNY
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: BRAND.textMute }}>
-                  24h 涨跌
-                </div>
-                <div
-                  className="text-2xl font-extrabold font-mono flex items-center gap-1.5"
-                  style={{ color: change24h >= 0 ? BRAND.success : BRAND.danger }}
-                >
-                  {change24h >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
-                  {change24h >= 0 ? '+' : ''}
-                  {change24h.toFixed(2)}%
-                </div>
-                <div
-                  className="text-xs font-mono"
-                  style={{ color: pnl24hUsdt >= 0 ? BRAND.success : BRAND.danger }}
-                >
-                  {pnl24hUsdt >= 0 ? '+' : ''}
-                  {fmtUsdt(pnl24hUsdt)} USDT
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: BRAND.textMute }}>
-                  可用余额
-                </div>
-                <div className="text-2xl font-extrabold font-mono" style={{ color: BRAND.text }}>
-                  {fmtUsdt(totalAvailable)}
-                </div>
-                <div className="text-xs font-mono" style={{ color: BRAND.textMute }}>
-                  USDT
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest mb-1" style={{ color: BRAND.textMute }}>
-                  冻结余额
-                </div>
-                <div className="text-2xl font-extrabold font-mono" style={{ color: BRAND.warning }}>
-                  {fmtUsdt(totalFrozen)}
-                </div>
-                <div className="text-xs font-mono" style={{ color: BRAND.textMute }}>
-                  USDT
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 2. 快捷操作 ===== */}
-      <section className="max-w-7xl mx-auto px-6 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          <button
-            onClick={() => openDrawer('deposit')}
-            className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] text-left"
-            style={{ backgroundColor: BRAND.primaryContainer, color: BRAND.onPrimary }}
-          >
-            <ArrowDownLeft className="w-5 h-5 mb-2" />
-            <div className="text-sm font-bold mb-0.5">充值</div>
-            <div className="text-[10px] opacity-90">6 主流网络</div>
-          </button>
-          <button
-            onClick={() => openDrawer('withdraw')}
-            className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] text-left"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}`, color: BRAND.text }}
-          >
-            <ArrowUpRight className="w-5 h-5 mb-2" style={{ color: BRAND.primary }} />
-            <div className="text-sm font-bold mb-0.5">提现</div>
-            <div className="text-[10px]" style={{ color: BRAND.textMute }}>2FA + 地址簿</div>
-          </button>
-          <a
-            href="#"
-            className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] block"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-          >
-            <ArrowLeftRight className="w-5 h-5 mb-2" style={{ color: BRAND.primary }} />
-            <div className="text-sm font-bold mb-0.5" style={{ color: BRAND.text }}>兑换</div>
-            <div className="text-[10px]" style={{ color: BRAND.textMute }}>币币互转</div>
-          </a>
-          <a
-            href="#"
-            className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] block"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-          >
-            <BookOpen className="w-5 h-5 mb-2" style={{ color: BRAND.primary }} />
-            <div className="text-sm font-bold mb-0.5" style={{ color: BRAND.text }}>资金流水</div>
-            <div className="text-[10px]" style={{ color: BRAND.textMute }}>最近 30 天</div>
-          </a>
-          <a
-            href="#"
-            className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] block"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-          >
-            <Network className="w-5 h-5 mb-2" style={{ color: BRAND.primary }} />
-            <div className="text-sm font-bold mb-0.5" style={{ color: BRAND.text }}>地址管理</div>
-            <div className="text-[10px]" style={{ color: BRAND.textMute }}>白名单 / 备注</div>
-          </a>
-          <a
-            href="#"
-            className="rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] block"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-          >
-            <Shield className="w-5 h-5 mb-2" style={{ color: BRAND.primary }} />
-            <div className="text-sm font-bold mb-0.5" style={{ color: BRAND.text }}>安全中心</div>
-            <div className="text-[10px]" style={{ color: BRAND.textMute }}>2FA / KYC</div>
-          </a>
-        </div>
-      </section>
-
-      {/* ===== 3. 资产分布 + 充值网络 ===== */}
-      <section className="max-w-7xl mx-auto px-6 py-4">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {/* 资产分布 */}
-          <div
-            className="rounded-2xl p-5"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-          >
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: BRAND.textMute }}>
-                  ALLOCATION
-                </div>
-                <h2 className="text-lg font-extrabold" style={{ color: BRAND.text }}>
-                  资产分布
-                </h2>
-              </div>
-              <span className="text-[10px] font-mono" style={{ color: BRAND.textMute }}>
-                按 USDT 估值
-              </span>
-            </div>
-            <AllocationBar segments={allocation} />
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {allocation.map((s) => (
-                <div key={s.name} className="flex items-center gap-2 text-xs">
-                  <div
-                    className="w-2.5 h-2.5 rounded shrink-0"
-                    style={{ backgroundColor: s.color }}
-                  />
-                  <span style={{ color: BRAND.textSub }}>{s.name}</span>
-                  <span className="ml-auto font-mono font-bold" style={{ color: BRAND.text }}>
-                    {s.pct.toFixed(1)}%
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 充值网络 */}
-          <div
-            className="rounded-2xl p-5"
-            style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-          >
-            <div className="flex items-end justify-between mb-4">
-              <div>
-                <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: BRAND.textMute }}>
-                  DEPOSIT NETWORKS
-                </div>
-                <h2 className="text-lg font-extrabold" style={{ color: BRAND.text }}>
-                  充值网络
-                </h2>
-              </div>
-              <button
-                onClick={() => openDrawer('deposit')}
-                className="text-[10px] font-bold inline-flex items-center gap-1"
-                style={{ color: BRAND.primary }}
-              >
-                充值详情 <ChevronRight className="w-3 h-3" />
+          <div className="flex flex-wrap gap-1 mb-4">
+            {[
+              { k: 'overview' as Tab, l: '总览' },
+              { k: 'spot' as Tab, l: `现货 (${ASSETS.length})` },
+              { k: 'perp' as Tab, l: `合约 (${POSITIONS.length})` },
+              { k: 'defi' as Tab, l: `DeFi (${LP_POSITIONS.length})` },
+              { k: 'nft' as Tab, l: `NFT (${NFT_HOLDINGS.length})` },
+              { k: 'bridge' as Tab, l: `跨链 (${BRIDGE_HOLDINGS.length})` },
+              { k: 'hardware' as Tab, l: `硬件 (${HARDWARE_DEVICES.length})` },
+              { k: 'history' as Tab, l: `历史 (${TRANSACTIONS.length})` },
+              { k: 'help' as Tab, l: '帮助' },
+            ].map((t) => (
+              <button key={t.k} onClick={() => setTab(t.k)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: tab === t.k ? BRAND.primary : BRAND.card, color: tab === t.k ? '#000' : BRAND.text, border: `1px solid ${tab === t.k ? BRAND.primary : BRAND.border}` }}>
+                {t.l}
               </button>
-            </div>
-            <div className="space-y-2">
-              {NETWORKS.map((n) => (
-                <NetworkRow
-                  key={n.key}
-                  net={n}
-                  selected={selectedNet === n.key}
-                  onClick={() => setSelectedNet(n.key)}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 4. 多币种余额表 ===== */}
-      <section className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-4">
-          <div>
-            <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: BRAND.textMute }}>
-              ASSETS
-            </div>
-            <h2 className="text-xl font-extrabold" style={{ color: BRAND.text }}>
-              资产列表
-            </h2>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <div
-              className="flex items-center gap-2 h-9 px-3 rounded-lg"
-              style={{
-                backgroundColor: BRAND.card,
-                border: `1px solid ${searchFocused ? BRAND.primary : BRAND.border}`,
-                minWidth: 180,
-              }}
-            >
-              <Search className="w-3.5 h-3.5" style={{ color: BRAND.textMute }} />
-              <input
-                ref={searchInputRef}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                placeholder="搜索币种…"
-                className="flex-1 bg-transparent outline-none text-xs"
-                style={{ color: BRAND.text }}
-              />
-              <kbd
-                className="text-[9px] px-1 rounded font-mono"
-                style={{ backgroundColor: BRAND.bgAlt, border: `1px solid ${BRAND.border}`, color: BRAND.textMute }}
-              >
-                /
-              </kbd>
-            </div>
-          </div>
-        </div>
-
-        {/* 分类 Tab */}
-        <div className="flex items-center gap-1 mb-3 overflow-x-auto pb-1">
-          {[
-            { key: 'all' as const, label: '全部', icon: Layers },
-            { key: 'major' as const, label: '主流币', icon: Bitcoin },
-            { key: 'stable' as const, label: '稳定币', icon: Coins },
-            { key: 'defi' as const, label: 'DeFi', icon: Activity },
-            { key: 'layer2' as const, label: 'L2', icon: Globe2 },
-            { key: 'meme' as const, label: 'Meme', icon: Sparkles },
-            { key: 'treegraph' as const, label: '树图生态', icon: Network },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const active = filter === tab.key;
-            return (
-              <button
-                key={tab.key}
-                onClick={() => setFilter(tab.key)}
-                className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold transition-all shrink-0"
-                style={{
-                  backgroundColor: active ? BRAND.primaryLt : 'transparent',
-                  color: active ? BRAND.primary : BRAND.textSub,
-                  border: `1px solid ${active ? BRAND.primary : 'transparent'}`,
-                }}
-              >
-                <Icon className="w-3 h-3" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* 资产表 */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-        >
-          <div
-            className="grid grid-cols-12 gap-2 px-4 py-3 text-[10px] font-bold uppercase tracking-widest"
-            style={{ backgroundColor: BRAND.bgAlt, color: BRAND.textMute, borderBottom: `1px solid ${BRAND.border}` }}
-          >
-            <button onClick={() => toggleSort('rank')} className="col-span-1 text-left flex items-center gap-1 hover:text-white">
-              #
-              {sortKey === 'rank' && (sortDir === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
-            </button>
-            <button onClick={() => toggleSort('name')} className="col-span-2 text-left flex items-center gap-1 hover:text-white">
-              资产
-              {sortKey === 'name' && (sortDir === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
-            </button>
-            <button onClick={() => toggleSort('balance')} className="col-span-2 text-right flex items-center justify-end gap-1 hover:text-white">
-              余额
-              {sortKey === 'balance' && (sortDir === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
-            </button>
-            <button onClick={() => toggleSort('valueUsdt')} className="col-span-2 text-right flex items-center justify-end gap-1 hover:text-white">
-              估值 (USDT)
-              {sortKey === 'valueUsdt' && (sortDir === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
-            </button>
-            <button onClick={() => toggleSort('change')} className="col-span-1 text-right flex items-center justify-end gap-1 hover:text-white">
-              24h
-              {sortKey === 'change' && (sortDir === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
-            </button>
-            <button onClick={() => toggleSort('allocation')} className="col-span-1 text-right hidden md:flex items-center justify-end gap-1 hover:text-white">
-              占比
-              {sortKey === 'allocation' && (sortDir === 'asc' ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />)}
-            </button>
-            <div className="col-span-3 text-right">操作</div>
-          </div>
-          <div>
-            {filtered.length === 0 ? (
-              <div className="py-12 text-center">
-                <Search className="w-8 h-8 mx-auto mb-3" style={{ color: BRAND.textMute }} />
-                <p className="text-sm font-semibold mb-1" style={{ color: BRAND.text }}>未找到匹配资产</p>
-                <p className="text-xs" style={{ color: BRAND.textSub }}>尝试其他关键词或切换分类</p>
-              </div>
-            ) : (
-              filtered.map((a, idx) => {
-                const value = a.balance * a.priceUsdt;
-                return (
-                  <div
-                    key={a.symbol}
-                    className="grid grid-cols-12 gap-2 px-4 py-2.5 items-center text-xs hover:bg-opacity-50 transition-colors"
-                    style={{ borderBottom: `1px solid ${BRAND.borderLt}`, backgroundColor: idx % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}
-                  >
-                    <div className="col-span-1 font-mono font-bold" style={{ color: BRAND.textMute }}>
-                      {a.rank}
-                    </div>
-                    <div className="col-span-2 flex items-center gap-2">
-                      <div
-                        className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-extrabold"
-                        style={{ backgroundColor: BRAND.primaryLt, color: BRAND.primary }}
-                      >
-                        {a.symbol.slice(0, 1)}
-                      </div>
-                      <div>
-                        <div className="font-bold" style={{ color: BRAND.text }}>{a.symbol}</div>
-                        <div className="text-[10px]" style={{ color: BRAND.textMute }}>{a.name}</div>
-                      </div>
-                    </div>
-                    <div className="col-span-2 text-right font-mono font-bold" style={{ color: BRAND.text }}>
-                      {hideBalance ? '••••' : a.balance < 0.01 ? a.balance.toFixed(8) : a.balance < 1 ? a.balance.toFixed(4) : a.balance.toFixed(2)}
-                    </div>
-                    <div className="col-span-2 text-right font-mono font-bold" style={{ color: BRAND.text }}>
-                      {fmtUsdt(value)}
-                    </div>
-                    <div
-                      className="col-span-1 text-right font-mono font-bold"
-                      style={{ color: a.change24h >= 0 ? BRAND.success : BRAND.danger }}
-                    >
-                      {a.change24h >= 0 ? '+' : ''}{a.change24h.toFixed(2)}%
-                    </div>
-                    <div className="col-span-1 text-right font-mono hidden md:block" style={{ color: BRAND.textSub }}>
-                      {a.allocation.toFixed(1)}%
-                    </div>
-                    <div className="col-span-3 flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openDrawer('deposit', a)}
-                        className="h-7 px-2.5 rounded-md text-[11px] font-bold flex items-center gap-0.5 transition-all active:scale-95"
-                        style={{ backgroundColor: BRAND.primaryLt, color: BRAND.primary, border: `1px solid ${BRAND.primary}33` }}
-                      >
-                        <ArrowDownLeft className="w-3 h-3" />充
-                      </button>
-                      <button
-                        onClick={() => openDrawer('withdraw', a)}
-                        className="h-7 px-2.5 rounded-md text-[11px] font-bold flex items-center gap-0.5 transition-all active:scale-95"
-                        style={{ backgroundColor: 'transparent', color: BRAND.text, border: `1px solid ${BRAND.border}` }}
-                      >
-                        <ArrowUpRight className="w-3 h-3" />提
-                      </button>
-                      <button
-                        onClick={() => openDrawer('asset', a)}
-                        className="w-7 h-7 rounded-md flex items-center justify-center"
-                        style={{ backgroundColor: 'transparent', color: BRAND.textMute, border: `1px solid ${BRAND.border}` }}
-                        aria-label="详情"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-        <div className="text-[10px] mt-2 flex items-center gap-1.5" style={{ color: BRAND.textMute }}>
-          <Info className="w-3 h-3" />
-          共 {filtered.length} 个资产 · 按 <kbd className="font-mono" style={{ backgroundColor: BRAND.bgAlt, padding: '0 4px', borderRadius: 2, border: `1px solid ${BRAND.border}` }}>/</kbd> 聚焦搜索 · <kbd className="font-mono" style={{ backgroundColor: BRAND.bgAlt, padding: '0 4px', borderRadius: 2, border: `1px solid ${BRAND.border}` }}>Esc</kbd> 关闭
-        </div>
-      </section>
-
-      {/* ===== 5. 资金流水 ===== */}
-      <section className="max-w-7xl mx-auto px-6 py-6">
-        <div className="flex items-end justify-between mb-4">
-          <div>
-            <div className="text-[10px] font-bold tracking-widest uppercase mb-1" style={{ color: BRAND.textMute }}>
-              RECENT FLOWS
-            </div>
-            <h2 className="text-xl font-extrabold" style={{ color: BRAND.text }}>最近资金流水</h2>
-          </div>
-          <a href="#" className="text-xs font-bold inline-flex items-center gap-1" style={{ color: BRAND.primary }}>
-            查看全部 <ChevronRight className="w-3 h-3" />
-          </a>
-        </div>
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}
-        >
-          <div
-            className="grid grid-cols-12 gap-2 px-3 py-2.5 text-[10px] font-bold uppercase tracking-widest"
-            style={{ backgroundColor: BRAND.bgAlt, color: BRAND.textMute, borderBottom: `1px solid ${BRAND.border}` }}
-          >
-            <div className="col-span-1">类型</div>
-            <div className="col-span-3">操作 / 网络</div>
-            <div className="col-span-3 text-right">数量</div>
-            <div className="col-span-2 text-right">状态</div>
-            <div className="col-span-3 text-right">时间</div>
-          </div>
-          <div>
-            {FLOWS.map((f) => (
-              <FlowRow key={f.id} flow={f} />
             ))}
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ===== 6. 安全提示条 ===== */}
-      <section
-        className="py-6"
-        style={{ backgroundColor: BRAND.card, borderTop: `1px solid ${BRAND.border}` }}
-      >
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-start md:items-center gap-4">
-          <div className="flex items-start gap-3 flex-1">
-            <div
-              className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
-              style={{ backgroundColor: 'rgba(255, 169, 64, 0.12)', color: BRAND.warning }}
-            >
-              <Shield className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="text-sm font-bold mb-0.5" style={{ color: BRAND.text }}>
-                资产数据为 mock 占位
-              </div>
-              <div className="text-xs" style={{ color: BRAND.textMute }}>
-                本页所有余额、价格、流水均为 mock 占位示例，仅用于界面演示。实际资产以链上余额与撮合系统结算为准。
-                请妥善保管私钥、开启 2FA、设置地址白名单，警惕钓鱼网站和社工攻击。
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== 7. Drawer：充值/提现/资产详情 ===== */}
-      {drawerMode && (
-        <div
-          className="fixed inset-0 z-50 flex justify-end"
-          style={{ backgroundColor: BRAND.overlay }}
-          onClick={() => setDrawerMode(null)}
-        >
-          <div
-            className="w-full max-w-md h-full overflow-y-auto"
-            style={{ backgroundColor: BRAND.cardElevated, borderLeft: `1px solid ${BRAND.border}` }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className="sticky top-0 flex items-center justify-between px-5 py-4"
-              style={{ backgroundColor: BRAND.cardElevated, borderBottom: `1px solid ${BRAND.border}` }}
-            >
-              <h3 className="text-sm font-bold" style={{ color: BRAND.text }}>
-                {drawerMode === 'deposit' ? '充值' : drawerMode === 'withdraw' ? '提现' : '资产详情'} {activeAsset ? `· ${activeAsset.symbol}` : ''}
-              </h3>
-              <button
-                onClick={() => setDrawerMode(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center"
-                style={{ backgroundColor: BRAND.bgAlt, color: BRAND.textMute }}
-                aria-label="关闭"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              {drawerMode === 'deposit' && (
-                <>
-                  <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: BRAND.textMute }}>
-                    选择网络
-                  </div>
+      {/* Content */}
+      <div className="px-6 pb-12">
+        <div className="max-w-7xl mx-auto">
+          {tab === 'overview' && (
+            <div className="space-y-6 pw-stagger">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <h3 className="text-base font-semibold mb-3" style={{ color: BRAND.text }}>资产配置</h3>
                   <div className="space-y-2">
-                    {NETWORKS.map((n) => (
-                      <NetworkRow
-                        key={n.key}
-                        net={n}
-                        selected={selectedNet === n.key}
-                        onClick={() => setSelectedNet(n.key)}
-                      />
+                    {[
+                      { l: 'BTC', v: 32.4, c: '#F7931A' },
+                      { l: 'SOL', v: 25.6, c: '#14F195' },
+                      { l: 'ETH', v: 18.4, c: '#627EEA' },
+                      { l: 'ZSD', v: 14.2, c: BRAND.primary },
+                      { l: '稳定币', v: 7.9, c: '#26A17B' },
+                      { l: '其他', v: 1.5, c: BRAND.textMuted },
+                    ].map((it) => (
+                      <div key={it.l} className="flex items-center gap-2">
+                        <span className="text-sm w-16" style={{ color: BRAND.text }}>{it.l}</span>
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: BRAND.bg }}>
+                          <div className="h-full pw-bar" style={{ width: `${(it.v / 40) * 100}%`, backgroundColor: it.c }} />
+                        </div>
+                        <span className="text-xs w-12 text-right" style={{ color: it.c }}>{it.v.toFixed(1)}%</span>
+                      </div>
                     ))}
                   </div>
-                  <div
-                    className="rounded-xl p-4 text-center"
-                    style={{ backgroundColor: BRAND.bg, border: `1px dashed ${BRAND.border}` }}
-                  >
-                    <div className="w-32 h-32 mx-auto mb-3 rounded-lg flex items-center justify-center" style={{ backgroundColor: '#fff' }}>
-                      <div className="text-3xl font-extrabold" style={{ color: BRAND.bg }}>QR</div>
-                    </div>
-                    <div className="text-[10px] font-mono break-all" style={{ color: BRAND.textMute }}>
-                      cfx:aanv7g1m9b8s6f5d4g3h2j1k0l9m8n7b6v5c4x3z
-                    </div>
-                    <button
-                      className="mt-3 inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-bold"
-                      style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}
-                    >
-                      <Copy className="w-3 h-3" />
-                      复制地址
-                    </button>
+                </div>
+                <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <h3 className="text-base font-semibold mb-3" style={{ color: BRAND.text }}>链上分布</h3>
+                  <div className="space-y-2">
+                    {[
+                      { l: 'Ethereum', v: 28.4, c: '#627EEA' },
+                      { l: 'Solana', v: 25.6, c: '#14F195' },
+                      { l: 'Bitcoin', v: 22.4, c: '#F7931A' },
+                      { l: 'BSC', v: 11.2, c: '#F3BA2F' },
+                      { l: 'Polygon', v: 4.8, c: '#8247E5' },
+                      { l: '其他', v: 7.6, c: BRAND.textMuted },
+                    ].map((it) => (
+                      <div key={it.l} className="flex items-center gap-2">
+                        <span className="text-sm w-20" style={{ color: BRAND.text }}>{it.l}</span>
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: BRAND.bg }}>
+                          <div className="h-full pw-bar" style={{ width: `${(it.v / 30) * 100}%`, backgroundColor: it.c }} />
+                        </div>
+                        <span className="text-xs w-10 text-right" style={{ color: it.c }}>{it.v.toFixed(1)}%</span>
+                      </div>
+                    ))}
                   </div>
-                  <div
-                    className="rounded-xl p-3 flex items-start gap-2"
-                    style={{ backgroundColor: 'rgba(255, 169, 64, 0.08)', border: `1px solid ${BRAND.warning}33` }}
-                  >
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: BRAND.warning }} />
-                    <div className="text-[11px] leading-relaxed" style={{ color: BRAND.textSub }}>
-                      请仅向该地址转入同网络资产。跨链或错误网络转入将不可恢复。最小充值金额 0.0001 BTC，到账需 2 个区块确认。
-                    </div>
+                </div>
+                <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <h3 className="text-base font-semibold mb-3" style={{ color: BRAND.text }}>钱包分布</h3>
+                  <div className="space-y-2">
+                    {[
+                      { l: '现货', v: kpi.spotValue, c: BRAND.primary },
+                      { l: '合约', v: kpi.perpValue, c: '#FFB400' },
+                      { l: 'DeFi', v: kpi.defiValue, c: '#627EEA' },
+                      { l: 'NFT', v: kpi.nftValue, c: '#FF5050' },
+                      { l: '跨链', v: kpi.bridgeValue, c: '#14F195' },
+                    ].map((it) => (
+                      <div key={it.l} className="flex items-center gap-2">
+                        <span className="text-sm w-12" style={{ color: BRAND.text }}>{it.l}</span>
+                        <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: BRAND.bg }}>
+                          <div className="h-full pw-bar" style={{ width: `${(it.v / kpi.totalValue) * 100 * 2}%`, backgroundColor: it.c }} />
+                        </div>
+                        <span className="text-xs w-14 text-right" style={{ color: it.c }}>{formatCurrency(it.v)}</span>
+                      </div>
+                    ))}
                   </div>
-                </>
-              )}
+                </div>
+              </div>
 
-              {drawerMode === 'withdraw' && (
-                <>
-                  <div
-                    className="rounded-xl p-3 flex items-start gap-2"
-                    style={{ backgroundColor: 'rgba(255, 169, 64, 0.08)', border: `1px solid ${BRAND.warning}33` }}
-                  >
-                    <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: BRAND.warning }} />
-                    <div className="text-[11px] leading-relaxed" style={{ color: BRAND.textSub }}>
-                      提现需开启 2FA 与邮箱验证。大额提现可能需要人工审核，预计 1-4 小时内到账。
+              <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>大额资产</h3>
+                  <button onClick={() => setTab('spot')} className="text-xs flex items-center gap-1" style={{ color: BRAND.primary }}>查看全部 <ChevronRight size={14} /></button>
+                </div>
+                <div className="space-y-2">
+                  {ASSETS.slice(0, 5).map((a) => (
+                    <div key={a.id} className="flex items-center justify-between p-3 rounded-lg pw-row" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }} onClick={() => openDrawer('asset', a.id)}>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{a.icon}</span>
+                        <div>
+                          <div className="text-sm font-medium" style={{ color: BRAND.text }}>{a.symbol}</div>
+                          <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{a.name} · {CHAIN_LABELS[a.chain]}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium" style={{ color: BRAND.text }}>{hideBalance ? '****' : formatCurrency(a.value)}</div>
+                        <div className="text-[10px]" style={{ color: changeColor(a.change24h) }}>{a.change24h >= 0 ? '+' : ''}{a.change24h.toFixed(2)}%</div>
+                      </div>
                     </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <h3 className="text-base font-semibold mb-3" style={{ color: BRAND.text }}>活跃仓位</h3>
+                  <div className="space-y-2">
+                    {POSITIONS.slice(0, 3).map((p) => (
+                      <div key={p.id} className="p-3 rounded-lg pw-row" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }} onClick={() => openDrawer('position', p.id)}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium" style={{ color: BRAND.text }}>{p.symbol}</span>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: p.type === 'long' ? 'rgba(20,184,129,0.10)' : 'rgba(255,80,80,0.10)', color: p.type === 'long' ? BRAND.primary : '#FF5050', border: `1px solid ${p.type === 'long' ? BRAND.primary : '#FF5050'}40` }}>{p.type === 'long' ? '多' : '空'}</span>
+                            <span className="text-[10px]" style={{ color: BRAND.textMuted }}>{p.leverage}x</span>
+                          </div>
+                          <span className="text-sm font-medium" style={{ color: changeColor(p.pnl) }}>{p.pnl >= 0 ? '+' : ''}{formatCurrency(p.pnl)} ({p.pnlPct.toFixed(2)}%)</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-[10px]">
+                          <div><span style={{ color: BRAND.textMuted }}>开仓</span> <span style={{ color: BRAND.text }}>${p.entryPrice.toLocaleString()}</span></div>
+                          <div><span style={{ color: BRAND.textMuted }}>现价</span> <span style={{ color: BRAND.text }}>${p.markPrice.toLocaleString()}</span></div>
+                          <div><span style={{ color: BRAND.textMuted }}>强平</span> <span style={{ color: '#FF5050' }}>${p.liquidationPrice.toLocaleString()}</span></div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest mb-1.5 block" style={{ color: BRAND.textMute }}>
-                      提现地址
-                    </label>
-                    <input
-                      placeholder="输入或选择已保存地址"
-                      className="w-full h-10 px-3 rounded-lg text-xs outline-none"
-                      style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}
-                    />
+                </div>
+                <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <h3 className="text-base font-semibold mb-3" style={{ color: BRAND.text }}>最近活动</h3>
+                  <div className="space-y-2">
+                    {TRANSACTIONS.slice(0, 5).map((t) => {
+                      const sb = statusBadge(t.status);
+                      return (
+                        <div key={t.id} className="flex items-center justify-between p-2 rounded" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}>
+                          <div>
+                            <div className="text-sm" style={{ color: BRAND.text }}>{TX_TYPE_LABELS[t.type]} {t.asset}</div>
+                            <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{t.time}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-sm font-medium" style={{ color: BRAND.text }}>{t.amount > 0 ? '+' : ''}{t.amount} {t.asset}</div>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: sb.bg, color: sb.fg, border: `1px solid ${sb.fg}40` }}>{sb.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-widest mb-1.5 block" style={{ color: BRAND.textMute }}>
-                      提现数量
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        placeholder="0.00"
-                        className="flex-1 h-10 px-3 rounded-lg text-xs outline-none"
-                        style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}
-                      />
-                      <button
-                        className="h-10 px-3 rounded-lg text-xs font-bold"
-                        style={{ backgroundColor: BRAND.card, color: BRAND.primary, border: `1px solid ${BRAND.primary}33` }}
-                      >
-                        全部
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    className="rounded-xl p-3 text-xs"
-                    style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}
-                  >
-                    <div className="flex justify-between mb-1" style={{ color: BRAND.textSub }}>
-                      <span>网络费</span>
-                      <span className="font-mono">~$3.5</span>
-                    </div>
-                    <div className="flex justify-between mb-1" style={{ color: BRAND.textSub }}>
-                      <span>预计到账</span>
-                      <span className="font-mono">~5-15 分钟</span>
-                    </div>
-                    <div className="flex justify-between" style={{ color: BRAND.textSub }}>
-                      <span>每日限额</span>
-                      <span className="font-mono">10 BTC</span>
-                    </div>
-                  </div>
-                  <button
-                    className="w-full h-11 rounded-xl text-sm font-bold transition-all active:scale-95"
-                    style={{ backgroundColor: BRAND.primaryContainer, color: BRAND.onPrimary }}
-                  >
-                    提交提现
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'spot' && (
+            <div className="space-y-4">
+              <div className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <select value={assetChainFilter} onChange={(e) => setAssetChainFilter(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    <option value="all">全部链</option>
+                    {(Object.keys(CHAIN_LABELS) as ChainNetwork[]).map((c) => <option key={c} value={c}>{CHAIN_LABELS[c]}</option>)}
+                  </select>
+                  <select value={assetTypeFilter} onChange={(e) => setAssetTypeFilter(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    <option value="all">全部类型</option>
+                    <option value="crypto">加密货币</option><option value="stable">稳定币</option>
+                    <option value="wrapped">包装资产</option><option value="lp">LP 凭证</option>
+                  </select>
+                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    <option value="value">排序：价值</option>
+                    <option value="balance">排序：余额</option>
+                    <option value="change">排序：变化</option>
+                    <option value="allocation">排序：占比</option>
+                  </select>
+                  <button onClick={() => setSortDir(sortDir === 'asc' ? 'desc' : 'asc')} className="px-2 py-1.5 rounded text-xs flex items-center justify-center gap-1" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    {sortDir === 'asc' ? <ChevronUp size={12} /> : <ChevronDown size={12} />} {sortDir === 'asc' ? '升序' : '降序'}
                   </button>
-                </>
-              )}
+                </div>
+              </div>
 
-              {drawerMode === 'asset' && activeAsset && (
-                <>
-                  <div
-                    className="rounded-2xl p-4"
-                    style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}
-                  >
-                    <div className="flex items-center gap-3 mb-3">
-                      <div
-                        className="w-10 h-10 rounded-full flex items-center justify-center font-extrabold"
-                        style={{ backgroundColor: BRAND.primaryLt, color: BRAND.primary }}
-                      >
-                        {activeAsset.symbol.slice(0, 1)}
-                      </div>
-                      <div>
-                        <div className="text-base font-extrabold" style={{ color: BRAND.text }}>{activeAsset.name}</div>
-                        <div className="text-[10px]" style={{ color: BRAND.textMute }}>{activeAsset.symbol} · {activeAsset.category}</div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                      <div>
-                        <div className="text-[10px] mb-0.5" style={{ color: BRAND.textMute }}>总余额</div>
-                        <div className="font-mono font-bold" style={{ color: BRAND.text }}>
-                          {hideBalance ? '••••' : activeAsset.balance.toFixed(4)} {activeAsset.symbol}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] mb-0.5" style={{ color: BRAND.textMute }}>可用</div>
-                        <div className="font-mono font-bold" style={{ color: BRAND.text }}>
-                          {hideBalance ? '••••' : activeAsset.available.toFixed(4)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] mb-0.5" style={{ color: BRAND.textMute }}>冻结</div>
-                        <div className="font-mono font-bold" style={{ color: BRAND.warning }}>
-                          {hideBalance ? '••••' : activeAsset.frozen.toFixed(4)}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="text-[10px] mb-0.5" style={{ color: BRAND.textMute }}>估值</div>
-                        <div className="font-mono font-bold" style={{ color: BRAND.text }}>
-                          {fmtUsdt(activeAsset.balance * activeAsset.priceUsdt)} USDT
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: BRAND.textMute }}>
-                      支持网络
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {activeAsset.networks.map((n) => (
-                        <span
-                          key={n}
-                          className="text-[10px] font-bold px-2 py-1 rounded"
-                          style={{ backgroundColor: BRAND.card, color: BRAND.textSub, border: `1px solid ${BRAND.border}` }}
-                        >
-                          {n}
-                        </span>
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+                        <th className="text-left px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>资产</th>
+                        <th className="text-right px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>余额</th>
+                        <th className="text-right px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>价格</th>
+                        <th className="text-right px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>价值</th>
+                        <th className="text-right px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>24h</th>
+                        <th className="text-right px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>占比</th>
+                        <th className="text-center px-3 py-2 text-xs" style={{ color: BRAND.textMuted }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAssets.map((a) => (
+                        <tr key={a.id} className="pw-row" style={{ borderBottom: `1px solid ${BRAND.border}` }} onClick={() => openDrawer('asset', a.id)}>
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{a.icon}</span>
+                              <div>
+                                <div className="text-sm font-medium" style={{ color: BRAND.text }}>{a.symbol}</div>
+                                <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{CHAIN_LABELS[a.chain]}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-3 py-2 text-right text-xs font-mono" style={{ color: BRAND.text }}>{hideBalance ? '****' : formatBalance(a.balance, a.decimals)}</td>
+                          <td className="px-3 py-2 text-right text-xs" style={{ color: BRAND.text }}>${a.price.toLocaleString()}</td>
+                          <td className="px-3 py-2 text-right text-xs font-medium" style={{ color: BRAND.text }}>{hideBalance ? '****' : formatCurrency(a.value)}</td>
+                          <td className="px-3 py-2 text-right text-xs" style={{ color: changeColor(a.change24h) }}>{a.change24h >= 0 ? '+' : ''}{a.change24h.toFixed(2)}%</td>
+                          <td className="px-3 py-2 text-right text-xs" style={{ color: BRAND.textMuted }}>{a.allocation.toFixed(1)}%</td>
+                          <td className="px-3 py-2 text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <button onClick={(e) => { e.stopPropagation(); setDepositAsset(a.symbol); openDrawer('deposit', a.id); }} className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: BRAND.primary, color: '#000' }}>充</button>
+                              <button onClick={(e) => { e.stopPropagation(); openDrawer('withdraw', a.id); }} className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>提</button>
+                            </div>
+                          </td>
+                        </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'perp' && (
+            <div className="space-y-4">
+              <div className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <select value={positionSideFilter} onChange={(e) => setPositionSideFilter(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                  <option value="all">全部方向</option><option value="long">做多</option><option value="short">做空</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                {filteredPositions.map((p) => (
+                  <div key={p.id} className="rounded-xl p-4 pw-row" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }} onClick={() => openDrawer('position', p.id)}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold" style={{ color: BRAND.text }}>{p.symbol}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: p.type === 'long' ? 'rgba(20,184,129,0.10)' : 'rgba(255,80,80,0.10)', color: p.type === 'long' ? BRAND.primary : '#FF5050', border: `1px solid ${p.type === 'long' ? BRAND.primary : '#FF5050'}40` }}>{p.type === 'long' ? '多' : '空'} {p.leverage}x</span>
+                        <span className="text-[10px]" style={{ color: BRAND.textMuted }}>{CHAIN_LABELS[p.chain]}</span>
+                      </div>
+                      <span className="text-base font-semibold" style={{ color: changeColor(p.pnl) }}>{p.pnl >= 0 ? '+' : ''}{formatCurrency(p.pnl)} ({p.pnlPct >= 0 ? '+' : ''}{p.pnlPct.toFixed(2)}%)</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-[11px]">
+                      <div><span style={{ color: BRAND.textMuted }}>数量</span> <span style={{ color: BRAND.text }}>{p.size}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>开仓价</span> <span style={{ color: BRAND.text }}>${p.entryPrice.toLocaleString()}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>现价</span> <span style={{ color: BRAND.text }}>${p.markPrice.toLocaleString()}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>保证金</span> <span style={{ color: BRAND.text }}>${p.margin.toLocaleString()}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>强平价</span> <span style={{ color: '#FF5050' }}>${p.liquidationPrice.toLocaleString()}</span></div>
+                    </div>
+                    <div className="text-[10px] mt-1" style={{ color: BRAND.textMuted }}>开仓 {p.openedAt} · 资金费率 {p.funding >= 0 ? '+' : ''}{p.funding.toFixed(3)}%</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {tab === 'defi' && (
+            <div className="space-y-2">
+              {LP_POSITIONS.map((lp) => (
+                <div key={lp.id} className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{lp.pool}</div>
+                      <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{lp.protocol} · {CHAIN_LABELS[lp.chain]} · {lp.age} 天</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-base font-semibold" style={{ color: BRAND.text }}>{formatCurrency(lp.value)}</div>
+                      <div className="text-[10px]" style={{ color: BRAND.primary }}>APR {lp.apr.toFixed(1)}%</div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 pt-2">
-                    <button
-                      onClick={() => setDrawerMode('deposit')}
-                      className="h-11 rounded-xl text-sm font-bold transition-all active:scale-95"
-                      style={{ backgroundColor: BRAND.primaryContainer, color: BRAND.onPrimary }}
-                    >
-                      充值
-                    </button>
-                    <button
-                      onClick={() => setDrawerMode('withdraw')}
-                      className="h-11 rounded-xl text-sm font-bold transition-all active:scale-95"
-                      style={{ backgroundColor: 'transparent', border: `1px solid ${BRAND.border}`, color: BRAND.text }}
-                    >
-                      提现
-                    </button>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                    <div><span style={{ color: BRAND.textMuted }}>24h 手续费</span> <span style={{ color: BRAND.text }}>${lp.fees24h}</span></div>
+                    <div><span style={{ color: BRAND.textMuted }}>奖励</span> <span style={{ color: BRAND.primary }}>{lp.rewards.map(r => `${r.amount} ${r.symbol}`).join(', ')}</span></div>
+                    <div><span style={{ color: BRAND.textMuted }}>无常损失</span> <span style={{ color: lp.impermanentLoss < 0 ? '#FF5050' : BRAND.primary }}>{lp.impermanentLoss.toFixed(2)}%</span></div>
+                    <div><span style={{ color: BRAND.textMuted }}>类型</span> <span style={{ color: BRAND.text }}>{lp.status === 'concentrated' ? '集中' : lp.status === 'stable' ? '稳定' : '活跃'}</span></div>
                   </div>
-                </>
-              )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'nft' && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {NFT_HOLDINGS.map((n) => (
+                <div key={n.id} className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-3xl">{n.image}</span>
+                    <div className="flex-1">
+                      <div className="text-sm font-medium" style={{ color: BRAND.text }}>{n.name}</div>
+                      <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{n.collection} · {CHAIN_LABELS[n.chain]}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div><span style={{ color: BRAND.textMuted }}>估值</span> <span style={{ color: BRAND.text }}>{formatCurrency(n.estimatedValue)}</span></div>
+                    <div><span style={{ color: BRAND.textMuted }}>最近成交</span> <span style={{ color: BRAND.text }}>{formatCurrency(n.lastSale)}</span></div>
+                    <div><span style={{ color: BRAND.textMuted }}>稀有度</span> <span style={{ color: BRAND.primary }}>{n.rarity}</span></div>
+                    <div><span style={{ color: BRAND.textMuted }}>抵押</span> <span style={{ color: n.usedAsCollateral ? BRAND.primary : BRAND.textMuted }}>{n.usedAsCollateral ? '是' : '否'}</span></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'bridge' && (
+            <div className="space-y-2">
+              {BRIDGE_HOLDINGS.map((b) => (
+                <div key={b.id} className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base font-semibold" style={{ color: BRAND.text }}>{b.asset}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: CHAIN_COLORS[b.originalChain] + '20', color: CHAIN_COLORS[b.originalChain], border: `1px solid ${CHAIN_COLORS[b.originalChain]}40` }}>{CHAIN_LABELS[b.originalChain]}</span>
+                      <ArrowRight size={12} style={{ color: BRAND.textMuted }} />
+                      <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: CHAIN_COLORS[b.chain] + '20', color: CHAIN_COLORS[b.chain], border: `1px solid ${CHAIN_COLORS[b.chain]}40` }}>{CHAIN_LABELS[b.chain]}</span>
+                      {b.isCanonical && <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(20,184,129,0.10)', color: BRAND.primary, border: `1px solid ${BRAND.primary}40` }}>原生</span>}
+                    </div>
+                    <div className="text-right">
+                      <div className="text-base font-semibold" style={{ color: BRAND.text }}>{formatCurrency(b.value)}</div>
+                      <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{b.balance} {b.asset}</div>
+                    </div>
+                  </div>
+                  <div className="text-[10px]" style={{ color: BRAND.textMuted }}>via {b.bridge} · 桥接于 {b.bridgedAt}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'hardware' && (
+            <div className="space-y-2">
+              {HARDWARE_DEVICES.map((hw) => {
+                const statusLabels = { active: '活跃', idle: '空闲', disconnected: '已断开', locked: '已锁定' };
+                const statusColors = { active: BRAND.primary, idle: '#FFB400', disconnected: BRAND.textMuted, locked: '#FF5050' };
+                return (
+                  <div key={hw.id} className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck size={18} style={{ color: BRAND.primary }} />
+                        <div>
+                          <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{hw.brand} {hw.model}</div>
+                          <div className="text-[10px]" style={{ color: BRAND.textMuted }}>固件 {hw.firmware} · 配对于 {hw.pairedAt}</div>
+                        </div>
+                      </div>
+                      <span className="text-[10px] px-2 py-0.5 rounded" style={{ backgroundColor: statusColors[hw.status] + '20', color: statusColors[hw.status], border: `1px solid ${statusColors[hw.status]}40` }}>{statusLabels[hw.status]}</span>
+                    </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+                      <div><span style={{ color: BRAND.textMuted }}>地址数</span> <span style={{ color: BRAND.text }}>{hw.addressCount}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>支持链</span> <span style={{ color: BRAND.text }}>{hw.chains.length}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>助记词</span> <span style={{ color: hw.backupVerified ? BRAND.primary : '#FFB400' }}>{hw.backupVerified ? '已验证' : '未验证'}</span></div>
+                      <div><span style={{ color: BRAND.textMuted }}>Passphrase</span> <span style={{ color: hw.passphrase ? BRAND.primary : BRAND.textMuted }}>{hw.passphrase ? '已开启' : '未开启'}</span></div>
+                    </div>
+                    <div className="text-[10px] mt-1" style={{ color: BRAND.textMuted }}>最后同步：{hw.lastSync}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {tab === 'history' && (
+            <div className="space-y-4">
+              <div className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <select value={txTypeFilter} onChange={(e) => setTxTypeFilter(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    <option value="all">全部类型</option>
+                    {(Object.keys(TX_TYPE_LABELS) as TxType[]).map((t) => <option key={t} value={t}>{TX_TYPE_LABELS[t]}</option>)}
+                  </select>
+                  <select value={txChainFilter} onChange={(e) => setTxChainFilter(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    <option value="all">全部链</option>
+                    {(Object.keys(CHAIN_LABELS) as ChainNetwork[]).map((c) => <option key={c} value={c}>{CHAIN_LABELS[c]}</option>)}
+                  </select>
+                  <select value={txStatusFilter} onChange={(e) => setTxStatusFilter(e.target.value as any)} className="px-2 py-1.5 rounded text-xs" style={{ backgroundColor: BRAND.bg, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                    <option value="all">全部状态</option>
+                    {(Object.keys(TX_STATUS_LABELS) as TxStatus[]).map((s) => <option key={s} value={s}>{TX_STATUS_LABELS[s]}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {filteredTx.map((t) => {
+                  const sb = statusBadge(t.status);
+                  return (
+                    <div key={t.id} className="rounded-xl p-4" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium" style={{ color: BRAND.text }}>{TX_TYPE_LABELS[t.type]} {t.asset}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: sb.bg, color: sb.fg, border: `1px solid ${sb.fg}40` }}>{sb.label}</span>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: BRAND.bg, color: CHAIN_COLORS[t.chain], border: `1px solid ${CHAIN_COLORS[t.chain]}40` }}>{CHAIN_LABELS[t.chain]}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{t.amount > 0 ? '+' : ''}{t.amount} {t.asset}</div>
+                          <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{formatCurrency(t.value)}</div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[10px]">
+                        <div><span style={{ color: BRAND.textMuted }}>时间</span> <span style={{ color: BRAND.text }}>{t.time}</span></div>
+                        <div><span style={{ color: BRAND.textMuted }}>手续费</span> <span style={{ color: BRAND.text }}>${t.fee.toFixed(2)}</span></div>
+                        <div><span style={{ color: BRAND.textMuted }}>区块</span> <span style={{ color: BRAND.text }}>#{t.block.toLocaleString()}</span></div>
+                        <div className="truncate"><span style={{ color: BRAND.textMuted }}>Hash</span> <span style={{ color: BRAND.text }} className="font-mono">{shortenAddress(t.txHash, 8, 6)}</span></div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {tab === 'help' && (
+            <div className="rounded-xl p-5" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+              <h3 className="text-base font-semibold mb-3" style={{ color: BRAND.text }}>钱包服务说明</h3>
+              <div className="space-y-3 text-sm" style={{ color: BRAND.textMuted }}>
+                <div>
+                  <div className="text-sm font-medium mb-1" style={{ color: BRAND.text }}>钱包类型</div>
+                  <p>· 现货钱包：存放 BTC/ETH 等主流币 · 合约钱包：永续/期货仓位 · DeFi 钱包：流动性/质押/借贷 · NFT 钱包：数字藏品 · 跨链钱包：多链资产</p>
+                </div>
+                <div>
+                  <div className="text-sm font-medium mb-1" style={{ color: BRAND.text }}>安全建议</div>
+                  <p>· 启用 2FA 二次验证 · 大额资产使用硬件钱包 · 助记词离线备份 · 定期更换密码 · 警惕钓鱼网站</p>
+                </div>
+                <div>
+                  <div className="text-sm font-medium mb-1" style={{ color: BRAND.text }}>充值 / 提现</div>
+                  <p>· 充值：从外部钱包向本平台钱包地址转账 · 提现：从本平台提现到外部地址 · 跨链：使用跨链桥在不同链之间转移资产</p>
+                </div>
+                <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(20,184,129,0.08)', border: `1px solid ${BRAND.primary}40` }}>
+                  <div className="text-sm font-medium mb-1" style={{ color: BRAND.primary }}>合规说明</div>
+                  <p className="text-[11px]">本平台钱包服务中心为"数字资产钱包与用户资产管理研究方向"演示页面，所有钱包 / 余额 / 交易 / 充值 / 提现数据均为 mock 占位。本平台不构成对任何资产收益的合规承诺。严格规避"承诺收益 / 保本 / 刚兑 / 稳赚 / 担保"等高风险表述。具体钱包使用请遵守所在司法管辖区的合规要求。</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Drawers */}
+      {drawer.open && drawer.type === 'deposit' && (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={closeDrawer}>
+          <div className="w-full max-w-md h-full overflow-y-auto pw-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+              <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>充值 {depositAsset}</h3>
+              <button onClick={closeDrawer} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>选择资产</label>
+                <select value={depositAsset} onChange={(e) => setDepositAsset(e.target.value)} className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                  {ASSETS.map((a) => <option key={a.id} value={a.symbol}>{a.symbol} - {a.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>数量 (可选，仅作提示)</label>
+                <input value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} placeholder="例：1000" className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }} />
+              </div>
+              <div className="p-4 rounded-lg text-center" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <QrCode size={120} style={{ color: BRAND.text, margin: '0 auto' }} />
+                <div className="text-[10px] mt-2 font-mono" style={{ color: BRAND.textMuted }}>0xYourWallet{drawer.payload ? drawer.payload.slice(-6) : '...'}abcd</div>
+                <div className="text-[10px] mt-1" style={{ color: BRAND.textMuted }}>{CHAIN_LABELS[ASSETS.find(a => a.id === drawer.payload)?.chain || 'eth']}</div>
+              </div>
+              <button onClick={submitDeposit} className="w-full py-2.5 rounded-lg text-sm font-medium" style={{ backgroundColor: BRAND.primary, color: '#000' }}>确认充值</button>
+              <div className="text-[10px] text-center" style={{ color: BRAND.textMuted }}>· 请从您的外部钱包向此地址转账；最小充值 0.001 ETH 等值；到账需 12-32 个区块确认</div>
             </div>
           </div>
         </div>
       )}
+
+      {drawer.open && drawer.type === 'withdraw' && (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={closeDrawer}>
+          <div className="w-full max-w-md h-full overflow-y-auto pw-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+              <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>提现</h3>
+              <button onClick={closeDrawer} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>选择资产</label>
+                <select value={depositAsset} onChange={(e) => setDepositAsset(e.target.value)} className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                  {ASSETS.map((a) => <option key={a.id} value={a.symbol}>{a.symbol} - {a.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>提现数量</label>
+                <input value={withdrawAmount} onChange={(e) => setWithdrawAmount(e.target.value)} placeholder="例：0.5" className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }} />
+              </div>
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>提现地址</label>
+                <input value={withdrawAddress} onChange={(e) => setWithdrawAddress(e.target.value)} placeholder="0x..." className="w-full px-3 py-2 rounded text-sm outline-none mt-1 font-mono" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }} />
+              </div>
+              <div className="p-3 rounded-lg text-[10px]" style={{ backgroundColor: 'rgba(255,180,0,0.10)', border: `1px solid #FFB40040` }}>
+                <div className="font-medium mb-1" style={{ color: '#FFB400' }}>安全提示</div>
+                <div style={{ color: BRAND.textMuted }}>· 请确认地址正确性，提现到错误地址将无法找回 · 大额提现需 2FA 验证 · 手续费 0.0005 ETH 等值</div>
+              </div>
+              <button onClick={submitWithdraw} className="w-full py-2.5 rounded-lg text-sm font-medium" style={{ backgroundColor: BRAND.primary, color: '#000' }}>提交提现</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {drawer.open && drawer.type === 'transfer' && (
+        <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={closeDrawer}>
+          <div className="w-full max-w-md h-full overflow-y-auto pw-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+              <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>站内转账</h3>
+              <button onClick={closeDrawer} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>选择资产</label>
+                <select value={transferAsset} onChange={(e) => setTransferAsset(e.target.value)} className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                  {ASSETS.map((a) => <option key={a.id} value={a.symbol}>{a.symbol}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>转账数量</label>
+                <input value={transferAmount} onChange={(e) => setTransferAmount(e.target.value)} placeholder="例：100" className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }} />
+              </div>
+              <div>
+                <label className="text-xs" style={{ color: BRAND.textMuted }}>接收地址（站内 UID 或邮箱）</label>
+                <input value={transferTo} onChange={(e) => setTransferTo(e.target.value)} placeholder="user@example.com" className="w-full px-3 py-2 rounded text-sm outline-none mt-1" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }} />
+              </div>
+              <div className="p-3 rounded-lg text-[10px]" style={{ backgroundColor: 'rgba(20,184,129,0.08)', border: `1px solid ${BRAND.primary}40` }}>
+                <div className="font-medium" style={{ color: BRAND.primary }}>· 站内转账免手续费 · 实时到账</div>
+              </div>
+              <button onClick={submitTransfer} className="w-full py-2.5 rounded-lg text-sm font-medium" style={{ backgroundColor: BRAND.primary, color: '#000' }}>提交转账</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {helpOpen && <HelpDrawer onClose={() => setHelpOpen(false)} />}
     </div>
   );
 }
 
-export default PortalWallet;
+function HelpDrawer({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={onClose}>
+      <div className="w-full max-w-md h-full overflow-y-auto pw-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+        <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+          <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>快捷键与帮助</h3>
+          <button onClick={onClose} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+        </div>
+        <div className="p-5 space-y-2">
+          {[
+            { k: '/', d: '聚焦搜索框' },
+            { k: 'Esc', d: '关闭 Drawer / 弹窗' },
+            { k: '?', d: '打开/关闭本页帮助' },
+            { k: '1-9', d: '切换 Tab' },
+          ].map((it) => (
+            <div key={it.k} className="flex items-center gap-3 p-2.5 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+              <span className="px-2 py-0.5 rounded text-xs font-mono" style={{ backgroundColor: BRAND.bg, color: BRAND.primary, border: `1px solid ${BRAND.primary}40`, minWidth: 60, textAlign: 'center' }}>{it.k}</span>
+              <span className="text-sm" style={{ color: BRAND.text }}>{it.d}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
