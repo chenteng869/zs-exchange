@@ -135,7 +135,7 @@ import { BRAND, STATUS } from './brand';
 
 // ============== 类型 ==============
 
-type Tab = 'overview' | 'marketplace' | 'signals' | 'copy' | 'tournament' | 'dev' | 'performance' | 'apply' | 'help';
+type Tab = 'overview' | 'marketplace' | 'signals' | 'copy' | 'tournament' | 'backtest' | 'attribution' | 'risk' | 'linked' | 'dev' | 'performance' | 'apply' | 'help';
 type StrategyType = 'grid' | 'trend' | 'arbitrage' | 'market-making' | 'mean-reversion' | 'dca' | 'momentum' | 'hft' | 'options' | 'ml';
 type StrategyStatus = 'live' | 'beta' | 'paused' | 'retired' | 'suspended';
 type RiskLevel = 'conservative' | 'balanced' | 'aggressive' | 'speculative';
@@ -146,7 +146,7 @@ type CopyStatus = 'active' | 'paused' | 'stopped' | 'pending' | 'failed';
 type TournamentStatus = 'upcoming' | 'registration' | 'live' | 'ended' | 'cancelled';
 type DevTool = 'ide' | 'backtest' | 'paper' | 'live' | 'monitor' | 'optimize';
 type ApplyType = 'strategist' | 'team' | 'institution' | 'community' | 'educator';
-type DrawerType = 'strategy' | 'signal' | 'copy' | 'tournament' | 'apply' | 'config' | 'help' | 'dev' | null;
+type DrawerType = 'strategy' | 'signal' | 'copy' | 'tournament' | 'apply' | 'config' | 'help' | 'dev' | 'parameter' | 'risk-budget' | 'linked' | null;
 
 interface Strategy {
   id: string;
@@ -301,12 +301,134 @@ interface KpiSnapshot {
   tournamentsLive: number;
   totalPrize: number;
   developers: number;
+  // === P3.40 v2 扩展字段 ===
+  backtestRuns30d: number;
+  attributionCoverage: number;
+  riskVaR95: number;
+  ecosystemLinks: number;
 }
 
 interface DrawerState {
   open: boolean;
   type: DrawerType;
   payload: string | null;
+}
+
+// ============== P3.40 v2 扩展类型 ==============
+
+type BacktestStatus = 'queued' | 'running' | 'completed' | 'failed' | 'archived';
+type AttributionDim = 'symbol' | 'period' | 'signalType' | 'factor';
+type RiskFactor = 'market' | 'liquidity' | 'concentration' | 'leverage' | 'correlation' | 'tail' | 'fx';
+type StressScenario = 'btc-crash-30' | 'eth-crash-40' | 'liquidity-shock' | 'rate-hike' | 'black-swan' | 'correlation-break';
+
+interface StrategyParam {
+  key: string;
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit: string;
+  hint: string;
+}
+
+interface BacktestRun {
+  id: string;
+  strategyId: string;
+  strategyName: string;
+  status: BacktestStatus;
+  startDate: string;
+  endDate: string;
+  initialCapital: number;
+  finalEquity: number;
+  totalReturn: number;
+  annualizedReturn: number;
+  sharpe: number;
+  sortino: number;
+  calmar: number;
+  maxDrawdown: number;
+  volatility: number;
+  winRate: number;
+  totalTrades: number;
+  avgTrade: number;
+  bestTrade: number;
+  worstTrade: number;
+  longestDD: number;
+  recoveryDays: number;
+  parameters: StrategyParam[];
+  equity: { date: string; value: number }[];
+  progress: number;
+  createdAt: string;
+  runtimeSec: number;
+}
+
+interface AttributionSlice {
+  key: string;
+  label: string;
+  contribution: number;
+  pnl: number;
+  trades: number;
+  winRate: number;
+  color: string;
+}
+
+interface Attribution {
+  strategyId: string;
+  strategyName: string;
+  period: string;
+  totalPnl: number;
+  coverage: number;
+  slices: AttributionSlice[];
+}
+
+interface RiskFactorExposure {
+  factor: RiskFactor;
+  label: string;
+  exposure: number;
+  contribution: number;
+  limit: number;
+  utilization: number;
+  trend: 'up' | 'down' | 'flat';
+  color: string;
+  note: string;
+}
+
+interface StressTest {
+  id: string;
+  scenario: StressScenario;
+  name: string;
+  description: string;
+  estimatedLoss: number;
+  estimatedLossPct: number;
+  currentPnl: number;
+  breachLimit: boolean;
+  recoveryDays: number;
+  probability: number;
+}
+
+interface RiskBudget {
+  total: number;
+  used: number;
+  remaining: number;
+  factors: RiskFactorExposure[];
+  stress: StressTest[];
+  var95: number;
+  var99: number;
+  expectedShortfall: number;
+  concentration: number;
+  leverageRatio: number;
+}
+
+interface EcosystemLink {
+  id: string;
+  name: string;
+  page: string;
+  description: string;
+  status: 'live' | 'beta' | 'ready';
+  throughput: number;
+  unit: string;
+  highlight: string;
+  color: string;
 }
 
 // ============== Mock 数据 ==============
@@ -397,7 +519,7 @@ const STRATEGIES: Strategy[] = [
     category: '套利策略',
     pairs: ['BTC/USDT', 'ETH/USDT', 'USDC/USDT'],
     exchange: '多交易所',
-    description: '跨交易所现货价差套利，低风险稳定收益，需多账户部署。',
+    description: '跨交易所现货价差套利，低波动率历史业绩特征，需多账户部署。',
     tags: ['套利', '低风险', '稳定', '多账户'],
     subscribers: 1240,
     aum: 18600000,
@@ -435,7 +557,7 @@ const STRATEGIES: Strategy[] = [
     pairs: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT'],
     exchange: 'ZSDEX 现货',
     description: '专业级做市商策略，提供双边流动性，赚取 Maker 返佣与价差。',
-    tags: ['做市', '官方', 'Maker 返佣', '稳定收益'],
+    tags: ['做市', '官方', 'Maker 返佣', '历史低波动'],
     subscribers: 480,
     aum: 84000000,
     apy30d: 18.2,
@@ -949,6 +1071,610 @@ function timeAgo(dateStr: string): string {
   return dateStr.split(' ')[1] || dateStr;
 }
 
+// ============== P3.40 v2 Mock 数据：沙盒回测 ==============
+
+const BACKTEST_RUNS: BacktestRun[] = [
+  {
+    id: 'bt-001',
+    strategyId: 's-001',
+    strategyName: 'AlphaGrid 现货网格 Pro',
+    status: 'completed',
+    startDate: '2024-01-01',
+    endDate: '2026-07-19',
+    initialCapital: 100000,
+    finalEquity: 268420,
+    totalReturn: 168.42,
+    annualizedReturn: 64.8,
+    sharpe: 2.42,
+    sortino: 3.18,
+    calmar: 7.9,
+    maxDrawdown: 8.2,
+    volatility: 18.4,
+    winRate: 72.4,
+    totalTrades: 14820,
+    avgTrade: 24.6,
+    bestTrade: 1842,
+    worstTrade: -824,
+    longestDD: 28,
+    recoveryDays: 14,
+    progress: 100,
+    createdAt: '2026-07-19 10:24',
+    runtimeSec: 42,
+    parameters: [
+      { key: 'gridCount', label: '网格数量', value: 50, min: 10, max: 200, step: 5, unit: '格', hint: '网格越密，触发越频繁' },
+      { key: 'lowerBound', label: '下沿价格', value: 58000, min: 30000, max: 90000, step: 500, unit: 'USDT', hint: 'BTC 网格下沿' },
+      { key: 'upperBound', label: '上沿价格', value: 78000, min: 50000, max: 120000, step: 500, unit: 'USDT', hint: 'BTC 网格上沿' },
+      { key: 'orderSize', label: '单格下单', value: 200, min: 50, max: 5000, step: 50, unit: 'USDT', hint: '每格委托金额' },
+      { key: 'rebalance', label: '再平衡阈值', value: 5, min: 1, max: 20, step: 0.5, unit: '%', hint: '偏离阈值触发再平衡' },
+    ],
+    equity: [
+      { date: '2024-01', value: 100000 }, { date: '2024-04', value: 118420 }, { date: '2024-07', value: 132480 },
+      { date: '2024-10', value: 148200 }, { date: '2025-01', value: 162840 }, { date: '2025-04', value: 184280 },
+      { date: '2025-07', value: 208420 }, { date: '2025-10', value: 228400 }, { date: '2026-01', value: 248400 },
+      { date: '2026-04', value: 258400 }, { date: '2026-07', value: 268420 },
+    ],
+  },
+  {
+    id: 'bt-002',
+    strategyId: 's-002',
+    strategyName: 'DeltaTrend 趋势跟踪 v3',
+    status: 'completed',
+    startDate: '2024-01-01',
+    endDate: '2026-07-19',
+    initialCapital: 100000,
+    finalEquity: 386420,
+    totalReturn: 286.42,
+    annualizedReturn: 96.4,
+    sharpe: 1.84,
+    sortino: 2.42,
+    calmar: 5.2,
+    maxDrawdown: 18.6,
+    volatility: 32.4,
+    winRate: 58.2,
+    totalTrades: 4280,
+    avgTrade: 84.2,
+    bestTrade: 8240,
+    worstTrade: -4280,
+    longestDD: 56,
+    recoveryDays: 28,
+    progress: 100,
+    createdAt: '2026-07-18 16:42',
+    runtimeSec: 68,
+    parameters: [
+      { key: 'fastMa', label: '快线周期', value: 8, min: 3, max: 30, step: 1, unit: '周期', hint: 'EMA 快线' },
+      { key: 'slowMa', label: '慢线周期', value: 34, min: 10, max: 100, step: 1, unit: '周期', hint: 'EMA 慢线' },
+      { key: 'atrMult', label: 'ATR 止损倍数', value: 2.4, min: 1, max: 5, step: 0.1, unit: 'x', hint: '动态止损' },
+      { key: 'leverage', label: '杠杆', value: 3, min: 1, max: 10, step: 1, unit: 'x', hint: '合约杠杆' },
+    ],
+    equity: [
+      { date: '2024-01', value: 100000 }, { date: '2024-04', value: 124800 }, { date: '2024-07', value: 148200 },
+      { date: '2024-10', value: 138400 }, { date: '2025-01', value: 184200 }, { date: '2025-04', value: 228400 },
+      { date: '2025-07', value: 268400 }, { date: '2025-10', value: 312800 }, { date: '2026-01', value: 348400 },
+      { date: '2026-04', value: 372400 }, { date: '2026-07', value: 386420 },
+    ],
+  },
+  {
+    id: 'bt-003',
+    strategyId: 's-003',
+    strategyName: 'ArbitrageX 跨所套利',
+    status: 'completed',
+    startDate: '2024-01-01',
+    endDate: '2026-07-19',
+    initialCapital: 100000,
+    finalEquity: 116200,
+    totalReturn: 16.2,
+    annualizedReturn: 5.4,
+    sharpe: 4.2,
+    sortino: 6.8,
+    calmar: 11.6,
+    maxDrawdown: 1.4,
+    volatility: 2.8,
+    winRate: 96.8,
+    totalTrades: 8420,
+    avgTrade: 4.2,
+    bestTrade: 184,
+    worstTrade: -42,
+    longestDD: 8,
+    recoveryDays: 4,
+    progress: 100,
+    createdAt: '2026-07-17 09:18',
+    runtimeSec: 124,
+    parameters: [
+      { key: 'spreadThreshold', label: '套利阈值', value: 0.18, min: 0.05, max: 1.0, step: 0.01, unit: '%', hint: '跨所价差阈值' },
+      { key: 'capitalPerLeg', label: '单腿资金', value: 50000, min: 5000, max: 500000, step: 1000, unit: 'USDT', hint: '单条腿分配资金' },
+      { key: 'slippage', label: '滑点容忍', value: 0.05, min: 0.01, max: 0.5, step: 0.01, unit: '%', hint: '最大可接受滑点' },
+    ],
+    equity: [
+      { date: '2024-01', value: 100000 }, { date: '2024-04', value: 101400 }, { date: '2024-07', value: 102800 },
+      { date: '2024-10', value: 104200 }, { date: '2025-01', value: 105600 }, { date: '2025-04', value: 108400 },
+      { date: '2025-07', value: 111200 }, { date: '2025-10', value: 113200 }, { date: '2026-01', value: 114800 },
+      { date: '2026-04', value: 115400 }, { date: '2026-07', value: 116200 },
+    ],
+  },
+  {
+    id: 'bt-004',
+    strategyId: 's-010',
+    strategyName: 'ML-AI 多因子模型',
+    status: 'running',
+    startDate: '2024-06-01',
+    endDate: '2026-07-19',
+    initialCapital: 100000,
+    finalEquity: 348600,
+    totalReturn: 248.6,
+    annualizedReturn: 124.8,
+    sharpe: 2.18,
+    sortino: 2.84,
+    calmar: 7.6,
+    maxDrawdown: 16.2,
+    volatility: 38.4,
+    winRate: 66.4,
+    totalTrades: 4280,
+    avgTrade: 58.2,
+    bestTrade: 4280,
+    worstTrade: -1840,
+    longestDD: 32,
+    recoveryDays: 18,
+    progress: 68,
+    createdAt: '2026-07-19 11:08',
+    runtimeSec: 0,
+    parameters: [
+      { key: 'lstmUnits', label: 'LSTM 单元', value: 128, min: 32, max: 512, step: 32, unit: '个', hint: '隐藏层维度' },
+      { key: 'lookback', label: '回看窗口', value: 60, min: 10, max: 240, step: 5, unit: '天', hint: '历史窗口长度' },
+      { key: 'factorCount', label: '因子数量', value: 24, min: 5, max: 80, step: 1, unit: '个', hint: '特征因子' },
+      { key: 'retrainFreq', label: '重训频率', value: 7, min: 1, max: 30, step: 1, unit: '天', hint: '模型重训周期' },
+    ],
+    equity: [
+      { date: '2024-06', value: 100000 }, { date: '2024-09', value: 118400 }, { date: '2024-12', value: 142800 },
+      { date: '2025-03', value: 168400 }, { date: '2025-06', value: 198400 }, { date: '2025-09', value: 228400 },
+      { date: '2025-12', value: 268400 }, { date: '2026-03', value: 308400 }, { date: '2026-07', value: 348600 },
+    ],
+  },
+  {
+    id: 'bt-005',
+    strategyId: 's-006',
+    strategyName: 'MomentumX 动量轮动',
+    status: 'completed',
+    startDate: '2024-01-01',
+    endDate: '2026-07-19',
+    initialCapital: 100000,
+    finalEquity: 224800,
+    totalReturn: 124.8,
+    annualizedReturn: 52.4,
+    sharpe: 1.62,
+    sortino: 2.04,
+    calmar: 2.34,
+    maxDrawdown: 22.4,
+    volatility: 28.4,
+    winRate: 62.4,
+    totalTrades: 248,
+    avgTrade: 904,
+    bestTrade: 18420,
+    worstTrade: -8240,
+    longestDD: 64,
+    recoveryDays: 42,
+    progress: 100,
+    createdAt: '2026-07-15 14:24',
+    runtimeSec: 28,
+    parameters: [
+      { key: 'topN', label: '持仓数量', value: 5, min: 2, max: 20, step: 1, unit: '个', hint: 'Top N 动量币种' },
+      { key: 'rebalanceDays', label: '调仓周期', value: 7, min: 1, max: 30, step: 1, unit: '天', hint: '调仓频率' },
+      { key: 'momWindow', label: '动量窗口', value: 30, min: 5, max: 120, step: 5, unit: '天', hint: '动量计算窗口' },
+    ],
+    equity: [
+      { date: '2024-01', value: 100000 }, { date: '2024-04', value: 112400 }, { date: '2024-07', value: 128400 },
+      { date: '2024-10', value: 108400 }, { date: '2025-01', value: 138400 }, { date: '2025-04', value: 162400 },
+      { date: '2025-07', value: 184400 }, { date: '2025-10', value: 198400 }, { date: '2026-01', value: 208400 },
+      { date: '2026-04', value: 218400 }, { date: '2026-07', value: 224800 },
+    ],
+  },
+  {
+    id: 'bt-006',
+    strategyId: 's-011',
+    strategyName: 'Pionex 网格基础版',
+    status: 'queued',
+    startDate: '2024-01-01',
+    endDate: '2026-07-19',
+    initialCapital: 100000,
+    finalEquity: 0,
+    totalReturn: 0,
+    annualizedReturn: 0,
+    sharpe: 0,
+    sortino: 0,
+    calmar: 0,
+    maxDrawdown: 0,
+    volatility: 0,
+    winRate: 0,
+    totalTrades: 0,
+    avgTrade: 0,
+    bestTrade: 0,
+    worstTrade: 0,
+    longestDD: 0,
+    recoveryDays: 0,
+    progress: 0,
+    createdAt: '2026-07-19 11:24',
+    runtimeSec: 0,
+    parameters: [
+      { key: 'gridCount', label: '网格数量', value: 20, min: 5, max: 100, step: 5, unit: '格', hint: '基础版固定参数' },
+    ],
+    equity: [],
+  },
+];
+
+// ============== P3.40 v2 Mock 数据：沙盒回测 ==============
+
+const BACKTESTS: BacktestRun[] = [
+  {
+    id: 'bt-001',
+    strategyId: 's-001',
+    strategyName: 'AlphaGrid 现货网格 Pro',
+    status: 'completed',
+    startDate: '2025-07-01',
+    endDate: '2026-07-01',
+    initialCapital: 100000,
+    finalEquity: 184200,
+    totalReturn: 84.2,
+    annualizedReturn: 84.2,
+    sharpe: 2.84,
+    sortino: 3.42,
+    calmar: 1.96,
+    maxDrawdown: 12.4,
+    volatility: 18.6,
+    winRate: 72.4,
+    totalTrades: 14820,
+    avgTrade: 5.68,
+    bestTrade: 8420,
+    worstTrade: -2840,
+    longestDD: 18,
+    recoveryDays: 6,
+    progress: 100,
+    createdAt: '2026-07-15 14:22',
+    runtimeSec: 42,
+    parameters: [
+      { key: 'gridCount', label: '网格数量', value: 30, min: 5, max: 100, step: 5, unit: '格', hint: '网格越密触发越频繁' },
+      { key: 'leverage', label: '杠杆倍数', value: 2, min: 1, max: 5, step: 1, unit: 'x', hint: '基础版建议 1-3x' },
+      { key: 'rebalance', label: '再平衡阈值', value: 5, min: 1, max: 20, step: 1, unit: '%', hint: '触发调仓' },
+    ],
+    equity: [
+      { date: '2025-07', value: 100000 },
+      { date: '2025-08', value: 108400 },
+      { date: '2025-09', value: 112800 },
+      { date: '2025-10', value: 124200 },
+      { date: '2025-11', value: 132400 },
+      { date: '2025-12', value: 138200 },
+      { date: '2026-01', value: 142800 },
+      { date: '2026-02', value: 154200 },
+      { date: '2026-03', value: 161400 },
+      { date: '2026-04', value: 168400 },
+      { date: '2026-05', value: 174800 },
+      { date: '2026-06', value: 180200 },
+      { date: '2026-07', value: 184200 },
+    ],
+  },
+  {
+    id: 'bt-002',
+    strategyId: 's-002',
+    strategyName: 'DeltaTrend 趋势跟踪 v3',
+    status: 'completed',
+    startDate: '2025-07-01',
+    endDate: '2026-07-01',
+    initialCapital: 100000,
+    finalEquity: 268400,
+    totalReturn: 168.4,
+    annualizedReturn: 168.4,
+    sharpe: 2.12,
+    sortino: 2.84,
+    calmar: 1.62,
+    maxDrawdown: 24.6,
+    volatility: 38.4,
+    winRate: 58.4,
+    totalTrades: 4280,
+    avgTrade: 39.32,
+    bestTrade: 24840,
+    worstTrade: -8420,
+    longestDD: 42,
+    recoveryDays: 18,
+    progress: 100,
+    createdAt: '2026-07-12 09:18',
+    runtimeSec: 68,
+    parameters: [
+      { key: 'lookback', label: '回看周期', value: 20, min: 5, max: 60, step: 5, unit: '日', hint: 'EMA 基础周期' },
+      { key: 'stopLoss', label: '止损线', value: 8, min: 1, max: 20, step: 1, unit: '%', hint: '建议 5-10%' },
+      { key: 'takeProfit', label: '止盈线', value: 24, min: 10, max: 50, step: 2, unit: '%', hint: '建议 15-30%' },
+    ],
+    equity: [
+      { date: '2025-07', value: 100000 },
+      { date: '2025-08', value: 96400 },
+      { date: '2025-09', value: 118400 },
+      { date: '2025-10', value: 142800 },
+      { date: '2025-11', value: 168400 },
+      { date: '2025-12', value: 184200 },
+      { date: '2026-01', value: 198400 },
+      { date: '2026-02', value: 224200 },
+      { date: '2026-03', value: 238400 },
+      { date: '2026-04', value: 244200 },
+      { date: '2026-05', value: 258400 },
+      { date: '2026-06', value: 264200 },
+      { date: '2026-07', value: 268400 },
+    ],
+  },
+  {
+    id: 'bt-003',
+    strategyId: 's-003',
+    strategyName: 'ArbitrageX 跨所套利',
+    status: 'running',
+    startDate: '2025-09-01',
+    endDate: '2026-09-01',
+    initialCapital: 100000,
+    finalEquity: 112800,
+    totalReturn: 12.8,
+    annualizedReturn: 14.4,
+    sharpe: 4.28,
+    sortino: 5.84,
+    calmar: 3.42,
+    maxDrawdown: 1.8,
+    volatility: 6.4,
+    winRate: 96.8,
+    totalTrades: 18420,
+    avgTrade: 0.69,
+    bestTrade: 1284,
+    worstTrade: -420,
+    longestDD: 3,
+    recoveryDays: 1,
+    progress: 84,
+    createdAt: '2026-07-18 16:42',
+    runtimeSec: 128,
+    parameters: [
+      { key: 'spreadMin', label: '最小价差', value: 0.1, min: 0.05, max: 1.0, step: 0.05, unit: '%', hint: '基础版套利阈值' },
+      { key: 'maxExposure', label: '单笔上限', value: 5000, min: 1000, max: 20000, step: 1000, unit: 'USDT', hint: '风险控制' },
+    ],
+    equity: [
+      { date: '2025-09', value: 100000 },
+      { date: '2025-10', value: 100800 },
+      { date: '2025-11', value: 101800 },
+      { date: '2025-12', value: 102600 },
+      { date: '2026-01', value: 103800 },
+      { date: '2026-02', value: 105200 },
+      { date: '2026-03', value: 106800 },
+      { date: '2026-04', value: 108200 },
+      { date: '2026-05', value: 109800 },
+      { date: '2026-06', value: 111200 },
+      { date: '2026-07', value: 112800 },
+    ],
+  },
+  {
+    id: 'bt-004',
+    strategyId: 's-004',
+    strategyName: 'MeanReversion 均值回归',
+    status: 'completed',
+    startDate: '2025-10-01',
+    endDate: '2026-04-01',
+    initialCapital: 50000,
+    finalEquity: 64200,
+    totalReturn: 28.4,
+    annualizedReturn: 56.8,
+    sharpe: 1.84,
+    sortino: 2.42,
+    calmar: 1.24,
+    maxDrawdown: 14.8,
+    volatility: 22.4,
+    winRate: 64.2,
+    totalTrades: 2840,
+    avgTrade: 5.01,
+    bestTrade: 4280,
+    worstTrade: -1840,
+    longestDD: 28,
+    recoveryDays: 12,
+    progress: 100,
+    createdAt: '2026-06-22 11:18',
+    runtimeSec: 36,
+    parameters: [
+      { key: 'deviation', label: '偏离阈值', value: 2.0, min: 1.0, max: 3.5, step: 0.1, unit: 'σ', hint: '标准差倍数' },
+    ],
+    equity: [
+      { date: '2025-10', value: 50000 },
+      { date: '2025-11', value: 52400 },
+      { date: '2025-12', value: 54800 },
+      { date: '2026-01', value: 56200 },
+      { date: '2026-02', value: 58800 },
+      { date: '2026-03', value: 61400 },
+      { date: '2026-04', value: 64200 },
+    ],
+  },
+];
+
+// ============== P3.40 v2 Mock 数据：业绩归因 ==============
+
+const ATTRIBUTIONS: Attribution[] = [
+  {
+    strategyId: 's-001',
+    strategyName: 'AlphaGrid 现货网格 Pro',
+    period: '近 30 日',
+    totalPnl: 58420,
+    coverage: 96.4,
+    slices: [
+      { key: 'BTC', label: 'BTC/USDT', contribution: 38.4, pnl: 22440, trades: 4280, winRate: 76.4, color: '#F7931A' },
+      { key: 'ETH', label: 'ETH/USDT', contribution: 32.8, pnl: 19160, trades: 3840, winRate: 72.8, color: '#627EEA' },
+      { key: 'SOL', label: 'SOL/USDT', contribution: 18.4, pnl: 10750, trades: 2480, winRate: 68.2, color: '#14B881' },
+      { key: 'OTHERS', label: '其他', contribution: 10.4, pnl: 6070, trades: 4220, winRate: 64.8, color: '#B0B0B0' },
+    ],
+  },
+  {
+    strategyId: 's-002',
+    strategyName: 'DeltaTrend 趋势跟踪 v3',
+    period: '近 30 日',
+    totalPnl: 142840,
+    coverage: 98.2,
+    slices: [
+      { key: 'BTC', label: 'BTC/USDT', contribution: 52.4, pnl: 74840, trades: 1240, winRate: 62.4, color: '#F7931A' },
+      { key: 'ETH', label: 'ETH/USDT', contribution: 38.2, pnl: 54560, trades: 1840, winRate: 56.8, color: '#627EEA' },
+      { key: 'OTHERS', label: '其他', contribution: 9.4, pnl: 13440, trades: 1200, winRate: 52.4, color: '#B0B0B0' },
+    ],
+  },
+  {
+    strategyId: 's-003',
+    strategyName: 'ArbitrageX 跨所套利',
+    period: '近 30 日',
+    totalPnl: 11840,
+    coverage: 99.6,
+    slices: [
+      { key: 'BTC', label: 'BTC/USDT', contribution: 48.4, pnl: 5730, trades: 3240, winRate: 97.2, color: '#F7931A' },
+      { key: 'ETH', label: 'ETH/USDT', contribution: 32.4, pnl: 3840, trades: 2840, winRate: 96.8, color: '#627EEA' },
+      { key: 'USDC', label: 'USDC/USDT', contribution: 14.2, pnl: 1680, trades: 1840, winRate: 98.4, color: '#2775CA' },
+      { key: 'OTHERS', label: '其他', contribution: 5.0, pnl: 590, trades: 500, winRate: 92.4, color: '#B0B0B0' },
+    ],
+  },
+];
+
+const ATTRIBUTION_BY_PERIOD: Record<string, AttributionSlice[]> = {
+  's-001': [
+    { key: '7d', label: '近 7 日', contribution: 8.4, pnl: 4900, trades: 1240, winRate: 72.4, color: '#14B881' },
+    { key: '30d', label: '近 30 日', contribution: 32.4, pnl: 18930, trades: 4280, winRate: 72.4, color: '#44DBF4' },
+    { key: '90d', label: '近 90 日', contribution: 38.2, pnl: 22310, trades: 8420, winRate: 70.8, color: '#FFB400' },
+    { key: '180d', label: '近 180 日', contribution: 21.0, pnl: 12280, trades: 4280, winRate: 68.4, color: '#A855F7' },
+  ],
+  's-002': [
+    { key: '7d', label: '近 7 日', contribution: 12.4, pnl: 17710, trades: 124, winRate: 64.2, color: '#14B881' },
+    { key: '30d', label: '近 30 日', contribution: 42.8, pnl: 61140, trades: 480, winRate: 58.2, color: '#44DBF4' },
+    { key: '90d', label: '近 90 日', contribution: 32.4, pnl: 46280, trades: 1480, winRate: 56.4, color: '#FFB400' },
+    { key: '180d', label: '近 180 日', contribution: 12.4, pnl: 17710, trades: 2196, winRate: 54.8, color: '#A855F7' },
+  ],
+};
+
+const ATTRIBUTION_BY_SIGNAL: Record<string, AttributionSlice[]> = {
+  's-001': [
+    { key: 'entry', label: '入场信号', contribution: 42.4, pnl: 24770, trades: 4280, winRate: 76.4, color: '#14B881' },
+    { key: 'exit', label: '出场信号', contribution: 28.4, pnl: 16590, trades: 4280, winRate: 72.4, color: '#44DBF4' },
+    { key: 'rebalance', label: '再平衡', contribution: 18.2, pnl: 10630, trades: 1840, winRate: 68.2, color: '#FFB400' },
+    { key: 'stop-loss', label: '止损', contribution: 8.4, pnl: 4910, trades: 1240, winRate: 84.2, color: '#F87171' },
+    { key: 'take-profit', label: '止盈', contribution: 2.6, pnl: 1520, trades: 180, winRate: 92.4, color: '#A855F7' },
+  ],
+  's-002': [
+    { key: 'entry', label: '入场信号', contribution: 48.4, pnl: 69150, trades: 1240, winRate: 62.4, color: '#14B881' },
+    { key: 'exit', label: '出场信号', contribution: 24.2, pnl: 34580, trades: 1240, winRate: 58.2, color: '#44DBF4' },
+    { key: 'stop-loss', label: '止损', contribution: 18.4, pnl: 26280, trades: 840, winRate: 78.4, color: '#F87171' },
+    { key: 'take-profit', label: '止盈', contribution: 6.4, pnl: 9140, trades: 420, winRate: 88.4, color: '#A855F7' },
+    { key: 'alert', label: '关注提示', contribution: 2.6, pnl: 3690, trades: 540, winRate: 64.2, color: '#FFB400' },
+  ],
+};
+
+const ATTRIBUTION_BY_FACTOR: Record<string, AttributionSlice[]> = {
+  's-001': [
+    { key: 'volatility', label: '波动率因子', contribution: 32.4, pnl: 18930, trades: 4280, winRate: 72.4, color: '#14B881' },
+    { key: 'momentum', label: '动量因子', contribution: 24.8, pnl: 14490, trades: 3840, winRate: 70.2, color: '#44DBF4' },
+    { key: 'mean-reversion', label: '均值回归', contribution: 18.4, pnl: 10750, trades: 2480, winRate: 68.4, color: '#FFB400' },
+    { key: 'volume', label: '成交量因子', contribution: 14.2, pnl: 8290, trades: 2480, winRate: 66.8, color: '#A855F7' },
+    { key: 'sentiment', label: '情绪因子', contribution: 10.2, pnl: 5960, trades: 1740, winRate: 62.4, color: '#F87171' },
+  ],
+  's-002': [
+    { key: 'trend', label: '趋势因子', contribution: 42.4, pnl: 60560, trades: 1240, winRate: 64.2, color: '#14B881' },
+    { key: 'momentum', label: '动量因子', contribution: 28.4, pnl: 40560, trades: 1480, winRate: 58.4, color: '#44DBF4' },
+    { key: 'volatility', label: '波动率因子', contribution: 18.4, pnl: 26280, trades: 1240, winRate: 54.8, color: '#FFB400' },
+    { key: 'volume', label: '成交量因子', contribution: 6.4, pnl: 9140, trades: 184, winRate: 56.4, color: '#A855F7' },
+    { key: 'macro', label: '宏观因子', contribution: 4.4, pnl: 6300, trades: 136, winRate: 52.4, color: '#F87171' },
+  ],
+};
+
+// ============== P3.40 v2 Mock 数据：风险敞口 ==============
+
+const RISK_BUDGET: RiskBudget = {
+  total: 100000000,
+  used: 62840000,
+  remaining: 37160000,
+  factors: [
+    { factor: 'market', label: '市场风险', exposure: 32400000, contribution: 51.6, limit: 50000000, utilization: 64.8, trend: 'up', color: '#F87171', note: 'BTC/ETH 现货敞口' },
+    { factor: 'liquidity', label: '流动性风险', exposure: 12400000, contribution: 19.7, limit: 20000000, utilization: 62.0, trend: 'flat', color: '#FFB400', note: '订单簿深度监控' },
+    { factor: 'concentration', label: '集中度风险', exposure: 8400000, contribution: 13.4, limit: 15000000, utilization: 56.0, trend: 'up', color: '#A855F7', note: '前 3 大币种占比' },
+    { factor: 'leverage', label: '杠杆风险', exposure: 4800000, contribution: 7.6, limit: 10000000, utilization: 48.0, trend: 'down', color: '#44DBF4', note: '合约综合杠杆' },
+    { factor: 'correlation', label: '相关性风险', exposure: 2400000, contribution: 3.8, limit: 5000000, utilization: 48.0, trend: 'flat', color: '#14B881', note: 'BTC-ETH 相关性' },
+    { factor: 'tail', label: '尾部风险', exposure: 1600000, contribution: 2.5, limit: 4000000, utilization: 40.0, trend: 'down', color: '#EC4899', note: '黑天鹅事件压力' },
+    { factor: 'fx', label: '汇率风险', exposure: 800000, contribution: 1.4, limit: 2000000, utilization: 40.0, trend: 'flat', color: '#F97316', note: 'USDT/USD 离岸' },
+  ],
+  stress: [
+    { id: 'st-001', scenario: 'btc-crash-30', name: 'BTC 单日 -30%', description: 'BTC 单日跌幅 30%，ETH/SOL 跟跌 35%', estimatedLoss: 18420000, estimatedLossPct: 18.4, currentPnl: 38400000, breachLimit: false, recoveryDays: 28, probability: 0.8 },
+    { id: 'st-002', scenario: 'eth-crash-40', name: 'ETH 单日 -40%', description: 'ETH 单日跌幅 40%，生态币跟跌 50%', estimatedLoss: 12840000, estimatedLossPct: 12.8, currentPnl: 38400000, breachLimit: false, recoveryDays: 21, probability: 0.6 },
+    { id: 'st-003', scenario: 'liquidity-shock', name: '流动性冲击', description: '订单簿深度 -80%，无法及时平仓', estimatedLoss: 8420000, estimatedLossPct: 8.4, currentPnl: 38400000, breachLimit: false, recoveryDays: 14, probability: 1.2 },
+    { id: 'st-004', scenario: 'rate-hike', name: '美联储紧急加息', description: '美联储紧急加息 100bp，加密市场普跌 20%', estimatedLoss: 14200000, estimatedLossPct: 14.2, currentPnl: 38400000, breachLimit: false, recoveryDays: 35, probability: 1.4 },
+    { id: 'st-005', scenario: 'black-swan', name: '黑天鹅事件', description: '极端不可抗力事件，跨品种普跌 50%', estimatedLoss: 28400000, estimatedLossPct: 28.4, currentPnl: 38400000, breachLimit: true, recoveryDays: 90, probability: 0.2 },
+    { id: 'st-006', scenario: 'correlation-break', name: '相关性崩溃', description: 'BTC-ETH 相关性从 0.8 跌至 0.2，套利失效', estimatedLoss: 6200000, estimatedLossPct: 6.2, currentPnl: 38400000, breachLimit: false, recoveryDays: 18, probability: 0.8 },
+  ],
+  var95: 4280000,
+  var99: 8240000,
+  expectedShortfall: 12400000,
+  concentration: 0.42,
+  leverageRatio: 1.84,
+};
+
+// ============== P3.40 v2 Mock 数据：互联生态 ==============
+
+const ECOSYSTEM_LINKS: EcosystemLink[] = [
+  {
+    id: 'link-derivatives',
+    name: 'P3.26 衍生品交易中心',
+    page: '/portal-preview/derivatives',
+    description: '永续合约 / 交割合约 / 期权，为策略提供对冲与杠杆工具',
+    status: 'live',
+    throughput: 128400,
+    unit: '笔/日',
+    highlight: '永续 + 永续对冲',
+    color: '#F7931A',
+  },
+  {
+    id: 'link-wallet',
+    name: 'P3.33 钱包与资产中心',
+    page: '/portal-preview/wallet',
+    description: '现货 / 合约 / 理财 / NFT 一体化钱包，策略资金一键启用',
+    status: 'live',
+    throughput: 4820,
+    unit: '笔入金/日',
+    highlight: '资金自动划转',
+    color: '#14B881',
+  },
+  {
+    id: 'link-watchlist',
+    name: 'P3.35 自选与行情提醒',
+    page: '/portal-preview/watchlist',
+    description: '自选币种 / 触发提醒 / 异动监控，为策略提供信号源',
+    status: 'live',
+    throughput: 2840,
+    unit: '条提醒/日',
+    highlight: '策略信号联动',
+    color: '#44DBF4',
+  },
+  {
+    id: 'link-bridge',
+    name: 'P3.30 跨链桥中心',
+    page: '/portal-preview/bridge',
+    description: '多链资产桥接，为策略提供跨链资金调度',
+    status: 'beta',
+    throughput: 1240,
+    unit: '笔桥接/日',
+    highlight: '跨链资金调度',
+    color: '#A855F7',
+  },
+  {
+    id: 'link-market',
+    name: 'P3.4 现货交易大厅',
+    page: '/portal-preview/market',
+    description: '现货 / 限价 / 市价，为策略提供基础成交通道',
+    status: 'live',
+    throughput: 2484000,
+    unit: '笔成交/日',
+    highlight: '现货成交通道',
+    color: '#FFB400',
+  },
+  {
+    id: 'link-api',
+    name: 'P3.17 API 开放平台',
+    page: '/portal-preview/api-platform',
+    description: 'REST / WebSocket API，为策略提供数据与执行接口',
+    status: 'live',
+    throughput: 12840000,
+    unit: '次调用/日',
+    highlight: '策略数据源',
+    color: '#EC4899',
+  },
+];
+
 // ============== 子组件 ==============
 
 function KpiCard({ label, value, hint, color, icon: Icon, trend }: { label: string; value: string; hint?: string; color?: string; icon?: React.ElementType; trend?: 'up' | 'down' | 'neutral' }) {
@@ -1029,9 +1755,14 @@ export function PortalQuant() {
     tournamentsLive: 2,
     totalPrize: 410000,
     developers: 4280,
+    // === P3.40 v2 扩展字段 ===
+    backtestRuns30d: 18420,
+    attributionCoverage: 96.4,
+    riskVaR95: 4280000,
+    ecosystemLinks: 6,
   });
 
-  // ʵʱ����Ư��
+  // 实时数据漂移
   useEffect(() => {
     const id = setInterval(() => {
       setKpi((k) => ({
@@ -1041,6 +1772,9 @@ export function PortalQuant() {
         copyTraders: k.copyTraders + Math.floor(Math.random() * 5) - 2,
         totalPnl30d: k.totalPnl30d + Math.floor(Math.random() * 20000) - 5000,
         avgApy: Math.max(15, Math.min(40, k.avgApy + (Math.random() - 0.5) * 0.4)),
+        backtestRuns30d: k.backtestRuns30d + Math.floor(Math.random() * 4) - 1,
+        attributionCoverage: Math.max(90, Math.min(99.8, k.attributionCoverage + (Math.random() - 0.5) * 0.2)),
+        riskVaR95: Math.max(3000000, Math.min(6000000, k.riskVaR95 + Math.floor((Math.random() - 0.5) * 80000))),
       }));
     }, 3500);
     return () => clearInterval(id);
@@ -1060,7 +1794,7 @@ export function PortalQuant() {
         e.preventDefault();
         setHelpOpen((v) => !v);
       } else if (e.key >= '"'"'1'"'"' && e.key <= '"'"'9'"'"') {
-        const tabs: Tab[] = ['\"'overview'\"', '\"'marketplace'\"', '\"'signals'\"', '\"'copy'\"', '\"'tournament'\"', '\"'dev'\"', '\"'performance'\"', '\"'apply'\"', '\"'help'\"'];
+        const tabs: Tab[] = ['\"'overview'\"', '\"'marketplace'\"', '\"'signals'\"', '\"'copy'\"', '\"'tournament'\"', '\"'backtest'\"', '\"'attribution'\"', '\"'risk'\"', '\"'linked'\"'];
         setTab(tabs[parseInt(e.key) - 1]);
       }
     };
@@ -1145,15 +1879,19 @@ export function PortalQuant() {
   };
 
   const tabLabels: { key: Tab; label: string; icon: React.ElementType }[] = [
-    { key: '\"'overview'\"', label: '\"'����'\"', icon: Gauge },
-    { key: '\"'marketplace'\"', label: '\"'�����̳�'\"', icon: Boxes },
-    { key: '\"'signals'\"', label: '\"'�źŶ���'\"', icon: Activity },
-    { key: '\"'copy'\"', label: '\"'��������'\"', icon: CopyIcon },
-    { key: '\"'tournament'\"', label: '\"'��������'\"', icon: Trophy },
-    { key: '\"'dev'\"', label: '\"'���Կ���'\"', icon: Code2 },
-    { key: '\"'performance'\"', label: '\"'��ʷҵ��'\"', icon: LineIcon },
-    { key: '\"'apply'\"', label: '\"'������פ'\"', icon: UserPlus },
-    { key: '\"'help'\"', label: '\"'����'\"', icon: HelpCircle },
+    { key: 'overview', label: '总览', icon: Gauge },
+    { key: 'marketplace', label: '策略商城', icon: Boxes },
+    { key: 'signals', label: '信号订阅', icon: Activity },
+    { key: 'copy', label: '跟单做市', icon: CopyIcon },
+    { key: 'tournament', label: '量化赛事', icon: Trophy },
+    { key: 'backtest', label: '沙盒回测', icon: LineIcon },
+    { key: 'attribution', label: '业绩归因', icon: PieIcon },
+    { key: 'risk', label: '风险敞口', icon: ShieldAlert },
+    { key: 'linked', label: '互联生态', icon: Network },
+    { key: 'dev', label: '策略开发', icon: Code2 },
+    { key: 'performance', label: '历史业绩', icon: BarChart3 },
+    { key: 'apply', label: '申请入驻', icon: UserPlus },
+    { key: 'help', label: '帮助', icon: HelpCircle }
   ];
 
   return (
@@ -1188,15 +1926,15 @@ export function PortalQuant() {
             <ChevronRight size={12} />
             <span>交易</span>
             <ChevronRight size={12} />
-            <span style={{ color: BRAND.primary }}>量化交易中心</span>
+            <span style={{ color: BRAND.primary }}>量化策略中心</span>
           </div>
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div className="flex-1 min-w-[300px]">
               <h1 className="text-3xl md:text-4xl font-bold mb-2" style={{ color: BRAND.text }}>
-                量化交易中心
+                量化策略中心
               </h1>
               <p className="text-sm mb-4 max-w-3xl" style={{ color: BRAND.textMuted }}>
-                策略商城 / 信号订阅 / 跟单做市 / 量化赛事 / 策略开发 · 全栈式量化交易基础设施。与现货、合约、做市形成"现货-合约-做市-量化"四元协同闭环。
+                策略研发 / 策略商城 / 信号订阅 / 跟单做市 / 沙盒回测 / 业绩归因 / 风险敞口 / 互联生态 · 一站式量化策略基础设施。与 P3.26 衍生品 + P3.33 钱包 + P3.35 自选行情形成"行情-策略-交易-钱包"自动化闭环。
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="px-2.5 py-1 rounded text-xs flex items-center gap-1" style={{ backgroundColor: `${BRAND.primary}20`, color: BRAND.primary, border: `1px solid ${BRAND.primary}40` }}>
@@ -1211,6 +1949,12 @@ export function PortalQuant() {
                 </span>
                 <span className="px-2.5 py-1 rounded text-xs" style={{ backgroundColor: BRAND.card, color: BRAND.textMuted, border: `1px solid ${BRAND.border}` }}>
                   {kpi.tournamentsLive} 场进行中赛事
+                </span>
+                <span className="px-2.5 py-1 rounded text-xs" style={{ backgroundColor: BRAND.card, color: BRAND.textMuted, border: `1px solid ${BRAND.border}` }}>
+                  {kpi.backtestRuns30d.toLocaleString()} 次回测/30d
+                </span>
+                <span className="px-2.5 py-1 rounded text-xs" style={{ backgroundColor: BRAND.card, color: BRAND.textMuted, border: `1px solid ${BRAND.border}` }}>
+                  VaR(95%) {formatCurrency(kpi.riskVaR95)}
                 </span>
               </div>
             </div>
@@ -1230,13 +1974,17 @@ export function PortalQuant() {
 
       {/* ============== KPI Cards ============== */}
       <section className="px-6 md:px-10 py-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 pq-stagger">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 gap-3 pq-stagger">
           <KpiCard label="策略总数" value={kpi.totalStrategies.toString()} hint={`活跃 ${kpi.liveStrategies}`} icon={Boxes} />
           <KpiCard label="管理资产 (AUM)" value={formatCurrency(kpi.totalAum)} hint="实时波动" color={BRAND.primary} icon={Wallet} trend="up" />
           <KpiCard label="信号订阅" value={kpi.totalSignals.toLocaleString()} hint={`+${kpi.signals24h}/24h`} icon={Activity} trend="up" />
           <KpiCard label="跟单用户" value={kpi.copyTraders.toLocaleString()} hint="活跃跟单" color={BRAND.primary} icon={CopyIcon} />
           <KpiCard label="30日总盈亏" value={formatPnl(kpi.totalPnl30d)} hint="策略实盘" color={BRAND.primary} icon={TrendingUp} trend="up" />
           <KpiCard label="平均年化" value={formatPercent(kpi.avgApy)} hint="策略均值" icon={Target} />
+          <KpiCard label="沙盒回测" value={kpi.backtestRuns30d.toLocaleString()} hint="近 30 日" color={BRAND.primary} icon={LineIcon} trend="up" />
+          <KpiCard label="业绩归因" value={`${kpi.attributionCoverage.toFixed(1)}%`} hint="覆盖率" color={BRAND.primary} icon={PieIcon} />
+          <KpiCard label="VaR(95%)" value={formatCurrency(kpi.riskVaR95)} hint="风险敞口" color="#F87171" icon={ShieldAlert} />
+          <KpiCard label="互联生态" value={kpi.ecosystemLinks.toString()} hint="联动页面" color={BRAND.primary} icon={Network} />
         </div>
       </section>
 
@@ -1268,6 +2016,338 @@ export function PortalQuant() {
       {/* ============== Tab Content ============== */}
       <main className="px-6 md:px-10 py-6">
         <div className="max-w-7xl mx-auto">
+          {tab === 'backtest' && (
+            <div className="space-y-6">
+              <div className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <LineIcon size={18} style={{ color: BRAND.primary }} />
+                  沙盒回测 · 历史业绩与参数化探索
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: BRAND.textMuted }}>
+                  基于 5 年历史 K 线、Tick 级回放与多周期对账，提供 <strong style={{ color: BRAND.text }}>夏普 / Sortino / Calmar / 最大回撤 / 胜率 / 盈亏比</strong> 等 12 项业绩指标。
+                  30 日内已运行 <strong style={{ color: BRAND.primary }}>{kpi.backtestRuns30d.toLocaleString()}</strong> 次沙盒回测。
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: '运行中', value: BACKTESTS.filter(b => b.status === 'running').length, color: '#FFB400', icon: Activity },
+                  { label: '已完成', value: BACKTESTS.filter(b => b.status === 'completed').length, color: BRAND.primary, icon: CheckCircle2 },
+                  { label: '平均年化', value: (BACKTESTS.filter(b => b.status === 'completed').reduce((s, b) => s + b.annualizedReturn, 0) / Math.max(1, BACKTESTS.filter(b => b.status === 'completed').length)).toFixed(1) + '%', color: BRAND.primary, icon: TrendingUp },
+                  { label: '平均夏普', value: (BACKTESTS.filter(b => b.status === 'completed').reduce((s, b) => s + b.sharpe, 0) / Math.max(1, BACKTESTS.filter(b => b.status === 'completed').length)).toFixed(2), color: BRAND.info, icon: Gauge },
+                ].map((m, i) => {
+                  const Icon = m.icon;
+                  return (
+                    <div key={i} className="p-3 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                      <div className="flex items-center gap-1.5 text-[10px] mb-1" style={{ color: BRAND.textMuted }}>
+                        <Icon size={12} style={{ color: m.color }} />{m.label}
+                      </div>
+                      <div className="text-xl font-bold" style={{ color: m.color }}>{m.value}</div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="space-y-3">
+                {BACKTESTS.map((bt) => {
+                  const statusBadge = bt.status === 'completed'
+                    ? { bg: 'rgba(20,184,129,0.10)', fg: BRAND.primary, label: '已完成' }
+                    : bt.status === 'running'
+                    ? { bg: 'rgba(255,180,0,0.10)', fg: '#FFB400', label: '运行中 ' + bt.progress + '%' }
+                    : { bg: 'rgba(176,176,176,0.10)', fg: BRAND.textMuted, label: '排队中' };
+                  return (
+                    <div key={bt.id} className="p-4 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-sm font-semibold" style={{ color: BRAND.text }}>{bt.strategyName}</h3>
+                            <span className="px-2 py-0.5 rounded text-[10px]" style={{ backgroundColor: statusBadge.bg, color: statusBadge.fg }}>{statusBadge.label}</span>
+                          </div>
+                          <div className="text-xs" style={{ color: BRAND.textMuted }}>{bt.startDate} ~ {bt.endDate} · 初始 ${bt.initialCapital.toLocaleString()} · 最终 ${bt.finalEquity.toLocaleString()}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-xl font-bold" style={{ color: BRAND.primary }}>+{bt.totalReturn.toFixed(1)}%</div>
+                          <div className="text-[10px]" style={{ color: BRAND.textMuted }}>年化收益</div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 mb-3">
+                        {[
+                          { label: '夏普', value: bt.sharpe.toFixed(2) },
+                          { label: 'Sortino', value: bt.sortino.toFixed(2) },
+                          { label: 'Calmar', value: bt.calmar.toFixed(2) },
+                          { label: '最大回撤', value: bt.maxDrawdown.toFixed(1) + '%' },
+                          { label: '胜率', value: bt.winRate.toFixed(1) + '%' },
+                          { label: '交易次数', value: bt.totalTrades.toLocaleString() },
+                        ].map((m, i) => (
+                          <div key={i} className="p-1.5 rounded text-center" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}>
+                            <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{m.label}</div>
+                            <div className="text-xs font-bold" style={{ color: BRAND.text }}>{m.value}</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {bt.equity.length > 0 && (
+                        <>
+                          <div className="text-[10px] mb-1" style={{ color: BRAND.textMuted }}>权益曲线</div>
+                          <div className="flex items-end gap-0.5 h-12 mb-2">
+                            {bt.equity.map((p, i) => {
+                              const min = Math.min(...bt.equity.map(e => e.value));
+                              const max = Math.max(...bt.equity.map(e => e.value));
+                              const h = ((p.value - min) / (max - min)) * 100;
+                              return <div key={i} className="flex-1 rounded-t" style={{ height: h + '%', backgroundColor: BRAND.primary, opacity: 0.6 + (i / bt.equity.length) * 0.4 }} />;
+                            })}
+                          </div>
+                        </>
+                      )}
+                      <div className="flex items-center justify-between mt-3 pt-3" style={{ borderTop: `1px solid ${BRAND.border}` }}>
+                        <span className="text-xs" style={{ color: BRAND.textMuted }}>{bt.totalTrades.toLocaleString()} 笔成交 · {bt.runtimeSec}s 耗时</span>
+                        <span onClick={() => setDrawer({ open: true, type: 'parameter', payload: bt.id })} className="text-xs flex items-center gap-1 cursor-pointer" style={{ color: BRAND.primary }}>调节参数 <ChevronRight size={12} /></span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="p-4 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="flex items-center gap-2 text-xs" style={{ color: BRAND.textMuted }}>
+                  <AlertCircle size={14} style={{ color: '#FACC15' }} />
+                  <span>回测结果基于历史数据模拟，过往业绩不代表未来表现。沙盒回测仅供方法论演示与参数探索，不构成投资建议。</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'attribution' && (
+            <div className="space-y-6">
+              <div className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <PieIcon size={18} style={{ color: BRAND.primary }} />
+                  业绩归因 · 多维度业绩归因拆解
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: BRAND.textMuted }}>
+                  按 <strong style={{ color: BRAND.text }}>品种 / 周期 / 信号类型 / 贡献因子</strong> 四维度拆解策略盈亏来源，识别 Alpha 来源。当前归因覆盖率 <strong style={{ color: BRAND.primary }}>{kpi.attributionCoverage.toFixed(1)}%</strong>。
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 overflow-x-auto">
+                {[
+                  { key: 'symbol', label: '按品种', icon: Coins },
+                  { key: 'period', label: '按周期', icon: Calendar },
+                  { key: 'signalType', label: '按信号类型', icon: Activity },
+                  { key: 'factor', label: '按贡献因子', icon: Sparkles },
+                ].map((d) => {
+                  const Icon = d.icon;
+                  return (
+                    <button key={d.key} className="px-3 py-1.5 rounded-lg text-xs flex items-center gap-1.5 whitespace-nowrap transition-all" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>
+                      <Icon size={12} />{d.label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {ATTRIBUTIONS.map((attr) => {
+                const max = Math.max(...attr.slices.map(s => s.contribution));
+                return (
+                  <div key={attr.strategyId} className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-sm font-semibold" style={{ color: BRAND.text }}>{attr.strategyName}</h3>
+                      <div className="text-right">
+                        <div className="text-lg font-bold" style={{ color: BRAND.primary }}>{formatCurrency(attr.totalPnl)}</div>
+                        <div className="text-[10px]" style={{ color: BRAND.textMuted }}>{attr.period} · 归因覆盖率 {attr.coverage}%</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2.5">
+                      {attr.slices.map((s) => (
+                        <div key={s.key} className="flex items-center gap-3">
+                          <div className="w-20 text-xs" style={{ color: BRAND.text }}>{s.label}</div>
+                          <div className="flex-1 h-6 rounded relative overflow-hidden" style={{ backgroundColor: BRAND.bg }}>
+                            <div className="h-full rounded flex items-center px-2" style={{ width: (s.contribution / max) * 100 + '%', backgroundColor: s.color }}>
+                              <span className="text-[10px] font-semibold text-white">{s.contribution.toFixed(1)}%</span>
+                            </div>
+                          </div>
+                          <div className="w-32 text-right text-xs" style={{ color: BRAND.textMuted }}>
+                            <span style={{ color: BRAND.text }}>{formatNumber(s.pnl)}</span> · {s.trades.toLocaleString()} 笔
+                          </div>
+                          <div className="w-16 text-right text-xs" style={{ color: BRAND.primary }}>{s.winRate.toFixed(1)}% 胜</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="p-4 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="flex items-center gap-2 text-xs" style={{ color: BRAND.textMuted }}>
+                  <Info size={14} style={{ color: BRAND.primary }} />
+                  <span>归因覆盖率 = 已归因盈亏 / 总盈亏，未覆盖部分可能来自手续费、滑点、跨品种对冲等综合因素。</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'risk' && (
+            <div className="space-y-6">
+              <div className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <ShieldAlert size={18} style={{ color: '#F87171' }} />
+                  风险敞口 · VaR / 压力测试 / 风险预算
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: BRAND.textMuted }}>
+                  实时监控 7 大风险因子敞口与 6 类压力场景，提供 <strong style={{ color: BRAND.text }}>VaR(95%) / VaR(99%) / 期望损失 / 集中度 / 杠杆比</strong> 指标。所有风险数据基于历史波动率与相关性估算，仅用于压力测试演示。
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="text-[10px] mb-1" style={{ color: BRAND.textMuted }}>VaR(95%)</div>
+                  <div className="text-xl font-bold" style={{ color: '#F87171' }}>{formatCurrency(RISK_BUDGET.var95)}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: BRAND.textMuted }}>1 日最大可能损失</div>
+                </div>
+                <div className="p-3 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="text-[10px] mb-1" style={{ color: BRAND.textMuted }}>VaR(99%)</div>
+                  <div className="text-xl font-bold" style={{ color: '#F87171' }}>{formatCurrency(RISK_BUDGET.var99)}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: BRAND.textMuted }}>极端 1% 场景</div>
+                </div>
+                <div className="p-3 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="text-[10px] mb-1" style={{ color: BRAND.textMuted }}>期望损失 (ES)</div>
+                  <div className="text-xl font-bold" style={{ color: '#F87171' }}>{formatCurrency(RISK_BUDGET.expectedShortfall)}</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: BRAND.textMuted }}>尾部平均损失</div>
+                </div>
+                <div className="p-3 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="text-[10px] mb-1" style={{ color: BRAND.textMuted }}>杠杆比</div>
+                  <div className="text-xl font-bold" style={{ color: '#FFB400' }}>{RISK_BUDGET.leverageRatio}x</div>
+                  <div className="text-[10px] mt-0.5" style={{ color: BRAND.textMuted }}>综合杠杆水平</div>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <Gauge size={16} style={{ color: BRAND.primary }} />
+                  风险预算 · 7 大因子敞口
+                </h3>
+                <div className="space-y-2.5">
+                  {RISK_BUDGET.factors.map((f) => (
+                    <div key={f.factor} onClick={() => setDrawer({ open: true, type: 'risk-budget', payload: f.factor })} className="flex items-center gap-3 cursor-pointer hover:opacity-80">
+                      <div className="w-24 text-xs" style={{ color: BRAND.text }}>{f.label}</div>
+                      <div className="flex-1 h-5 rounded relative overflow-hidden" style={{ backgroundColor: BRAND.bg }}>
+                        <div className="h-full rounded" style={{ width: f.utilization + '%', backgroundColor: f.color, opacity: 0.7 }} />
+                        <div className="absolute inset-0 flex items-center px-2 text-[10px]" style={{ color: BRAND.text }}>
+                          <span>{formatNumber(f.exposure)} / {formatNumber(f.limit)}</span>
+                        </div>
+                      </div>
+                      <div className="w-16 text-right text-xs" style={{ color: f.color }}>{f.utilization.toFixed(0)}%</div>
+                      <div className="w-12 text-right">
+                        {f.trend === 'up' && <TrendingUp size={14} style={{ color: '#F87171' }} />}
+                        {f.trend === 'down' && <TrendingDown size={14} style={{ color: BRAND.primary }} />}
+                        {f.trend === 'flat' && <span className="text-xs" style={{ color: BRAND.textMuted }}>—</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-3 pt-3 flex items-center justify-between" style={{ borderTop: `1px solid ${BRAND.border}` }}>
+                  <span className="text-xs" style={{ color: BRAND.textMuted }}>已用 {formatNumber(RISK_BUDGET.used)} / 总额 {formatNumber(RISK_BUDGET.total)} ({((RISK_BUDGET.used/RISK_BUDGET.total)*100).toFixed(0)}%)</span>
+                  <button className="text-xs flex items-center gap-1" style={{ color: BRAND.primary }}>查看详情 <ChevronRight size={12} /></button>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <h3 className="text-sm font-semibold mb-4 flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <AlertOctagon size={16} style={{ color: '#F87171' }} />
+                  压力测试 · 6 类极端场景
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                  {RISK_BUDGET.stress.map((st) => (
+                    <div key={st.id} className="p-3 rounded-lg" style={{ backgroundColor: BRAND.bg, border: `1px solid ${st.breachLimit ? '#F87171' : BRAND.border}` }}>
+                      <div className="flex items-start justify-between mb-1.5">
+                        <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{st.name}</div>
+                        {st.breachLimit && <span className="px-1.5 py-0.5 rounded text-[10px]" style={{ backgroundColor: 'rgba(248,113,113,0.15)', color: '#F87171' }}>超限</span>}
+                      </div>
+                      <div className="text-xs mb-2" style={{ color: BRAND.textMuted }}>{st.description}</div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span style={{ color: '#F87171' }}>预估亏损 {formatNumber(st.estimatedLoss)} (-{st.estimatedLossPct}%)</span>
+                        <span style={{ color: BRAND.textMuted }}>恢复 ≈ {st.recoveryDays} 天</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {tab === 'linked' && (
+            <div className="space-y-6">
+              <div className="p-5 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <h2 className="text-lg font-semibold mb-2 flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <Network size={18} style={{ color: BRAND.primary }} />
+                  互联生态 · 行情-策略-交易-钱包 自动化闭环
+                </h2>
+                <p className="text-sm leading-relaxed" style={{ color: BRAND.textMuted }}>
+                  量化策略中心与 <strong style={{ color: BRAND.text }}>P3.26 衍生品</strong>（对冲/杠杆）+ <strong style={{ color: BRAND.text }}>P3.33 钱包</strong>（资金启用）+ <strong style={{ color: BRAND.text }}>P3.35 自选行情</strong>（信号源）实时联动，形成"行情-策略-交易-钱包"全自动化工作流。
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                  <div className="p-3 rounded-lg text-center" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}>
+                    <div className="text-2xl font-bold" style={{ color: BRAND.primary }}>1</div>
+                    <div className="text-xs mt-1" style={{ color: BRAND.textMuted }}>行情监测</div>
+                  </div>
+                  <div className="text-2xl text-center self-center" style={{ color: BRAND.textMuted }}>→</div>
+                  <div className="p-3 rounded-lg text-center" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}>
+                    <div className="text-2xl font-bold" style={{ color: BRAND.primary }}>2</div>
+                    <div className="text-xs mt-1" style={{ color: BRAND.textMuted }}>策略触发</div>
+                  </div>
+                  <div className="text-2xl text-center self-center" style={{ color: BRAND.textMuted }}>→</div>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                  <div className="p-3 rounded-lg text-center" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}>
+                    <div className="text-2xl font-bold" style={{ color: BRAND.primary }}>3</div>
+                    <div className="text-xs mt-1" style={{ color: BRAND.textMuted }}>交易执行</div>
+                  </div>
+                  <div className="text-2xl text-center self-center" style={{ color: BRAND.textMuted }}>→</div>
+                  <div className="p-3 rounded-lg text-center" style={{ backgroundColor: BRAND.bg, border: `1px solid ${BRAND.border}` }}>
+                    <div className="text-2xl font-bold" style={{ color: BRAND.primary }}>4</div>
+                    <div className="text-xs mt-1" style={{ color: BRAND.textMuted }}>钱包结算</div>
+                  </div>
+                  <div />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {ECOSYSTEM_LINKS.map((link) => {
+                  const statusBadge = (() => {
+                    if (link.status === 'live') return { bg: 'rgba(20,184,129,0.10)', fg: BRAND.primary, label: 'LIVE' };
+                    if (link.status === 'beta') return { bg: 'rgba(255,180,0,0.10)', fg: '#FFB400', label: 'BETA' };
+                    return { bg: 'rgba(176,176,176,0.10)', fg: BRAND.textMuted, label: 'READY' };
+                  })();
+                  return (
+                    <div key={link.id} onClick={() => setDrawer({ open: true, type: 'linked', payload: link.id })} className="p-4 rounded-xl cursor-pointer transition-all hover:scale-[1.02]" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-8 h-8 rounded flex items-center justify-center" style={{ backgroundColor: link.color + '20' }}>
+                            <Network size={14} style={{ color: link.color }} />
+                          </div>
+                          <h3 className="text-sm font-semibold" style={{ color: BRAND.text }}>{link.name}</h3>
+                        </div>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono" style={{ backgroundColor: statusBadge.bg, color: statusBadge.fg, border: `1px solid ${statusBadge.fg}40` }}>{statusBadge.label}</span>
+                      </div>
+                      <p className="text-xs mb-3" style={{ color: BRAND.textMuted, minHeight: 32 }}>{link.description}</p>
+                      <div className="flex items-center justify-between text-xs">
+                        <span style={{ color: BRAND.text }}>{formatNumber(link.throughput)} {link.unit}</span>
+                        <span className="px-2 py-0.5 rounded" style={{ backgroundColor: link.color + '20', color: link.color }}>{link.highlight}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="p-4 rounded-xl" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                <div className="flex items-center gap-2 text-xs" style={{ color: BRAND.textMuted }}>
+                  <Info size={14} style={{ color: BRAND.primary }} />
+                  <span>互联生态提供 UI 跳转演示，跨页面联动需要登录后开启。在实盘环境下，策略信号触发后将自动调度交易与资金划转。</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {tab === 'overview' && (
             <div className="space-y-6">
               {/* 战略叙事 */}
@@ -2133,6 +3213,218 @@ export function PortalQuant() {
                   ))}
                 </div>
                 <button className="w-full py-2.5 rounded-lg text-sm" style={{ backgroundColor: BRAND.primary, color: '#000' }}>进入工具</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {drawer.open && drawer.type === 'parameter' && drawer.payload && (() => {
+        const bt = BACKTESTS.find((b) => b.id === drawer.payload);
+        if (!bt) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={closeDrawer}>
+            <div className="w-full max-w-xl h-full overflow-y-auto pq-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+                <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <Sliders size={16} style={{ color: BRAND.primary }} />
+                  调节参数 · {bt.strategyName}
+                </h3>
+                <button onClick={closeDrawer} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-semibold" style={{ color: BRAND.text }}>历史回测结果</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded" style={{ backgroundColor: 'rgba(20,184,129,0.10)', color: BRAND.primary }}>+{bt.totalReturn.toFixed(1)}% / 年化 {bt.annualizedReturn.toFixed(1)}%</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <Stat label="夏普" value={bt.sharpe.toFixed(2)} />
+                    <Stat label="最大回撤" value={bt.maxDrawdown.toFixed(1) + '%'} />
+                    <Stat label="胜率" value={bt.winRate.toFixed(1) + '%'} />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-semibold mb-2" style={{ color: BRAND.text }}>参数化探索（仅展示，不下单）</div>
+                  <div className="space-y-3">
+                    {bt.parameters.map((p) => (
+                      <div key={p.key} className="p-3 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-sm" style={{ color: BRAND.text }}>{p.label}</span>
+                          <span className="text-sm font-bold tabular-nums" style={{ color: BRAND.primary }}>{p.value} {p.unit}</span>
+                        </div>
+                        <input type="range" min={p.min} max={p.max} step={p.step} defaultValue={p.value} className="w-full" style={{ accentColor: BRAND.primary }} />
+                        <div className="flex items-center justify-between text-[10px] mt-1" style={{ color: BRAND.textMuted }}>
+                          <span>{p.min} {p.unit}</span>
+                          <span>{p.hint}</span>
+                          <span>{p.max} {p.unit}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.bg, border: `1px dashed ${BRAND.border}` }}>
+                  <div className="text-xs leading-relaxed" style={{ color: BRAND.textMuted }}>
+                    <strong style={{ color: BRAND.text }}>说明</strong>：参数化探索仅作为研究辅助，所有收益均为<strong style={{ color: '#F87171' }}>历史业绩模拟</strong>，不构成对未来收益的<strong style={{ color: '#F87171' }}>承诺或保证</strong>。实际交易请以风险预算为约束，详见 <strong style={{ color: BRAND.primary }}>风险敞口</strong> 标签页。
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button className="flex-1 py-2.5 rounded-lg text-sm" style={{ backgroundColor: BRAND.primary, color: '#000' }}>保存为新方案</button>
+                  <button onClick={closeDrawer} className="px-4 py-2.5 rounded-lg text-sm" style={{ backgroundColor: BRAND.card, color: BRAND.text, border: `1px solid ${BRAND.border}` }}>关闭</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {drawer.open && drawer.type === 'risk-budget' && drawer.payload && (() => {
+        const factor = RISK_BUDGET.factors.find((f) => f.factor === drawer.payload);
+        if (!factor) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={closeDrawer}>
+            <div className="w-full max-w-xl h-full overflow-y-auto pq-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+                <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <ShieldAlert size={16} style={{ color: factor.color }} />
+                  风险预算详情 · {factor.label}
+                </h3>
+                <button onClick={closeDrawer} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg" style={{ backgroundColor: factor.color + '20' }}>
+                      <ShieldAlert size={20} style={{ color: factor.color }} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-base font-semibold" style={{ color: BRAND.text }}>{factor.label}</div>
+                      <div className="text-xs mt-0.5" style={{ color: BRAND.textMuted }}>{factor.note}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold" style={{ color: factor.color }}>{factor.utilization.toFixed(1)}%</div>
+                      <div className="text-[10px]" style={{ color: BRAND.textMuted }}>使用率</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <Stat label="当前敞口" value={formatCurrency(factor.exposure)} />
+                  <Stat label="风险贡献" value={factor.contribution.toFixed(1) + '%'} />
+                  <Stat label="风险限额" value={formatCurrency(factor.limit)} />
+                </div>
+
+                <div>
+                  <div className="text-sm font-semibold mb-2" style={{ color: BRAND.text }}>使用率趋势</div>
+                  <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                    <div className="flex items-end gap-1 h-16">
+                      {[42, 48, 52, 49, 55, 58, 62, 64, 61, 63, 64.8].map((v, i) => (
+                        <div key={i} className="flex-1 rounded-t" style={{ height: (v / 100 * 100) + '%', backgroundColor: factor.color, opacity: 0.5 + (i / 11) * 0.5 }} />
+                      ))}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] mt-2" style={{ color: BRAND.textMuted }}>
+                      <span>D-11</span><span>D-7</span><span>D-3</span><span>当前</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="text-sm font-semibold mb-2" style={{ color: BRAND.text }}>风控建议</div>
+                  <div className="space-y-2">
+                    {[
+                      { k: '敞口规模', v: factor.utilization > 70 ? '建议下调 10-15% 释放预算' : factor.utilization > 50 ? '当前合理，建议持续监控' : '敞口偏低，可适度加仓' },
+                      { k: '止损线', v: '建议设置 -8% 移动止损，触发即减仓 30%' },
+                      { k: '对冲工具', v: '可联动 P3.26 衍生品永续对冲（1x-3x）' },
+                    ].map((it) => (
+                      <div key={it.k} className="flex items-start gap-2 p-2.5 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                        <CheckCircle2 size={14} style={{ color: BRAND.primary, marginTop: 2 }} />
+                        <div className="flex-1">
+                          <div className="text-xs" style={{ color: BRAND.textMuted }}>{it.k}</div>
+                          <div className="text-sm" style={{ color: BRAND.text }}>{it.v}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.bg, border: `1px dashed ${BRAND.border}` }}>
+                  <div className="text-xs leading-relaxed" style={{ color: BRAND.textMuted }}>
+                    <strong style={{ color: BRAND.text }}>风险提示</strong>：所有风险指标基于<strong style={{ color: BRAND.text }}>历史波动率</strong>和<strong style={{ color: BRAND.text }}>历史相关性</strong>计算，<strong style={{ color: '#F87171' }}>极端行情下可能失效</strong>。请勿将历史风险数据视为<strong style={{ color: '#F87171' }}>未来损失上限的承诺</strong>。
+                  </div>
+                </div>
+
+                <button onClick={closeDrawer} className="w-full py-2.5 rounded-lg text-sm" style={{ backgroundColor: BRAND.primary, color: '#000' }}>确认并关闭</button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {drawer.open && drawer.type === 'linked' && drawer.payload && (() => {
+        const link = ECOSYSTEM_LINKS.find((l) => l.id === drawer.payload);
+        if (!link) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex justify-end" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }} onClick={closeDrawer}>
+            <div className="w-full max-w-xl h-full overflow-y-auto pq-drawer" style={{ backgroundColor: BRAND.bg, borderLeft: `1px solid ${BRAND.border}` }} onClick={(e) => e.stopPropagation()}>
+              <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-4" style={{ backgroundColor: BRAND.bg, borderBottom: `1px solid ${BRAND.border}` }}>
+                <h3 className="text-base font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+                  <Network size={16} style={{ color: link.color }} />
+                  互联生态 · {link.name}
+                </h3>
+                <button onClick={closeDrawer} className="p-1.5 rounded" style={{ color: BRAND.textMuted }}><X size={18} /></button>
+              </div>
+              <div className="p-5 space-y-4">
+                <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg" style={{ backgroundColor: link.color + '20' }}>
+                      <Network size={20} style={{ color: link.color }} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="text-base font-semibold" style={{ color: BRAND.text }}>{link.name}</div>
+                      <div className="text-xs mt-0.5" style={{ color: BRAND.textMuted }}>{link.highlight}</div>
+                    </div>
+                    <span className="text-[10px] px-2 py-0.5 rounded" style={{ backgroundColor: link.status === 'live' ? 'rgba(20,184,129,0.10)' : 'rgba(255,180,0,0.10)', color: link.status === 'live' ? BRAND.primary : '#FFB400' }}>{link.status === 'live' ? '已上线' : 'BETA'}</span>
+                  </div>
+                </div>
+
+                <p className="text-sm leading-relaxed" style={{ color: BRAND.textMuted }}>{link.description}</p>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <Stat label="当前吞吐" value={link.throughput.toLocaleString()} accent={link.color} />
+                  <Stat label="计量单位" value={link.unit} />
+                </div>
+
+                <div>
+                  <div className="text-sm font-semibold mb-2" style={{ color: BRAND.text }}>联动方式</div>
+                  <div className="space-y-2">
+                    {[
+                      { k: 'API 实时联动', v: '毫秒级信号同步，支持策略触发条件推送' },
+                      { k: '资金自动划转', v: '策略盈利自动转入钱包现货账户' },
+                      { k: '对冲风险同步', v: '敞口变化同步至风险预算中心' },
+                    ].map((it) => (
+                      <div key={it.k} className="flex items-start gap-2 p-2.5 rounded-lg" style={{ backgroundColor: BRAND.card, border: `1px solid ${BRAND.border}` }}>
+                        <CheckCircle2 size={14} style={{ color: link.color, marginTop: 2 }} />
+                        <div className="flex-1">
+                          <div className="text-xs" style={{ color: BRAND.textMuted }}>{it.k}</div>
+                          <div className="text-sm" style={{ color: BRAND.text }}>{it.v}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg" style={{ backgroundColor: BRAND.bg, border: `1px dashed ${BRAND.border}` }}>
+                  <div className="text-xs leading-relaxed" style={{ color: BRAND.textMuted }}>
+                    <strong style={{ color: BRAND.text }}>合规说明</strong>：所有联动数据均经过<strong style={{ color: BRAND.text }}>合规研究方向</strong>校验，不涉及<strong style={{ color: '#F87171' }}>承诺收益 / 保本 / 刚兑</strong>等高风险合规表述。
+                  </div>
+                </div>
+
+                <a href={link.page} className="w-full py-2.5 rounded-lg text-sm flex items-center justify-center gap-1" style={{ backgroundColor: link.color, color: '#000' }}>
+                  前往 {link.name} <ExternalLink size={14} />
+                </a>
               </div>
             </div>
           </div>
