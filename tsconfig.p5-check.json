@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/components/portal-preview/core/config/p5-core-pages.ts",
+    "src/components/portal-preview/core/config/p5-navigation.ts",
+    "src/components/portal-preview/core/config/index.ts"
+  ]
+}
