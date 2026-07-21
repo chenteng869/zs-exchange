@@ -1,0 +1,526 @@
+// ============================================================
+// TAB 1: 总览
+// ============================================================
+function OverviewTab({ onInst, onKyb, onReport }: { onInst: (i: Institution) => void; onKyb: (k: KybApplication) => void; onReport: (r: InstReport) => void }) {
+  return (
+    <div className="space-y-6 inst-stagger">
+      <div className="rounded-xl p-6 border" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center inst-float" style={{ background: 'rgba(20,184,129,0.12)', color: BRAND.primary }}>
+            <BriefcaseBusiness className="w-6 h-6" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-2" style={{ color: BRAND.text }}>机构服务 · 做市商合作 一体化平台</h3>
+            <p className="text-sm mb-3" style={{ color: BRAND.textSub }}>
+              平台聚合 12 家头部机构（含 5 家铂金 / 4 家黄金 / 2 家白银 / 1 家青铜），月成交量 880 亿美元，信用额度总规模 48 亿美元。
+              覆盖机构准入 / KYB 审核 / PB 交易 / 信用额度 / 大宗撮合 / 流动性分成 / 报告白盒 / 风险对冲 / 联合做市 / API 接入全链路。
+            </p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[{ l: '机构数', v: '12', c: BRAND.primary }, { l: '月成交', v: '$88B', c: BRAND.success }, { l: '信用总额', v: '$4.8B', c: BRAND.amber }, { l: 'API 调用', v: '10M/日', c: BRAND.info }].map((x, i) => (
+                <div key={i} className="rounded-lg p-3" style={{ background: 'rgba(20,184,129,0.05)' }}>
+                  <div className="text-xs mb-1" style={{ color: BRAND.textSub }}>{x.l}</div>
+                  <div className="text-xl font-semibold" style={{ color: x.c }}>{x.v}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>头部机构</h3>
+          <span className="text-xs" style={{ color: BRAND.textSub }}>按 AUM 排序</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {INSTITUTIONS.slice(0, 3).map((i) => (
+            <div key={i.id} onClick={() => onInst(i)} className="rounded-xl p-4 border cursor-pointer transition-all" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-semibold" style={{ background: i.iconBg, color: i.iconColor }}>{i.logo}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate" style={{ color: BRAND.text }}>{i.name}</div>
+                  <div className="text-xs" style={{ color: BRAND.textSub }}>{INST_TYPE_LABEL[i.type]}</div>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: TIER_COLOR[i.tier].bg, color: TIER_COLOR[i.tier].color }}>{TIER_COLOR[i.tier].label}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><div style={{ color: BRAND.textSub }}>AUM</div><div className="font-medium" style={{ color: BRAND.text }}>{formatUsd(i.aum)}</div></div>
+                <div><div style={{ color: BRAND.textSub }}>月成交</div><div className="font-medium" style={{ color: BRAND.text }}>{formatUsd(i.monthlyVolume)}</div></div>
+                <div><div style={{ color: BRAND.textSub }}>评级</div><div className="font-medium" style={{ color: BRAND.text }}>⭐ {i.rating.toFixed(1)}</div></div>
+                <div><div style={{ color: BRAND.textSub }}>KYB</div><div className="font-medium" style={{ color: BRAND.success }}>L{i.kybLevel}</div></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>最新 KYB 审核</h3>
+          <span className="text-xs inst-pulse" style={{ color: BRAND.amber }}>● {KYB_APPLICATIONS.filter(k => k.status === 'review' || k.status === 'pending').length} 进行中</span>
+        </div>
+        <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+          {KYB_APPLICATIONS.slice(0, 4).map((k, i) => (
+            <div key={k.id} onClick={() => onKyb(k)} className="flex items-center gap-3 p-3 cursor-pointer" style={{ borderTop: i > 0 ? '1px solid ' + BRAND.border : 'none' }}>
+              <div className="w-8 h-8 rounded-md flex items-center justify-center" style={{ background: statusBadge(k.status).bg, color: statusBadge(k.status).color }}>
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm truncate" style={{ color: BRAND.text }}>{k.institution}</div>
+                <div className="text-xs" style={{ color: BRAND.textSub }}>{k.id} · {REVIEW_STAGE_LABEL[k.reviewStage]} · 进度 {k.progress}%</div>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(k.status).bg, color: statusBadge(k.status).color }}>{statusBadge(k.status).label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+        <div className="flex items-center gap-2 mb-3">
+          <Lightbulb className="w-4 h-4" style={{ color: BRAND.amber }} />
+          <h3 className="text-sm font-semibold" style={{ color: BRAND.text }}>机构服务市场洞察</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs" style={{ color: BRAND.textSub }}>
+          <div>· 全球机构加密资产持仓占比 2024 年 18% 升至 2026 年 38%</div>
+          <div>· 顶级做市商平均吃单率（taker ratio）从 2023 年 28% 降至 2026 年 14%</div>
+          <div>· PB 交易 API 流量是 Web 端流量的 96 倍</div>
+          <div>· 信用额度平均利用率 42%，3 家铂金机构超过 60%</div>
+          <div>· 大宗撮合平均折扣 -0.0012（-12 bps），T+2 链上结算占比 88%</div>
+          <div>· 流动性分成 tier1 返佣率 2.5 bps，机构平均收入贡献 1.2M USD / Q</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 2: 机构
+// ============================================================
+function InstitutionTab({ institutions, onSelect }: { institutions: Institution[]; onSelect: (i: Institution) => void }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 inst-stagger">
+      {institutions.map((i) => (
+        <div key={i.id} onClick={() => onSelect(i)} className="rounded-xl p-4 border cursor-pointer transition-all" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-12 h-12 rounded-lg flex items-center justify-center text-base font-semibold" style={{ background: i.iconBg, color: i.iconColor }}>{i.logo}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate" style={{ color: BRAND.text }}>{i.name}</div>
+              <div className="text-xs truncate" style={{ color: BRAND.textSub }}>{i.legalName}</div>
+            </div>
+            <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: TIER_COLOR[i.tier].bg, color: TIER_COLOR[i.tier].color }}>{TIER_COLOR[i.tier].label}</span>
+          </div>
+          <p className="text-xs mb-3 line-clamp-2" style={{ color: BRAND.textSub }}>{i.services.join(' / ')}</p>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div><div style={{ color: BRAND.textSub }}>AUM</div><div className="font-medium" style={{ color: BRAND.text }}>{formatUsd(i.aum)}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>月成交</div><div className="font-medium" style={{ color: BRAND.text }}>{formatUsd(i.monthlyVolume)}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>评级</div><div className="font-medium" style={{ color: BRAND.text }}>⭐ {i.rating.toFixed(1)}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>状态</div><div className="font-medium" style={{ color: statusBadge(i.status).color }}>{statusBadge(i.status).label}</div></div>
+          </div>
+          <div className="flex flex-wrap gap-1 mt-3">
+            {i.tags.slice(0, 3).map((t, idx) => (
+              <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>#{t}</span>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 3: KYB
+// ============================================================
+function KybTab({ applications, onSelect }: { applications: KybApplication[]; onSelect: (k: KybApplication) => void }) {
+  return (
+    <div className="space-y-2 inst-stagger">
+      {applications.map((k) => (
+        <div key={k.id} onClick={() => onSelect(k)} className="rounded-xl p-4 border cursor-pointer" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style={{ background: statusBadge(k.status).bg, color: statusBadge(k.status).color }}>
+              <ShieldCheck className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between mb-1">
+                <div className="text-sm font-medium" style={{ color: BRAND.text }}>{k.institution}</div>
+                <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(k.status).bg, color: statusBadge(k.status).color }}>{statusBadge(k.status).label}</span>
+              </div>
+              <div className="text-xs mb-2" style={{ color: BRAND.textSub }}>{k.id} · {k.type} · 提交 {k.submittedAt.split(' ')[0]}</div>
+              <div className="flex items-center gap-3 text-xs" style={{ color: BRAND.textSub }}>
+                <span>当前阶段：{REVIEW_STAGE_LABEL[k.reviewStage]}</span>
+                <span>·</span>
+                <span>审核员 {k.reviewer}</span>
+                <span>·</span>
+                <span>剩余 SLA {k.estimatedDays} 天</span>
+              </div>
+              <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+                <div className="h-full inst-bar" style={{ width: k.progress + '%', background: k.progress === 100 ? BRAND.success : BRAND.primary }}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 4: PB 交易
+// ============================================================
+function PbTab({ trades, onSelect }: { trades: PbTrade[]; onSelect: (t: PbTrade) => void }) {
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>
+            <th className="text-left p-3 text-xs">时间</th>
+            <th className="text-left p-3 text-xs">机构</th>
+            <th className="text-left p-3 text-xs">品种</th>
+            <th className="text-left p-3 text-xs">方向</th>
+            <th className="text-right p-3 text-xs">数量</th>
+            <th className="text-right p-3 text-xs">价格</th>
+            <th className="text-right p-3 text-xs">成交额</th>
+            <th className="text-right p-3 text-xs">返佣</th>
+            <th className="text-center p-3 text-xs">状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trades.map((t, i) => (
+            <tr key={t.id} onClick={() => onSelect(t)} className="cursor-pointer inst-stagger" style={{ borderTop: i > 0 ? '1px solid ' + BRAND.border : 'none', color: BRAND.text }}>
+              <td className="p-3 text-xs" style={{ color: BRAND.textSub }}>{t.executedAt.split(' ')[1]}</td>
+              <td className="p-3 text-xs">{t.institution}</td>
+              <td className="p-3 text-xs font-mono">{t.symbol}</td>
+              <td className="p-3 text-xs">
+                <span className="px-2 py-0.5 rounded" style={{ background: t.side === 'buy' ? BRAND.successLt : BRAND.dangerLt, color: t.side === 'buy' ? BRAND.success : BRAND.danger }}>{t.side.toUpperCase()}</span>
+              </td>
+              <td className="p-3 text-xs text-right tabular-nums">{t.qty.toLocaleString()}</td>
+              <td className="p-3 text-xs text-right tabular-nums">${'$'}{t.price.toLocaleString()}</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: BRAND.primary }}>{formatUsd(t.value)}</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: BRAND.amber }}>{formatUsd(t.rebate)}</td>
+              <td className="p-3 text-xs text-center">
+                <span className="px-2 py-0.5 rounded" style={{ background: statusBadge(t.status).bg, color: statusBadge(t.status).color }}>{statusBadge(t.status).label}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 5: 信用额度
+// ============================================================
+function CreditTab({ lines, onSelect }: { lines: CreditLine[]; onSelect: (l: CreditLine) => void }) {
+  return (
+    <div className="space-y-3 inst-stagger">
+      {lines.map((l) => {
+        const utilization = (l.used / l.total) * 100;
+        const barColor = utilization >= 80 ? BRAND.danger : utilization >= 60 ? BRAND.amber : BRAND.primary;
+        return (
+          <div key={l.id} onClick={() => onSelect(l)} className="rounded-xl p-4 border cursor-pointer" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(20,184,129,0.10)', color: BRAND.primary }}>
+                  <BadgeDollarSign className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: BRAND.text }}>{l.institution}</div>
+                  <div className="text-xs" style={{ color: BRAND.textSub }}>{l.id} · 到期 {l.expiresAt}</div>
+                </div>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(l.status).bg, color: statusBadge(l.status).color }}>{statusBadge(l.status).label}</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs mb-2">
+              <div><span style={{ color: BRAND.textSub }}>总额度：</span><span style={{ color: BRAND.text }}>{formatUsd(l.total)}</span></div>
+              <div><span style={{ color: BRAND.textSub }}>已用：</span><span style={{ color: barColor }}>{formatUsd(l.used)}</span></div>
+              <div><span style={{ color: BRAND.textSub }}>可用：</span><span style={{ color: BRAND.success }}>{formatUsd(l.available)}</span></div>
+              <div><span style={{ color: BRAND.textSub }}>利率：</span><span style={{ color: BRAND.text }}>{(l.rate * 100).toFixed(2)}%</span></div>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+              <div className="h-full inst-bar" style={{ width: utilization + '%', background: barColor }}></div>
+            </div>
+            <div className="flex items-center justify-between text-[10px] mt-1" style={{ color: BRAND.textMute }}>
+              <span>利用率 {utilization.toFixed(1)}%</span>
+              <span>抵押率 {l.collateralRatio.toFixed(1)}x</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 6: 大宗撮合
+// ============================================================
+function BlockTab({ trades, onSelect }: { trades: BlockTrade[]; onSelect: (t: BlockTrade) => void }) {
+  return (
+    <div className="space-y-3 inst-stagger">
+      {trades.map((b) => (
+        <div key={b.id} onClick={() => onSelect(b)} className="rounded-xl p-4 border cursor-pointer" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2 py-0.5 rounded" style={{ background: b.side === 'buy' ? BRAND.successLt : BRAND.dangerLt, color: b.side === 'buy' ? BRAND.success : BRAND.danger }}>{b.side.toUpperCase()}</span>
+              <span className="text-sm font-medium font-mono" style={{ color: BRAND.text }}>{b.symbol}</span>
+              <span className="text-xs" style={{ color: BRAND.textSub }}>{b.id}</span>
+            </div>
+            <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(b.status).bg, color: statusBadge(b.status).color }}>{statusBadge(b.status).label}</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 text-xs">
+            <div><div style={{ color: BRAND.textSub }}>买方</div><div style={{ color: BRAND.text }}>{b.buyer}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>卖方</div><div style={{ color: BRAND.text }}>{b.seller}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>数量</div><div className="tabular-nums" style={{ color: BRAND.text }}>{b.qty.toLocaleString()}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>价格</div><div className="tabular-nums" style={{ color: BRAND.text }}>${'$'}{b.price.toLocaleString()}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>成交额</div><div className="tabular-nums" style={{ color: BRAND.primary }}>{formatUsd(b.value)}</div></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 7: 流动性分成
+// ============================================================
+function LiquidityTab({ shares, onSelect }: { shares: LiquidityShare[]; onSelect: (s: LiquidityShare) => void }) {
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>
+            <th className="text-left p-3 text-xs">机构</th>
+            <th className="text-left p-3 text-xs">池</th>
+            <th className="text-right p-3 text-xs">份额</th>
+            <th className="text-right p-3 text-xs">返佣率</th>
+            <th className="text-right p-3 text-xs">返佣金额</th>
+            <th className="text-right p-3 text-xs">价差捕获</th>
+            <th className="text-right p-3 text-xs">Uptime</th>
+            <th className="text-right p-3 text-xs">质量</th>
+            <th className="text-center p-3 text-xs">状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {shares.map((s, i) => (
+            <tr key={s.id} onClick={() => onSelect(s)} className="cursor-pointer inst-stagger" style={{ borderTop: i > 0 ? '1px solid ' + BRAND.border : 'none', color: BRAND.text }}>
+              <td className="p-3 text-xs">{s.institution}</td>
+              <td className="p-3 text-xs" style={{ color: BRAND.textSub }}>{s.pool}</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: BRAND.primary }}>{(s.volumeShare * 100).toFixed(1)}%</td>
+              <td className="p-3 text-xs text-right tabular-nums">{(s.rebateRate * 10000).toFixed(1)} bps</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: BRAND.amber }}>{formatUsd(s.rebateAmount)}</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: BRAND.success }}>{formatUsd(s.spreadCaptured)}</td>
+              <td className="p-3 text-xs text-right tabular-nums">{(s.uptime * 100).toFixed(1)}%</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: s.qualityScore >= 90 ? BRAND.success : s.qualityScore >= 70 ? BRAND.amber : BRAND.danger }}>{s.qualityScore}</td>
+              <td className="p-3 text-xs text-center">
+                <span className="px-2 py-0.5 rounded" style={{ background: statusBadge(s.status).bg, color: statusBadge(s.status).color }}>{statusBadge(s.status).label}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 8: 报告白盒
+// ============================================================
+function ReportTab({ reports, onSelect }: { reports: InstReport[]; onSelect: (r: InstReport) => void }) {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 inst-stagger">
+      {reports.map((r) => (
+        <div key={r.id} onClick={() => onSelect(r)} className="rounded-xl p-4 border cursor-pointer" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-md flex items-center justify-center" style={{ background: r.compliance ? 'rgba(20,184,129,0.12)' : 'rgba(255,169,64,0.12)', color: r.compliance ? BRAND.primary : BRAND.amber }}>
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium truncate" style={{ color: BRAND.text }}>{r.title}</div>
+              <div className="text-xs" style={{ color: BRAND.textSub }}>{r.id} · {r.type} · {r.format.toUpperCase()}</div>
+            </div>
+            <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(r.status).bg, color: statusBadge(r.status).color }}>{statusBadge(r.status).label}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
+            <div><div style={{ color: BRAND.textSub }}>页数</div><div style={{ color: BRAND.text }}>{r.pages}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>数据点</div><div style={{ color: BRAND.text }}>{formatInt(r.dataPoints)}</div></div>
+            <div><div style={{ color: BRAND.textSub }}>大小</div><div style={{ color: BRAND.text }}>{formatBytes(r.size)}</div></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 9: 风险对冲
+// ============================================================
+function HedgeTab({ items, onSelect }: { items: HedgeInterface[]; onSelect: (h: HedgeInterface) => void }) {
+  return (
+    <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+      <table className="w-full text-sm">
+        <thead>
+          <tr style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>
+            <th className="text-left p-3 text-xs">机构</th>
+            <th className="text-left p-3 text-xs">产品</th>
+            <th className="text-left p-3 text-xs">类型</th>
+            <th className="text-right p-3 text-xs">名义本金</th>
+            <th className="text-right p-3 text-xs">Delta</th>
+            <th className="text-right p-3 text-xs">对冲率</th>
+            <th className="text-right p-3 text-xs">PnL</th>
+            <th className="text-center p-3 text-xs">状态</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((h, i) => (
+            <tr key={h.id} onClick={() => onSelect(h)} className="cursor-pointer inst-stagger" style={{ borderTop: i > 0 ? '1px solid ' + BRAND.border : 'none', color: BRAND.text }}>
+              <td className="p-3 text-xs">{h.institution}</td>
+              <td className="p-3 text-xs font-mono">{h.product}</td>
+              <td className="p-3 text-xs"><span className="px-2 py-0.5 rounded" style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>{h.type.toUpperCase()}</span></td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: BRAND.primary }}>{formatUsd(h.notional)}</td>
+              <td className="p-3 text-xs text-right tabular-nums">{h.delta.toFixed(2)}</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: h.hedgeRatio >= 0.9 ? BRAND.success : h.hedgeRatio >= 0.75 ? BRAND.amber : BRAND.danger }}>{(h.hedgeRatio * 100).toFixed(0)}%</td>
+              <td className="p-3 text-xs text-right tabular-nums" style={{ color: h.pnl >= 0 ? BRAND.success : BRAND.danger }}>{formatUsd(h.pnl)}</td>
+              <td className="p-3 text-xs text-center">
+                <span className="px-2 py-0.5 rounded" style={{ background: statusBadge(h.status).bg, color: statusBadge(h.status).color }}>{statusBadge(h.status).label}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 10: 联合做市
+// ============================================================
+function MmTab({ partnerships, onSelect }: { partnerships: MmPartnership[]; onSelect: (m: MmPartnership) => void }) {
+  return (
+    <div className="space-y-3 inst-stagger">
+      {partnerships.map((m) => (
+        <div key={m.id} onClick={() => onSelect(m)} className="rounded-xl p-4 border cursor-pointer" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(20,184,129,0.12)', color: BRAND.primary }}>
+                <CoinsIcon className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-sm font-medium" style={{ color: BRAND.text }}>{m.institution}</div>
+                <div className="text-xs" style={{ color: BRAND.textSub }}>{m.id} · {m.pairs.length} 个交易对 · 合约 {m.contractStart} ~ {m.contractEnd}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: m.tier === 'tier1' ? 'rgba(20,184,129,0.15)' : BRAND.bgCardHover, color: m.tier === 'tier1' ? BRAND.primary : BRAND.textSub }}>{m.tier.toUpperCase()}</span>
+              <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(m.status).bg, color: statusBadge(m.status).color }}>{statusBadge(m.status).label}</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+            <div><span style={{ color: BRAND.textSub }}>深度：</span><span style={{ color: BRAND.text }}>{formatUsd(m.depthUsd)}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>24H 量：</span><span style={{ color: BRAND.text }}>{formatUsd(m.volume24h)}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>Uptime：</span><span style={{ color: BRAND.success }}>{(m.uptime * 100).toFixed(1)}%</span></div>
+            <div><span style={{ color: BRAND.textSub }}>质量：</span><span style={{ color: BRAND.text }}>{m.qualityScore} / 100</span></div>
+            <div><span style={{ color: BRAND.textSub }}>返佣：</span><span style={{ color: BRAND.amber }}>{(m.rebate * 10000).toFixed(1)} bps</span></div>
+            <div><span style={{ color: BRAND.textSub }}>库存：</span><span style={{ color: BRAND.text }}>{formatUsd(m.inventory)}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>风险限额：</span><span style={{ color: BRAND.text }}>{formatUsd(m.riskLimit)}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>分成：</span><span style={{ color: BRAND.primary }}>{(m.revenueShare * 100).toFixed(0)}%</span></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 11: API 接入
+// ============================================================
+function ApiTab({ credentials, onSelect }: { credentials: ApiCredential[]; onSelect: (a: ApiCredential) => void }) {
+  return (
+    <div className="space-y-3 inst-stagger">
+      {credentials.map((a) => {
+        const usagePct = (a.used / a.rateLimit) * 100;
+        return (
+          <div key={a.id} onClick={() => onSelect(a)} className="rounded-xl p-4 border cursor-pointer" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: 'rgba(68,219,244,0.12)', color: BRAND.info }}>
+                  <Code className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium" style={{ color: BRAND.text }}>{a.name}</div>
+                  <div className="text-xs font-mono" style={{ color: BRAND.textSub }}>{a.id} · {a.signature.toUpperCase()}</div>
+                </div>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(a.status).bg, color: statusBadge(a.status).color }}>{statusBadge(a.status).label}</span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+              <div><span style={{ color: BRAND.textSub }}>机构：</span><span style={{ color: BRAND.text }}>{a.institution}</span></div>
+              <div><span style={{ color: BRAND.textSub }}>类型：</span><span style={{ color: BRAND.text }}>{a.type}</span></div>
+              <div><span style={{ color: BRAND.textSub }}>区域：</span><span style={{ color: BRAND.text }}>{a.region}</span></div>
+              <div><span style={{ color: BRAND.textSub }}>24H 调用：</span><span style={{ color: BRAND.text }}>{formatInt(a.calls24h)}</span></div>
+            </div>
+            <div className="mt-2 h-1.5 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+              <div className="h-full inst-bar" style={{ width: usagePct + '%', background: usagePct >= 80 ? BRAND.danger : usagePct >= 60 ? BRAND.amber : BRAND.primary }}></div>
+            </div>
+            <div className="flex items-center justify-between text-[10px] mt-1" style={{ color: BRAND.textMute }}>
+              <span>限速 {a.rateLimit}/s · 当前 {a.used}/s</span>
+              <span>IP 白名单 {a.ipWhitelist.length} 个</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 12: 帮助
+// ============================================================
+function HelpTab({ onOpen }: { onOpen: () => void }) {
+  return (
+    <div className="space-y-4 inst-stagger">
+      <div className="rounded-xl p-6 border" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+        <div className="flex items-center gap-3 mb-3">
+          <HelpCircle className="w-5 h-5" style={{ color: BRAND.primary }} />
+          <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>机构服务与做市商合作 · 帮助中心</h3>
+        </div>
+        <p className="text-sm mb-4" style={{ color: BRAND.textSub }}>以下为常见问题解答、快捷键指南、合规说明与平台能力概览。</p>
+        <button onClick={onOpen} className="px-4 py-2 rounded-md text-sm" style={{ background: BRAND.primary, color: BRAND.onPrimary }}>打开完整帮助</button>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {[
+          { q: '如何申请成为合作机构？', a: '在"机构" Tab 点击"申请入驻"，填写机构基本信息、UBO 穿透、AML 资料，提交后进入 KYB 审核流程（5-7 工作日）。' },
+          { q: '信用额度如何评估？', a: '基于机构 AUM / 风险评分 / 抵押率 / 历史履约综合评估；铂金机构最高 50 亿美元；信用额度按季度复审。' },
+          { q: '做市商返佣如何结算？', a: '按月结算，下月 5 日自动发放至机构账户；tier1 返佣 2.5 bps，tier2 返佣 1.8 bps，tier3 返佣 1.0 bps。' },
+          { q: '大宗撮合 T+2 结算如何工作？', a: '撮合完成后，买卖双方资产分别锁定在托管账户；T+2 链上结算时同步划转；T+1 加急服务仅对铂金机构开放。' },
+          { q: 'API 调用频率限制？', a: '默认 200-1000 次/秒，可按需申请扩容；PB 交易 API 延迟 SLA P99 < 50ms；行情 API P99 < 10ms。' },
+          { q: '白盒报告支持哪些格式？', a: 'PDF / XLSX / HTML / CSV；支持自定义白标（机构 Logo + 色系）；周报 / 月报 / 季报 / 半年报 / 年报 / 审计报告。' },
+        ].map((x, i) => (
+          <div key={i} className="rounded-xl p-4 border" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+            <div className="text-sm font-medium mb-2" style={{ color: BRAND.text }}>{x.q}</div>
+            <p className="text-xs" style={{ color: BRAND.textSub }}>{x.a}</p>
+          </div>
+        ))}
+      </div>
+      <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+        <div className="text-sm font-semibold mb-2" style={{ color: BRAND.text }}>快捷键</div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+          {[{ k: '/', d: '聚焦搜索框' }, { k: 'Esc', d: '关闭 Drawer' }, { k: 'Tab', d: '切换主分区' }, { k: 'Enter', d: '打开选中项详情' }].map((x, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <kbd className="px-2 py-0.5 rounded font-mono" style={{ background: BRAND.bgCardHover, color: BRAND.text, border: '1px solid ' + BRAND.border }}>{x.k}</kbd>
+              <span style={{ color: BRAND.textSub }}>{x.d}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-xl p-4 border" style={{ background: 'rgba(20,184,129,0.05)', borderColor: BRAND.border }}>
+        <div className="text-sm font-semibold mb-2" style={{ color: BRAND.text }}>合规说明</div>
+        <ul className="text-xs space-y-1" style={{ color: BRAND.textSub }}>
+          <li>· 机构服务与做市商合作仅作技术能力演示，不构成投资建议</li>
+          <li>· 平台所有 KYB / AML / 制裁筛查均严格遵循合规研究方向示例</li>
+          <li>· 机构服务不承诺收益 / 保本 / 刚兑 / 稳赚 / 担保</li>
+          <li>· 机构服务区域为合规研究方向示例，定性为研究 / 工具 / 辅助</li>
+          <li>· 平台持续开展合规自查、KYB 尽调、KYC 更新、利用冲突检查</li>
+        </ul>
+      </div>
+    </div>
+  );
+}

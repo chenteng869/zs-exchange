@@ -1,0 +1,569 @@
+// ============================================================
+// 通用 Drawer
+// ============================================================
+function DrawerHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center justify-between p-4" style={{ background: BRAND.bg, borderBottom: '1px solid ' + BRAND.border }}>
+      <div className="min-w-0 flex-1">
+        <h2 className="text-lg font-bold truncate" style={{ color: BRAND.text }}>{title}</h2>
+        {subtitle && <p className="text-[11px] mt-1" style={{ color: BRAND.textSub }}>{subtitle}</p>}
+      </div>
+      <button onClick={onClose} className="ml-3 p-2 rounded-lg hover:scale-110 transition-transform" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+        <X size={16} style={{ color: BRAND.textSub }} />
+      </button>
+    </div>
+  );
+}
+
+function DrawerShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.65)' }} onClick={onClose}></div>
+      <div className="ml-auto w-full max-w-2xl h-full overflow-y-auto inst-slide-in" style={{ background: BRAND.bg, borderLeft: '1px solid ' + BRAND.border }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DrawerKv({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="p-3 rounded-lg" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+      <div className="text-[10px] mb-1" style={{ color: BRAND.textSub }}>{label}</div>
+      <div className="text-sm font-bold tabular-nums truncate" style={{ color: color || BRAND.text }}>{value}</div>
+    </div>
+  );
+}
+
+function DrawerSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl p-4" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+      <h3 className="text-xs font-semibold mb-3" style={{ color: BRAND.text }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+// ============================================================
+// DRAWER 1: Institution
+// ============================================================
+function InstitutionDrawer({ inst, onClose }: { inst: Institution; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={inst.name} subtitle={inst.legalName + ' · ' + INST_TYPE_LABEL[inst.type]} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl font-semibold" style={{ background: inst.iconBg, color: inst.iconColor }}>{inst.logo}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold" style={{ color: BRAND.text }}>{inst.name}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{inst.region} · {inst.jurisdiction}</div>
+            <div className="flex flex-wrap gap-1 mt-1">
+              <span className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: TIER_COLOR[inst.tier].bg, color: TIER_COLOR[inst.tier].color }}>{TIER_COLOR[inst.tier].label}级</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: statusBadge(inst.status).bg, color: statusBadge(inst.status).color }}>{statusBadge(inst.status).label}</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>⭐ {inst.rating.toFixed(1)}</span>
+            </div>
+          </div>
+        </div>
+        <p className="text-sm" style={{ color: BRAND.textSub }}>联系方式：{inst.contact} · {inst.email}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="AUM" value={formatUsd(inst.aum)} color={BRAND.primary} />
+          <DrawerKv label="月成交" value={formatUsd(inst.monthlyVolume)} color={BRAND.success} />
+          <DrawerKv label="子账户" value={String(inst.accounts)} />
+          <DrawerKv label="风险评分" value={String(inst.riskScore)} color={inst.riskScore < 20 ? BRAND.success : inst.riskScore < 35 ? BRAND.amber : BRAND.danger} />
+          <DrawerKv label="KYB 等级" value={'L' + inst.kybLevel} color={BRAND.success} />
+          <DrawerKv label="KYB 状态" value={statusBadge(inst.kybStatus).label} color={statusBadge(inst.kybStatus).color} />
+          <DrawerKv label="合规标记" value={String(inst.complianceFlags)} color={inst.complianceFlags === 0 ? BRAND.success : BRAND.amber} />
+          <DrawerKv label="评级" value={'⭐ ' + inst.rating.toFixed(1)} />
+        </div>
+        <DrawerSection title="合作服务">
+          <div className="flex flex-wrap gap-1.5">
+            {inst.services.map((s, i) => (
+              <span key={i} className="text-[10px] px-2 py-1 rounded-md" style={{ background: 'rgba(20,184,129,0.10)', color: BRAND.primary }}>{s}</span>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="标签">
+          <div className="flex flex-wrap gap-1.5">
+            {inst.tags.map((t, i) => (
+              <span key={i} className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>#{t}</span>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="合约 / 时间">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>入驻：</span><span style={{ color: BRAND.text }}>{inst.joinedAt}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>合约到期：</span><span style={{ color: BRAND.text }}>{inst.contractEnd}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>合作时长：</span><span style={{ color: BRAND.text }}>{Math.round((new Date(inst.contractEnd).getTime() - new Date(inst.joinedAt).getTime()) / (1000 * 60 * 60 * 24 * 30))} 个月</span></div>
+            <div><span style={{ color: BRAND.textSub }}>合约状态：</span><span style={{ color: BRAND.success }}>履约中</span></div>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 2: KybApplication
+// ============================================================
+function KybDrawer({ app, onClose }: { app: KybApplication; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={app.institution} subtitle={app.id + ' · ' + app.type} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-base font-semibold" style={{ color: BRAND.text }}>{app.institution}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>提交 {app.submittedAt}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md font-semibold" style={{ background: statusBadge(app.status).bg, color: statusBadge(app.status).color }}>{statusBadge(app.status).label}</span>
+        </div>
+        <div className="rounded-xl p-3" style={{ background: 'rgba(20,184,129,0.05)' }}>
+          <div className="flex items-center justify-between text-[11px] mb-1" style={{ color: BRAND.textSub }}>
+            <span>当前阶段：{REVIEW_STAGE_LABEL[app.reviewStage]}</span>
+            <span>审核员 {app.reviewer}</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+            <div className="h-full inst-bar" style={{ width: app.progress + '%', background: app.progress === 100 ? BRAND.success : BRAND.primary }}></div>
+          </div>
+          <div className="text-[10px] mt-1" style={{ color: BRAND.textMute }}>总进度 {app.progress}%</div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="文件数" value={String(app.documents)} />
+          <DrawerKv label="缺失文件" value={String(app.missingDocs)} color={app.missingDocs > 0 ? BRAND.amber : BRAND.success} />
+          <DrawerKv label="合规标记" value={String(app.flags)} color={app.flags > 0 ? BRAND.amber : BRAND.success} />
+          <DrawerKv label="风险等级" value={statusBadge(app.riskLevel).label} color={statusBadge(app.riskLevel).color} />
+          <DrawerKv label="UBO 数量" value={String(app.uboCount)} />
+          <DrawerKv label="AML 命中" value={String(app.amlHits)} color={app.amlHits > 0 ? BRAND.amber : BRAND.success} />
+          <DrawerKv label="制裁命中" value={String(app.sanctionsHits)} color={app.sanctionsHits > 0 ? BRAND.danger : BRAND.success} />
+          <DrawerKv label="剩余 SLA" value={app.estimatedDays + ' 天'} color={app.estimatedDays <= 1 ? BRAND.danger : BRAND.amber} />
+        </div>
+        <DrawerSection title="审核阶段">
+          <div className="space-y-1.5 text-[11px]">
+            {(['documents', 'ubo', 'aml', 'sanctions', 'final'] as ReviewStage[]).map((s, i) => {
+              const isCurrent = s === app.reviewStage;
+              const isPast = (['documents', 'ubo', 'aml', 'sanctions', 'final'] as ReviewStage[]).indexOf(app.reviewStage) > i;
+              return (
+                <div key={s} className="flex items-center gap-2">
+                  {isPast ? <CheckCircle className="w-3 h-3" style={{ color: BRAND.success }} /> : isCurrent ? <Activity className="w-3 h-3 inst-pulse" style={{ color: BRAND.primary }} /> : <CircleDot className="w-3 h-3" style={{ color: BRAND.textMute }} />}
+                  <span style={{ color: isCurrent ? BRAND.primary : isPast ? BRAND.text : BRAND.textMute }}>{REVIEW_STAGE_LABEL[s]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="审核备注">
+          <p className="text-[11px]" style={{ color: BRAND.textSub }}>{app.notes}</p>
+        </DrawerSection>
+        <DrawerSection title="合规研究方向">
+          <p className="text-[11px]" style={{ color: BRAND.textSub }}>司法管辖区：{app.jurisdiction} · KYB / AML / 制裁筛查为合规研究方向示例，定性为研究 / 工具 / 辅助。</p>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 3: PbTrade
+// ============================================================
+function PbDrawer({ trade, onClose }: { trade: PbTrade; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={trade.id} subtitle={trade.symbol + ' · ' + trade.institution} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: trade.side === 'buy' ? 'rgba(14,203,129,0.12)' : 'rgba(246,70,93,0.10)', color: trade.side === 'buy' ? BRAND.success : BRAND.danger }}>
+            {trade.side === 'buy' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{trade.side.toUpperCase()} {trade.qty.toLocaleString()} {trade.symbol}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>@{'$'}{trade.price.toLocaleString()} · {trade.executedAt}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(trade.status).bg, color: statusBadge(trade.status).color }}>{statusBadge(trade.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="成交价" value={'$' + trade.price.toLocaleString()} />
+          <DrawerKv label="数量" value={trade.qty.toLocaleString()} />
+          <DrawerKv label="成交额" value={formatUsd(trade.value)} color={BRAND.primary} />
+          <DrawerKv label="手续费" value={formatUsd(trade.fee)} color={BRAND.amber} />
+          <DrawerKv label="返佣" value={formatUsd(trade.rebate)} color={BRAND.success} />
+          <DrawerKv label="净费" value={formatUsd(trade.fee - trade.rebate)} color={BRAND.amber} />
+          <DrawerKv label="杠杆" value={trade.leverage + 'x'} color={trade.leverage > 1 ? BRAND.amber : BRAND.text} />
+          <DrawerKv label="信用占用" value={formatUsd(trade.creditUsed)} color={BRAND.amber} />
+        </div>
+        <DrawerSection title="成交环境">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>场所：</span><span style={{ color: BRAND.text }}>{trade.venue}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>对手方：</span><span style={{ color: BRAND.text }}>{trade.counterparty}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>结算：</span><span style={{ color: BRAND.text }}>T+{trade.settlementT}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>流动性：</span><span style={{ color: statusBadge(trade.liquidity).color }}>{statusBadge(trade.liquidity).label}</span></div>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 4: CreditLine
+// ============================================================
+function CreditDrawer({ line, onClose }: { line: CreditLine; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={line.institution + ' · 信用额度'} subtitle={line.id} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-base font-semibold" style={{ color: BRAND.text }}>{line.institution}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{line.id} · 到期 {line.expiresAt}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md font-semibold" style={{ background: statusBadge(line.status).bg, color: statusBadge(line.status).color }}>{statusBadge(line.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="总额度" value={formatUsd(line.total)} color={BRAND.primary} />
+          <DrawerKv label="已用" value={formatUsd(line.used)} color={BRAND.amber} />
+          <DrawerKv label="可用" value={formatUsd(line.available)} color={BRAND.success} />
+          <DrawerKv label="利用率" value={line.utilizationPct.toFixed(1) + '%'} color={line.utilizationPct > 0.7 ? BRAND.danger : line.utilizationPct > 0.5 ? BRAND.amber : BRAND.success} />
+          <DrawerKv label="利率" value={(line.rate * 100).toFixed(2) + '%'} />
+          <DrawerKv label="抵押率" value={line.collateralRatio.toFixed(1) + 'x'} />
+          <DrawerKv label="抵押价值" value={formatUsd(line.collateralUsd)} />
+          <DrawerKv label="LVR" value={line.lvr.toFixed(2)} color={line.lvr > 0.7 ? BRAND.danger : BRAND.text} />
+        </div>
+        <DrawerSection title="风控阈值">
+          <div className="space-y-1.5 text-[11px]">
+            <div className="flex items-center justify-between"><span style={{ color: BRAND.textSub }}>追保线：</span><span style={{ color: BRAND.amber }}>{formatUsd(line.marginCall)}</span></div>
+            <div className="flex items-center justify-between"><span style={{ color: BRAND.textSub }}>强平线：</span><span style={{ color: BRAND.danger }}>{formatUsd(line.liquidationLine)}</span></div>
+            <div className="flex items-center justify-between"><span style={{ color: BRAND.textSub }}>已用：</span><span style={{ color: BRAND.text }}>{formatUsd(line.used)}</span></div>
+          </div>
+        </DrawerSection>
+        <DrawerSection title="复审计划">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>上次复审：</span><span style={{ color: BRAND.text }}>{line.lastReview}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>下次复审：</span><span style={{ color: BRAND.text }}>{line.nextReview}</span></div>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 5: BlockTrade
+// ============================================================
+function BlockDrawer({ trade, onClose }: { trade: BlockTrade; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={trade.blockId} subtitle={trade.symbol + ' · ' + trade.venue} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: trade.side === 'buy' ? 'rgba(14,203,129,0.12)' : 'rgba(246,70,93,0.10)', color: trade.side === 'buy' ? BRAND.success : BRAND.danger }}>
+            {trade.side === 'buy' ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{trade.side.toUpperCase()} {trade.qty.toLocaleString()} {trade.symbol}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>@{'$'}{trade.price.toLocaleString()} · 折扣 {(trade.discount * 100).toFixed(2)}%</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(trade.status).bg, color: statusBadge(trade.status).color }}>{statusBadge(trade.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="成交价" value={'$' + trade.price.toLocaleString()} />
+          <DrawerKv label="数量" value={trade.qty.toLocaleString()} />
+          <DrawerKv label="成交额" value={formatUsd(trade.value)} color={BRAND.primary} />
+          <DrawerKv label="折扣" value={(trade.discount * 100).toFixed(2) + '%'} color={BRAND.success} />
+          <DrawerKv label="手续费" value={formatUsd(trade.fee)} color={BRAND.amber} />
+          <DrawerKv label="场所" value={trade.venue} />
+          <DrawerKv label="结算" value={trade.settlement} />
+          <DrawerKv label="台" value={trade.desk} />
+        </div>
+        <DrawerSection title="交易双方">
+          <div className="space-y-1 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>买方：</span><span style={{ color: BRAND.text }}>{trade.buyer}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>卖方：</span><span style={{ color: BRAND.text }}>{trade.seller}</span></div>
+          </div>
+        </DrawerSection>
+        <DrawerSection title="时间线">
+          <div className="space-y-1.5 text-[11px] font-mono">
+            <div className="flex justify-between"><span style={{ color: BRAND.textSub }}>RFQ 报价：</span><span style={{ color: BRAND.text }}>{trade.rfqAt || '-'}</span></div>
+            <div className="flex justify-between"><span style={{ color: BRAND.textSub }}>达成：</span><span style={{ color: BRAND.text }}>{trade.agreedAt || '-'}</span></div>
+            <div className="flex justify-between"><span style={{ color: BRAND.textSub }}>结算：</span><span style={{ color: BRAND.text }}>{trade.settledAt || '待结算'}</span></div>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 6: LiquidityShare
+// ============================================================
+function LiquidityDrawer({ share, onClose }: { share: LiquidityShare; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={share.institution + ' · 流动性分成'} subtitle={share.pool + ' · ' + share.period} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-base font-semibold" style={{ color: BRAND.text }}>{share.institution}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{share.id} · {share.pairs} 个交易对</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md font-semibold" style={{ background: statusBadge(share.status).bg, color: statusBadge(share.status).color }}>{statusBadge(share.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="总份额" value={(share.totalShare * 100).toFixed(1) + '%'} color={BRAND.primary} />
+          <DrawerKv label="量份额" value={(share.volumeShare * 100).toFixed(1) + '%'} color={BRAND.primary} />
+          <DrawerKv label="返佣率" value={(share.rebateRate * 10000).toFixed(1) + ' bps'} color={BRAND.amber} />
+          <DrawerKv label="返佣金额" value={formatUsd(share.rebateAmount)} color={BRAND.success} />
+          <DrawerKv label="价差捕获" value={formatUsd(share.spreadCaptured)} color={BRAND.success} />
+          <DrawerKv label="Tier" value={share.rebateTier.toUpperCase()} />
+          <DrawerKv label="Maker 占比" value={(share.makerRatio * 100).toFixed(1) + '%'} color={BRAND.success} />
+          <DrawerKv label="Taker 占比" value={(share.takerRatio * 100).toFixed(1) + '%'} color={BRAND.amber} />
+        </div>
+        <DrawerSection title="服务质量">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>Uptime：</span><span style={{ color: BRAND.success }}>{(share.uptime * 100).toFixed(1)}%</span></div>
+            <div><span style={{ color: BRAND.textSub }}>延迟：</span><span style={{ color: BRAND.text }}>{share.latency.toFixed(1)} ms</span></div>
+            <div><span style={{ color: BRAND.textSub }}>质量分：</span><span style={{ color: share.qualityScore >= 90 ? BRAND.success : BRAND.amber }}>{share.qualityScore} / 100</span></div>
+            <div><span style={{ color: BRAND.textSub }}>发放时间：</span><span style={{ color: BRAND.text }}>{share.paidAt || '待发放'}</span></div>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 7: InstReport
+// ============================================================
+function ReportDrawer({ report, onClose }: { report: InstReport; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={report.title} subtitle={report.id + ' · ' + report.type} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(20,184,129,0.12)', color: BRAND.primary }}>
+            <FileText className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{report.title}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{report.institution} · {report.period} · {report.format.toUpperCase()}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(report.status).bg, color: statusBadge(report.status).color }}>{statusBadge(report.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="页数" value={String(report.pages)} />
+          <DrawerKv label="数据点" value={formatInt(report.dataPoints)} color={BRAND.primary} />
+          <DrawerKv label="收件人" value={String(report.recipients)} />
+          <DrawerKv label="大小" value={formatBytes(report.size)} />
+          <DrawerKv label="白标" value={report.whiteLabel ? '是' : '否'} color={report.whiteLabel ? BRAND.success : BRAND.textSub} />
+          <DrawerKv label="合规" value={report.compliance ? '是' : '否'} color={report.compliance ? BRAND.success : BRAND.textSub} />
+          <DrawerKv label="类型" value={report.type} />
+          <DrawerKv label="格式" value={report.format.toUpperCase()} />
+        </div>
+        <DrawerSection title="章节结构">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5 text-[11px]">
+            {report.sections.map((s, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <FileCheck className="w-3 h-3" style={{ color: BRAND.primary }} />
+                <span style={{ color: BRAND.textSub }}>{s}</span>
+              </div>
+            ))}
+          </div>
+        </DrawerSection>
+        <div className="rounded-xl p-3" style={{ background: 'rgba(20,184,129,0.05)' }}>
+          <div className="text-[11px]" style={{ color: BRAND.textSub }}>生成时间：{report.generatedAt}</div>
+        </div>
+        <button className="w-full py-2.5 text-sm rounded-lg font-semibold" style={{ background: BRAND.primary, color: BRAND.onPrimary }}>下载报告 ({report.format.toUpperCase()})</button>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 8: HedgeInterface
+// ============================================================
+function HedgeDrawer({ item, onClose }: { item: HedgeInterface; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={item.id} subtitle={item.product + ' · ' + item.type.toUpperCase()} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(255,169,64,0.12)', color: BRAND.amber }}>
+            <ShieldHalf className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{item.product}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{item.institution} · {item.venue}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(item.status).bg, color: statusBadge(item.status).color }}>{statusBadge(item.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="名义本金" value={formatUsd(item.notional)} color={BRAND.primary} />
+          <DrawerKv label="Delta" value={item.delta.toFixed(2)} />
+          <DrawerKv label="Vega" value={item.vega.toFixed(1)} />
+          <DrawerKv label="Theta" value={item.theta.toFixed(1)} color={BRAND.danger} />
+          <DrawerKv label="Gamma" value={item.gamma.toFixed(3)} />
+          <DrawerKv label="对冲率" value={(item.hedgeRatio * 100).toFixed(0) + '%'} color={item.hedgeRatio >= 0.9 ? BRAND.success : item.hedgeRatio >= 0.75 ? BRAND.amber : BRAND.danger} />
+          <DrawerKv label="有效性" value={(item.effectiveness * 100).toFixed(0) + '%'} color={BRAND.success} />
+          <DrawerKv label="基差" value={item.basis.toFixed(4)} />
+        </div>
+        <DrawerSection title="盈亏 / 时间">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>累计 PnL：</span><span style={{ color: item.pnl >= 0 ? BRAND.success : BRAND.danger }}>{formatUsd(item.pnl)}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>开始：</span><span style={{ color: BRAND.text }}>{item.startedAt}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>到期：</span><span style={{ color: BRAND.text }}>{item.expiresAt}</span></div>
+            <div><span style={{ color: BRAND.textSub }}>对手方：</span><span style={{ color: BRAND.text }}>{item.counterparty}</span></div>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 9: MmPartnership
+// ============================================================
+function MmDrawer({ mm, onClose }: { mm: MmPartnership; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={mm.institution + ' · 联合做市'} subtitle={mm.id + ' · ' + mm.tier.toUpperCase()} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(20,184,129,0.12)', color: BRAND.primary }}>
+            <CoinsIcon className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{mm.institution}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{mm.pairs.length} 个交易对 · 合约 {mm.contractStart} ~ {mm.contractEnd}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(mm.status).bg, color: statusBadge(mm.status).color }}>{statusBadge(mm.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="深度" value={formatUsd(mm.depthUsd)} color={BRAND.primary} />
+          <DrawerKv label="24H 量" value={formatUsd(mm.volume24h)} color={BRAND.success} />
+          <DrawerKv label="目标点差" value={(mm.spreadTarget * 10000).toFixed(1) + ' bps'} />
+          <DrawerKv label="返佣" value={(mm.rebate * 10000).toFixed(1) + ' bps'} color={BRAND.amber} />
+          <DrawerKv label="Uptime" value={(mm.uptime * 100).toFixed(1) + '%'} color={BRAND.success} />
+          <DrawerKv label="延迟" value={'< 20ms'} />
+          <DrawerKv label="库存" value={formatUsd(mm.inventory)} />
+          <DrawerKv label="风险限额" value={formatUsd(mm.riskLimit)} />
+        </div>
+        <DrawerSection title="合约 / 商业">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div><span style={{ color: BRAND.textSub }}>分成：</span><span style={{ color: BRAND.primary }}>{(mm.revenueShare * 100).toFixed(0)}%</span></div>
+            <div><span style={{ color: BRAND.textSub }}>质量分：</span><span style={{ color: BRAND.text }}>{mm.qualityScore} / 100</span></div>
+            <div><span style={{ color: BRAND.textSub }}>杠杆：</span><span style={{ color: BRAND.text }}>{mm.leverage}x</span></div>
+            <div><span style={{ color: BRAND.textSub }}>Tier：</span><span style={{ color: BRAND.primary }}>{mm.tier.toUpperCase()}</span></div>
+          </div>
+        </DrawerSection>
+        <DrawerSection title="交易对">
+          <div className="flex flex-wrap gap-1.5">
+            {mm.pairs.slice(0, 20).map((p, i) => (
+              <span key={i} className="text-[10px] px-2 py-0.5 rounded-md font-mono" style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>{p}</span>
+            ))}
+            {mm.pairs.length > 20 && <span className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: BRAND.primaryLt, color: BRAND.primary }}>+{mm.pairs.length - 20} more</span>}
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 10: ApiCredential
+// ============================================================
+function ApiDrawer({ api, onClose }: { api: ApiCredential; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={api.name} subtitle={api.id + ' · ' + api.type} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ background: 'rgba(68,219,244,0.12)', color: BRAND.info }}>
+            <Code className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <div className="text-sm font-semibold" style={{ color: BRAND.text }}>{api.name}</div>
+            <div className="text-xs" style={{ color: BRAND.textSub }}>{api.institution} · {api.signature.toUpperCase()}</div>
+          </div>
+          <span className="text-xs px-2 py-0.5 rounded-md" style={{ background: statusBadge(api.status).bg, color: statusBadge(api.status).color }}>{statusBadge(api.status).label}</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <DrawerKv label="限速" value={api.rateLimit + '/s'} />
+          <DrawerKv label="当前" value={api.used + '/s'} color={api.used / api.rateLimit > 0.8 ? BRAND.danger : BRAND.text} />
+          <DrawerKv label="24H 调用" value={formatInt(api.calls24h)} color={BRAND.primary} />
+          <DrawerKv label="区域" value={api.region} />
+          <DrawerKv label="创建" value={api.createdAt} />
+          <DrawerKv label="到期" value={api.expiresAt} color={new Date(api.expiresAt).getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000 ? BRAND.amber : BRAND.text} />
+          <DrawerKv label="最后使用" value={api.lastUsed.split(' ')[0]} />
+          <DrawerKv label="IP 白名单" value={String(api.ipWhitelist.length) + ' 个'} />
+        </div>
+        <DrawerSection title="权限范围">
+          <div className="flex flex-wrap gap-1.5">
+            {api.permissions.map((p, i) => (
+              <span key={i} className="text-[10px] px-2 py-0.5 rounded-md" style={{ background: 'rgba(68,219,244,0.10)', color: BRAND.info }}>{p}</span>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="API Key（已脱敏）">
+          <div className="font-mono text-[11px] p-2 rounded-lg break-all" style={{ background: BRAND.bgCardHover, color: BRAND.textSub }}>{api.apiKey}</div>
+          <p className="text-[10px] mt-1" style={{ color: BRAND.textMute }}>完整 Secret Key 仅在创建 / 轮换时明文显示一次，请妥善保管。</p>
+        </DrawerSection>
+        <DrawerSection title="IP 白名单">
+          <div className="space-y-1 text-[11px] font-mono">
+            {api.ipWhitelist.map((ip, i) => (
+              <div key={i} style={{ color: BRAND.textSub }}>{ip}</div>
+            ))}
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// DRAWER 11: HelpDrawer
+// ============================================================
+function HelpDrawer({ onClose }: { onClose: () => void }) {
+  const faq = [
+    { q: '如何申请成为合作机构？', a: '在"机构" Tab 点击"申请入驻"，填写机构基本信息、UBO 穿透、AML 资料，提交后进入 KYB 审核流程（5-7 工作日）。' },
+    { q: '信用额度如何评估？', a: '基于机构 AUM / 风险评分 / 抵押率 / 历史履约综合评估；铂金机构最高 50 亿美元；信用额度按季度复审。' },
+    { q: '做市商返佣如何结算？', a: '按月结算，下月 5 日自动发放至机构账户；tier1 返佣 2.5 bps，tier2 返佣 1.8 bps，tier3 返佣 1.0 bps。' },
+    { q: '大宗撮合 T+2 结算如何工作？', a: '撮合完成后，买卖双方资产分别锁定在托管账户；T+2 链上结算时同步划转；T+1 加急服务仅对铂金机构开放。' },
+    { q: 'API 调用频率限制？', a: '默认 200-1000 次/秒，可按需申请扩容；PB 交易 API 延迟 SLA P99 < 50ms；行情 API P99 < 10ms。' },
+    { q: '白盒报告支持哪些格式？', a: 'PDF / XLSX / HTML / CSV；支持自定义白标（机构 Logo + 色系）；周报 / 月报 / 季报 / 半年报 / 年报 / 审计报告。' },
+    { q: '如何提升合作 Tier？', a: '连续 3 个月质量分 ≥ 95 + 月成交 ≥ $100M 可申请升级；Tier 升级后返佣率、API 限额、信用额度同步提升。' },
+    { q: '可以做市永续合约吗？', a: '可以，但需独立申请做市商资格 + 提交《做市商风险承诺函》；做市商杠杆最高 5x。' },
+  ];
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title="机构服务与做市商合作 · 帮助中心" subtitle="常见问题 / 快捷键 / 合规说明" onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <DrawerSection title="常见问题 FAQ">
+          <div className="space-y-2">
+            {faq.map((x, i) => (
+              <div key={i} className="rounded-lg p-3" style={{ background: BRAND.bgCardHover, border: '1px solid ' + BRAND.border }}>
+                <div className="text-[12px] font-medium mb-1" style={{ color: BRAND.text }}>Q. {x.q}</div>
+                <p className="text-[11px]" style={{ color: BRAND.textSub }}>A. {x.a}</p>
+              </div>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="快捷键">
+          <div className="grid grid-cols-2 gap-2 text-[11px]">
+            <div className="flex items-center gap-2"><kbd className="px-2 py-0.5 rounded font-mono" style={{ background: BRAND.bg, color: BRAND.text, border: '1px solid ' + BRAND.border }}>/</kbd><span style={{ color: BRAND.textSub }}>聚焦搜索框</span></div>
+            <div className="flex items-center gap-2"><kbd className="px-2 py-0.5 rounded font-mono" style={{ background: BRAND.bg, color: BRAND.text, border: '1px solid ' + BRAND.border }}>Esc</kbd><span style={{ color: BRAND.textSub }}>关闭 Drawer</span></div>
+            <div className="flex items-center gap-2"><kbd className="px-2 py-0.5 rounded font-mono" style={{ background: BRAND.bg, color: BRAND.text, border: '1px solid ' + BRAND.border }}>Tab</kbd><span style={{ color: BRAND.textSub }}>切换主分区</span></div>
+            <div className="flex items-center gap-2"><kbd className="px-2 py-0.5 rounded font-mono" style={{ background: BRAND.bg, color: BRAND.text, border: '1px solid ' + BRAND.border }}>Enter</kbd><span style={{ color: BRAND.textSub }}>打开选中项详情</span></div>
+          </div>
+        </DrawerSection>
+        <DrawerSection title="合规说明">
+          <ul className="text-[11px] space-y-1" style={{ color: BRAND.textSub }}>
+            <li>· 机构服务与做市商合作仅作技术能力演示，不构成投资建议</li>
+            <li>· 平台所有 KYB / AML / 制裁筛查均严格遵循合规研究方向示例</li>
+            <li>· 机构服务不承诺收益 / 保本 / 刚兑 / 稳赚 / 担保</li>
+            <li>· 机构服务区域为合规研究方向示例，定性为研究 / 工具 / 辅助</li>
+            <li>· 平台持续开展合规自查、KYB 尽调、KYC 更新、利用冲突检查</li>
+          </ul>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
