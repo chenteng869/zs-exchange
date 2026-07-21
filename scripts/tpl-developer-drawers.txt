@@ -1,0 +1,598 @@
+// ============================================================
+// 通用 Drawer
+// ============================================================
+function DrawerHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center justify-between p-4" style={{ background: BRAND.bg, borderBottom: '1px solid ' + BRAND.border }}>
+      <div className="min-w-0 flex-1">
+        <h2 className="text-lg font-bold truncate" style={{ color: BRAND.text }}>{title}</h2>
+        {subtitle && <p className="text-[11px] mt-1" style={{ color: BRAND.textSub }}>{subtitle}</p>}
+      </div>
+      <button onClick={onClose} className="ml-3 p-2 rounded-lg hover:scale-110 transition-transform" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+        <X size={16} style={{ color: BRAND.textSub }} />
+      </button>
+    </div>
+  );
+}
+
+function DrawerShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.65)' }} onClick={onClose}></div>
+      <div className="ml-auto w-full max-w-2xl h-full overflow-y-auto dev-slide-in" style={{ background: BRAND.bg, borderLeft: '1px solid ' + BRAND.border }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DrawerKv({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="flex items-center justify-between py-1.5 text-xs">
+      <span style={{ color: BRAND.textMute }}>{label}</span>
+      <span className="font-mono" style={{ color: color || BRAND.text }}>{value}</span>
+    </div>
+  );
+}
+
+function DrawerSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCard, borderColor: BRAND.border }}>
+      <h3 className="text-sm font-semibold mb-3" style={{ color: BRAND.text }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+// ============================================================
+// API 端点 Drawer
+// ============================================================
+function ApiDrawer({ api, onClose }: { api: ApiEndpoint; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={api.name} subtitle={api.path + ' · ' + api.version} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="px-2 py-1 rounded text-xs font-mono font-bold" style={{ background: METHOD_COLOR[api.method] + '20', color: METHOD_COLOR[api.method] }}>{api.method}</span>
+          <span className="text-sm font-mono flex-1 truncate" style={{ color: BRAND.text }}>{api.path}</span>
+          <span className="px-2 py-0.5 rounded text-[10px]" style={{ background: statusBadge(api.status).bg, color: statusBadge(api.status).color }}>{statusBadge(api.status).label}</span>
+        </div>
+        <p className="text-xs" style={{ color: BRAND.textSub }}>{api.description}</p>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>24h 调用</div>
+            <div className="text-lg font-bold font-mono" style={{ color: BRAND.text }}>{formatInt(api.calls24h)}</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>p95 延迟</div>
+            <div className="text-lg font-bold font-mono" style={{ color: BRAND.text }}>{api.p95LatencyMs}ms</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>错误率</div>
+            <div className="text-lg font-bold font-mono" style={{ color: api.errorRate > 0.3 ? BRAND.danger : BRAND.text }}>{api.errorRate.toFixed(2)}%</div>
+          </div>
+        </div>
+        <DrawerSection title="端点信息">
+          <DrawerKv label="方法" value={api.method} color={METHOD_COLOR[api.method]} />
+          <DrawerKv label="路径" value={api.path} />
+          <DrawerKv label="版本" value={api.version} />
+          <DrawerKv label="分类" value={CAT_ICON[api.category]} />
+          <DrawerKv label="鉴权" value={api.auth} />
+          <DrawerKv label="速率限制" value={api.rateLimit} />
+          <DrawerKv label="更新时间" value={api.updatedAt} />
+          {api.deprecatedAt && <DrawerKv label="弃用时间" value={api.deprecatedAt} color={BRAND.danger} />}
+        </DrawerSection>
+        <DrawerSection title="调用示例（cURL）">
+          <pre className="text-[10px] font-mono p-3 rounded overflow-x-auto code-scroll" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{'curl -X ' + api.method + ' "https://api.zsdex.io' + api.path + '?symbol=BTCUSDT" \\\n  -H "X-API-Key: $ZSDX_KEY" \\\n  -H "X-Signature: $SIG"'}</pre>
+        </DrawerSection>
+        <DrawerSection title="调用示例（TypeScript SDK）">
+          <pre className="text-[10px] font-mono p-3 rounded overflow-x-auto code-scroll" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{"import { Zsdex } from '@zsdex/sdk-typescript';\nconst c = new Zsdex({ apiKey: process.env.ZSDX_KEY!, apiSecret: process.env.ZSDX_SECRET! });\nconst r = await c." + api.category + '.' + api.path.split('/').pop() + "({ symbol: 'BTCUSDT' });"}</pre>
+        </DrawerSection>
+        <DrawerSection title="标签">
+          <div className="flex flex-wrap gap-1.5">
+            {api.tags.map((t, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px]" style={{ background: BRAND.primaryLt, color: BRAND.primary }}>{t}</span>)}
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// SDK Drawer
+// ============================================================
+function SdkDrawer({ sdk, onClose }: { sdk: SdkPackage; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={sdk.name} subtitle={sdk.lang + ' · v' + sdk.version} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-16 h-16 rounded-xl flex items-center justify-center text-xl font-bold" style={{ background: LANG_COLOR[sdk.lang] + '20', color: LANG_COLOR[sdk.lang] }}>{LANG_ICON[sdk.lang]}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold mb-1" style={{ color: BRAND.text }}>{sdk.lang}</div>
+            <div className="text-[10px] mb-1" style={{ color: BRAND.textMute }}>{sdk.description}</div>
+            <div className="flex items-center gap-2">
+              <span className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: statusBadge(sdk.status).bg, color: statusBadge(sdk.status).color }}>{statusBadge(sdk.status).label}</span>
+              <span className="text-[10px]" style={{ color: BRAND.textMute }}>· {sdk.license}</span>
+            </div>
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>下载量</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{formatInt(sdk.downloads)}</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>Star</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{formatInt(sdk.stars)}</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>Open Issue</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{sdk.openIssues}</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>包大小</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{formatBytes(sdk.size)}</div>
+          </div>
+        </div>
+        <DrawerSection title="安装命令">
+          <pre className="text-[11px] font-mono p-3 rounded" style={{ background: BRAND.bgCardHover, color: BRAND.primary }}>{sdk.installCmd}</pre>
+        </DrawerSection>
+        <DrawerSection title="仓库信息">
+          <DrawerKv label="仓库" value={sdk.repo} />
+          <DrawerKv label="文档" value={sdk.docs} />
+          <DrawerKv label="维护者" value={sdk.maintainer} />
+          <DrawerKv label="许可证" value={sdk.license} />
+          <DrawerKv label="最近发布" value={sdk.lastRelease} />
+        </DrawerSection>
+        <DrawerSection title="核心特性">
+          <div className="space-y-1.5">
+            {sdk.features.map((f, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs">
+                <CheckCircle size={12} style={{ color: BRAND.primary }} />
+                <span style={{ color: BRAND.text }}>{f}</span>
+              </div>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="快速开始">
+          <pre className="text-[10px] font-mono p-3 rounded overflow-x-auto code-scroll" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{sdk.installCmd + '\n\n# 初始化客户端\nconst c = new Zsdex({\n  apiKey: process.env.ZSDX_KEY!,\n  apiSecret: process.env.ZSDX_SECRET!,\n  sandbox: true,\n});'}</pre>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 沙箱密钥 Drawer
+// ============================================================
+function SandboxDrawer({ sand, onClose }: { sand: SandboxKey; onClose: () => void }) {
+  const usagePct = (sand.callsToday / sand.callsLimit) * 100;
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={sand.name} subtitle={sand.keyPrefix} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(20,184,129,0.15)', color: BRAND.primary }}><Key className="w-6 h-6" /></div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold mb-0.5" style={{ color: BRAND.text }}>{sand.env} · {sand.tier}</div>
+            <div className="text-[11px] font-mono mb-1" style={{ color: BRAND.textMute }}>{sand.keyPrefix}</div>
+            <span className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: statusBadge(sand.status).bg, color: statusBadge(sand.status).color }}>{statusBadge(sand.status).label}</span>
+          </div>
+        </div>
+        <DrawerSection title="用量">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span style={{ color: BRAND.textMute }}>今日调用</span>
+            <span className="font-mono" style={{ color: BRAND.text }}>{formatInt(sand.callsToday)} / {formatInt(sand.callsLimit)}</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden mb-2" style={{ background: BRAND.bgCardHover }}>
+            <div className="h-full dev-bar" style={{ width: Math.min(100, usagePct) + '%', background: usagePct > 80 ? BRAND.danger : BRAND.primary }}></div>
+          </div>
+          <div className="text-[10px]" style={{ color: BRAND.textMute }}>使用率 {usagePct.toFixed(1)}%</div>
+        </DrawerSection>
+        <DrawerSection title="密钥信息">
+          <DrawerKv label="环境" value={sand.env} />
+          <DrawerKv label="套餐" value={sand.tier} />
+          <DrawerKv label="速率限制" value={sand.rateLimit} />
+          <DrawerKv label="创建时间" value={sand.createdAt} />
+          <DrawerKv label="到期时间" value={sand.expiresAt} color={sand.status === 'expired' || sand.status === 'revoked' ? BRAND.danger : BRAND.text} />
+          <DrawerKv label="最后使用" value={sand.lastUsedAt} />
+        </DrawerSection>
+        <DrawerSection title="权限范围（scopes）">
+          <div className="flex flex-wrap gap-1.5">
+            {sand.scopes.map((s, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px] font-mono" style={{ background: BRAND.primaryLt, color: BRAND.primary }}>{s}</span>)}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="IP 白名单">
+          {sand.ipWhitelist.length === 0 ? (
+            <div className="text-[11px]" style={{ color: BRAND.textMute }}>无限制（任何 IP 可调用）</div>
+          ) : (
+            <div className="space-y-1">
+              {sand.ipWhitelist.map((ip, i) => <div key={i} className="text-[11px] font-mono" style={{ color: BRAND.text }}>{ip}</div>)}
+            </div>
+          )}
+        </DrawerSection>
+        <DrawerSection title="备注">{sand.note}</DrawerSection>
+        <div className="rounded-xl p-3 border" style={{ background: 'rgba(20,184,129,0.05)', borderColor: BRAND.border }}>
+          <div className="text-[10px]" style={{ color: BRAND.textSub }}>
+            <strong style={{ color: BRAND.primary }}>提示</strong>：沙箱密钥仅用于测试环境，不涉及真实资产；如需生产访问，请创建生产环境密钥并完成接入审核。
+          </div>
+        </div>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// Webhook Drawer
+// ============================================================
+function WebhookDrawer({ wh, onClose }: { wh: WebhookEvent; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={wh.name} subtitle={wh.category + ' · ' + wh.id} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ background: 'rgba(20,184,129,0.15)', color: BRAND.primary }}><Webhook className="w-6 h-6" /></div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold mb-0.5" style={{ color: BRAND.text }}>{wh.name}</div>
+            <div className="text-[10px] font-mono mb-1 truncate" style={{ color: BRAND.textMute }}>{wh.endpoint}</div>
+            <span className="px-1.5 py-0.5 rounded text-[10px]" style={{ background: statusBadge(wh.status).bg, color: statusBadge(wh.status).color }}>{statusBadge(wh.status).label}</span>
+          </div>
+        </div>
+        <p className="text-xs" style={{ color: BRAND.textSub }}>{wh.description}</p>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>24h 投递</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{formatInt(wh.deliveries24h)}</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>成功率</div>
+            <div className="text-base font-bold font-mono" style={{ color: wh.successRate > 99.5 ? BRAND.success : wh.successRate > 99 ? BRAND.amber : BRAND.danger }}>{wh.successRate.toFixed(2)}%</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>平均延迟</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{wh.avgLatencyMs}ms</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>重试</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{wh.retries}</div>
+          </div>
+        </div>
+        <DrawerSection title="端点配置">
+          <DrawerKv label="端点 URL" value={wh.endpoint} />
+          <DrawerKv label="签名密钥" value={wh.secret} />
+          <DrawerKv label="更新时间" value={wh.updatedAt} />
+        </DrawerSection>
+        <DrawerSection title="订阅事件">
+          <div className="flex flex-wrap gap-1.5">
+            {wh.events.map((e, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px] font-mono" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{e}</span>)}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="事件过滤">
+          {wh.filters.length === 0 ? <div className="text-[11px]" style={{ color: BRAND.textMute }}>无过滤（接收所有事件）</div> : (
+            <div className="space-y-1">
+              {wh.filters.map((f, i) => <div key={i} className="text-[11px] font-mono" style={{ color: BRAND.text }}>{f}</div>)}
+            </div>
+          )}
+        </DrawerSection>
+        <DrawerSection title="签名验证示例">
+          <pre className="text-[10px] font-mono p-3 rounded overflow-x-auto code-scroll" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{"import hmac, hashlib\n\ndef verify(payload, signature, secret):\n    expected = hmac.new(\n        secret.encode(),\n        payload.encode(),\n        hashlib.sha256\n    ).hexdigest()\n    return hmac.compare_digest(expected, signature)"}</pre>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 配额 Drawer
+// ============================================================
+function QuotaDrawer({ q, onClose }: { q: QuotaUsage; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={q.tier + ' 套餐配额'} subtitle="实时用量监控" onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <DrawerSection title="基础配额">
+          <DrawerKv label="每分钟调用" value={q.callsPerMin.toLocaleString()} />
+          <DrawerKv label="每日调用" value={formatInt(q.callsPerDay)} />
+          <DrawerKv label="WebSocket 连接" value={q.websocketConns.toString()} />
+          <DrawerKv label="Webhook 投递" value={formatInt(q.webhookDeliveries)} />
+          <DrawerKv label="重置时间" value={q.resetAt} />
+        </DrawerSection>
+        <DrawerSection title="实时使用率">
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span style={{ color: BRAND.textMute }}>平均使用率</span>
+            <span className="font-mono" style={{ color: q.usedPct > 80 ? BRAND.danger : BRAND.text }}>{q.usedPct}%</span>
+          </div>
+          <div className="h-3 rounded-full overflow-hidden mb-3" style={{ background: BRAND.bgCardHover }}>
+            <div className="h-full dev-bar" style={{ width: q.usedPct + '%', background: q.usedPct > 80 ? BRAND.danger : q.usedPct > 50 ? BRAND.amber : BRAND.primary }}></div>
+          </div>
+          <div className="mb-2 flex items-center justify-between text-xs">
+            <span style={{ color: BRAND.textMute }}>峰值（burst）</span>
+            <span className="font-mono" style={{ color: BRAND.text }}>{q.burstPct}%</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+            <div className="h-full dev-bar" style={{ width: q.burstPct + '%', background: BRAND.amber }}></div>
+          </div>
+        </DrawerSection>
+        <DrawerSection title="近 10 次使用率">
+          <div className="h-20 flex items-end gap-1">
+            {q.history.map((h, i) => (
+              <div key={i} className="flex-1 rounded-t" style={{ height: h + '%', background: h > 80 ? BRAND.danger : h > 50 ? BRAND.amber : BRAND.primary, opacity: 0.6 + (i * 0.04) }}></div>
+            ))}
+          </div>
+          <div className="flex justify-between text-[10px] mt-1" style={{ color: BRAND.textMute }}>
+            <span>10 次前</span><span>现在</span>
+          </div>
+        </DrawerSection>
+        <DrawerSection title="区域分布">
+          <div className="space-y-2">
+            {q.regions.map((r, i) => (
+              <div key={i}>
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span style={{ color: BRAND.text }}>{r.name}</span>
+                  <span className="font-mono" style={{ color: BRAND.textSub }}>{r.pct}% · {r.latencyMs}ms</span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+                  <div className="h-full dev-bar" style={{ width: r.pct + '%', background: BRAND.primary }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="告警">
+          <div className="flex items-center gap-2 text-xs">
+            <Bell className="w-4 h-4" style={{ color: BRAND.amber }} />
+            <span style={{ color: BRAND.text }}>近 7d 触发 {q.alerts} 次配额告警</span>
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 错误码 Drawer
+// ============================================================
+function ErrorDrawer({ e, onClose }: { e: ErrorCode; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={e.code} subtitle={e.message} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-1 rounded text-xs" style={{ background: severityColor(e.severity).bg, color: severityColor(e.severity).color }}>{e.severity}</span>
+          <span className="px-2 py-1 rounded text-xs" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{e.category}</span>
+          <span className="px-2 py-1 rounded text-xs" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>HTTP {e.httpStatus}</span>
+          <span className="px-2 py-1 rounded text-xs" style={{ background: e.retryable ? BRAND.successLt : 'rgba(112,112,112,0.10)', color: e.retryable ? BRAND.success : BRAND.textMute }}>{e.retryable ? '可重试' : '不可重试'}</span>
+        </div>
+        <DrawerSection title="错误描述">
+          <p className="text-xs" style={{ color: BRAND.textSub }}>{e.message}</p>
+        </DrawerSection>
+        <DrawerSection title="可能原因">
+          <p className="text-xs" style={{ color: BRAND.textSub }}>{e.cause}</p>
+        </DrawerSection>
+        <DrawerSection title="解决方案">
+          <p className="text-xs" style={{ color: BRAND.textSub }}>{e.solution}</p>
+        </DrawerSection>
+        <DrawerSection title="统计">
+          <DrawerKv label="近 7d 触发" value={formatInt(e.occurrence) + ' 次'} />
+          <DrawerKv label="最后出现" value={e.lastSeen} />
+        </DrawerSection>
+        <DrawerSection title="相关参考">
+          <div className="space-y-1">
+            {e.references.map((r, i) => (
+              <a key={i} href={r} className="block text-xs font-mono hover:underline" style={{ color: BRAND.primary }}>{r}</a>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="处理示例（Python）">
+          <pre className="text-[10px] font-mono p-3 rounded overflow-x-auto code-scroll" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{"from zsdex.exceptions import ZsdexError\n\ntry:\n    order = await client.order.create(...)\nexcept ZsdexError as e:\n    if e.code == '" + e.code + "':\n        if e.retryable:\n            await asyncio.sleep(1)\n            return await client.order.create(...)\n        else:\n            logger.error(f'不可恢复错误: {e.message}')\n            raise"}</pre>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 接入审核 Drawer
+// ============================================================
+function AuditDrawer({ a, onClose }: { a: AuditApplication; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={a.orgName} subtitle={a.orgType + ' · ' + a.id} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center text-base font-bold" style={{ background: 'rgba(20,184,129,0.15)', color: BRAND.primary }}>{a.orgName.substring(0, 2).toUpperCase()}</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-semibold mb-0.5" style={{ color: BRAND.text }}>{a.orgName}</div>
+            <div className="text-[11px] mb-1" style={{ color: BRAND.textSub }}>申请人：{a.applicant}</div>
+            <span className="px-2 py-0.5 rounded text-[10px]" style={{ background: statusBadge(a.status).bg, color: statusBadge(a.status).color }}>{statusBadge(a.status).label}</span>
+          </div>
+        </div>
+        <DrawerSection title="申请信息">
+          <DrawerKv label="机构类型" value={a.orgType} />
+          <DrawerKv label="联系人" value={a.contact} />
+          <DrawerKv label="联系邮箱" value={a.email} />
+          <DrawerKv label="提交时间" value={a.submittedAt} />
+          <DrawerKv label="审核人" value={a.reviewedBy} />
+          <DrawerKv label="评分" value={a.score > 0 ? a.score.toString() : '-'} color={a.score >= 80 ? BRAND.success : a.score >= 60 ? BRAND.amber : a.score > 0 ? BRAND.danger : BRAND.textMute} />
+        </DrawerSection>
+        <DrawerSection title="用途说明">{a.useCase}</DrawerSection>
+        <DrawerSection title="准入信息">
+          <DrawerKv label="KYB 等级" value={'L' + a.kybLevel} color={a.kybLevel >= 4 ? BRAND.success : a.kybLevel >= 2 ? BRAND.amber : BRAND.danger} />
+          <DrawerKv label="期望 RPS" value={a.expectedRps.toString()} />
+        </DrawerSection>
+        <DrawerSection title="申请 scopes">
+          <div className="flex flex-wrap gap-1.5">
+            {a.scope.map((s, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px] font-mono" style={{ background: BRAND.primaryLt, color: BRAND.primary }}>{s}</span>)}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="审核备注">{a.reviewNote}</DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 代码示例 Drawer
+// ============================================================
+function ExampleDrawer({ ex, onClose }: { ex: CodeExample; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={ex.title} subtitle={ex.api + ' · ' + ex.lang} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-1 rounded text-xs font-mono" style={{ background: BRAND.primaryLt, color: BRAND.primary }}>{ex.lang}</span>
+          <span className="px-2 py-1 rounded text-xs" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{ex.difficulty}</span>
+          <span className="text-[10px]" style={{ color: BRAND.textMute }}>· {ex.scenario} · 运行 {formatInt(ex.runs)} 次</span>
+        </div>
+        <p className="text-xs" style={{ color: BRAND.textSub }}>{ex.description}</p>
+        <DrawerSection title="代码">
+          <pre className="text-[11px] font-mono p-4 rounded overflow-x-auto code-scroll" style={{ background: BRAND.bgCardHover, color: BRAND.text, maxHeight: '500px' }}>{ex.code}</pre>
+        </DrawerSection>
+        <DrawerSection title="标签">
+          <div className="flex flex-wrap gap-1.5">
+            {ex.tags.map((t, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px]" style={{ background: BRAND.primaryLt, color: BRAND.primary }}>{t}</span>)}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="元信息">
+          <DrawerKv label="API" value={ex.api} />
+          <DrawerKv label="场景" value={ex.scenario} />
+          <DrawerKv label="难度" value={ex.difficulty} />
+          <DrawerKv label="更新" value={ex.updatedAt} />
+          <DrawerKv label="运行次数" value={formatInt(ex.runs)} />
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 变更日志 Drawer
+// ============================================================
+function ChangeDrawer({ c, onClose }: { c: ChangelogEntry; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={c.version + ' · ' + c.title} subtitle={c.releasedAt + ' · ' + c.type} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-1 rounded text-xs" style={{ background: statusBadge(c.type).bg, color: statusBadge(c.type).color }}>{statusBadge(c.type).label}</span>
+          <span className="text-[10px]" style={{ color: BRAND.textMute }}>· {c.pr} · {c.author} · 👍 {c.reactions}</span>
+        </div>
+        <p className="text-xs" style={{ color: BRAND.textSub }}>{c.description}</p>
+        <DrawerSection title="影响范围">
+          <div className="flex flex-wrap gap-1.5">
+            {c.affects.map((a, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px]" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{a}</span>)}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="迁移说明">{c.migration}</DrawerSection>
+        <DrawerSection title="元信息">
+          <DrawerKv label="版本" value={c.version} />
+          <DrawerKv label="类型" value={c.type} />
+          <DrawerKv label="发布日期" value={c.releasedAt} />
+          <DrawerKv label="作者" value={c.author} />
+          <DrawerKv label="PR" value={c.pr} />
+          <DrawerKv label="社区反应" value={'👍 ' + c.reactions} />
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 服务状态 Drawer
+// ============================================================
+function ServiceDrawer({ s, onClose }: { s: ServiceStatusItem; onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title={s.name} subtitle={s.region + ' · ' + s.state} onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <div className="flex items-center gap-3">
+          <span className="w-3 h-3 rounded-full" style={{ background: statusBadge(s.state).color }}></span>
+          <div className="flex-1">
+            <div className="text-base font-semibold" style={{ color: BRAND.text }}>{s.name}</div>
+            <div className="text-[11px]" style={{ color: BRAND.textSub }}>{s.description}</div>
+          </div>
+          <span className="px-2 py-1 rounded text-xs" style={{ background: statusBadge(s.state).bg, color: statusBadge(s.state).color }}>{statusBadge(s.state).label}</span>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>可用率</div>
+            <div className="text-base font-bold font-mono" style={{ color: s.uptime > 99.9 ? BRAND.success : BRAND.text }}>{s.uptime.toFixed(2)}%</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>p50 延迟</div>
+            <div className="text-base font-bold font-mono" style={{ color: BRAND.text }}>{s.latencyP50}ms</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>p95 延迟</div>
+            <div className="text-base font-bold font-mono" style={{ color: s.latencyP95 > 200 ? BRAND.amber : BRAND.text }}>{s.latencyP95}ms</div>
+          </div>
+          <div className="rounded-lg p-3" style={{ background: BRAND.bgCard }}>
+            <div className="text-[10px]" style={{ color: BRAND.textMute }}>错误率</div>
+            <div className="text-base font-bold font-mono" style={{ color: s.errorRate > 0.3 ? BRAND.danger : BRAND.text }}>{s.errorRate.toFixed(2)}%</div>
+          </div>
+        </div>
+        <DrawerSection title="服务信息">
+          <DrawerKv label="服务名" value={s.name} />
+          <DrawerKv label="区域" value={s.region} />
+          <DrawerKv label="状态" value={statusBadge(s.state).label} color={statusBadge(s.state).color} />
+          <DrawerKv label="30d 事故" value={s.incidents30d.toString() + ' 次'} />
+          <DrawerKv label="最近事故" value={s.lastIncident} />
+        </DrawerSection>
+        <DrawerSection title="依赖服务">
+          <div className="flex flex-wrap gap-1.5">
+            {s.dependencies.map((d, i) => <span key={i} className="px-2 py-0.5 rounded text-[10px]" style={{ background: BRAND.bgCardHover, color: BRAND.text }}>{d}</span>)}
+          </div>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}
+
+// ============================================================
+// 帮助 Drawer
+// ============================================================
+function HelpDrawer({ onClose }: { onClose: () => void }) {
+  return (
+    <DrawerShell onClose={onClose}>
+      <DrawerHeader title="帮助中心" subtitle="开发者门户使用指南" onClose={onClose} />
+      <div className="p-4 space-y-4">
+        <DrawerSection title="快速链接">
+          <div className="grid grid-cols-2 gap-2">
+            {[
+              { t: 'API 文档', d: 'OpenAPI 3.1 + 完整示例' },
+              { t: 'SDK 仓库', d: '9 语言 GitHub 仓库' },
+              { t: '状态页', d: '实时服务状态' },
+              { t: '社区', d: 'Discord / GitHub Discussions' },
+              { t: '工单', d: '提交技术问题' },
+              { t: '更新日志', d: '订阅 API 变更通知' },
+            ].map((x, i) => (
+              <a key={i} href="#" className="block rounded-lg p-3" style={{ background: BRAND.bgCardHover }}>
+                <div className="text-xs font-semibold mb-0.5" style={{ color: BRAND.text }}>{x.t}</div>
+                <div className="text-[10px]" style={{ color: BRAND.textSub }}>{x.d}</div>
+              </a>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="快捷键">
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            {[{ k: '/', d: '聚焦搜索' }, { k: 'Esc', d: '关闭 Drawer' }, { k: 'Tab', d: '切换主分区' }, { k: 'Enter', d: '打开选中项' }].map((x, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <kbd className="px-2 py-0.5 rounded font-mono" style={{ background: BRAND.bgCardHover, color: BRAND.text, border: '1px solid ' + BRAND.border }}>{x.k}</kbd>
+                <span style={{ color: BRAND.textSub }}>{x.d}</span>
+              </div>
+            ))}
+          </div>
+        </DrawerSection>
+        <DrawerSection title="合规说明">
+          <ul className="text-[11px] space-y-1" style={{ color: BRAND.textSub }}>
+            <li>· 开发者门户与 SDK 仅作技术能力演示</li>
+            <li>· 沙箱为模拟 / 测试型环境，不涉及真实资产</li>
+            <li>· 严禁利用 SDK / 沙箱从事违法违规活动</li>
+            <li>· 区域为重点市场与合规研究方向示例</li>
+          </ul>
+        </DrawerSection>
+      </div>
+    </DrawerShell>
+  );
+}

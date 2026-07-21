@@ -1,0 +1,661 @@
+// Mock 数据 - 全部使用模拟数据，不连接真实 API
+
+// === API 端点（14 个） ===
+const API_ENDPOINTS: ApiEndpoint[] = [
+  {
+    id: 'API-001', name: '行情 K 线', path: '/v1/market/klines', method: 'GET', category: 'market',
+    status: 'stable', version: 'v1.2', description: '获取交易对 K 线数据，支持 1m/5m/15m/1h/4h/1d/1w',
+    rateLimit: '1200/min', auth: 'API Key', calls24h: 8_240_000, p95LatencyMs: 42, errorRate: 0.08,
+    updatedAt: '2026-07-15', tags: ['行情', 'K 线', '高频'],
+  },
+  {
+    id: 'API-002', name: '账户余额', path: '/v1/account/balances', method: 'GET', category: 'account',
+    status: 'stable', version: 'v1.0', description: '查询账户多币种余额',
+    rateLimit: '600/min', auth: 'API Key + Signature', calls24h: 1_840_000, p95LatencyMs: 68, errorRate: 0.12,
+    updatedAt: '2026-06-20', tags: ['账户', '余额'],
+  },
+  {
+    id: 'API-003', name: '下单', path: '/v1/order/create', method: 'POST', category: 'trade',
+    status: 'stable', version: 'v2.1', description: '创建限价/市价/止损单',
+    rateLimit: '300/min', auth: 'API Key + Signature', calls24h: 980_000, p95LatencyMs: 124, errorRate: 0.32,
+    updatedAt: '2026-07-10', tags: ['交易', '下单', '核心'],
+  },
+  {
+    id: 'API-004', name: '撤单', path: '/v1/order/cancel', method: 'DELETE', category: 'trade',
+    status: 'stable', version: 'v2.0', description: '撤销未成交订单',
+    rateLimit: '600/min', auth: 'API Key + Signature', calls24h: 412_000, p95LatencyMs: 96, errorRate: 0.18,
+    updatedAt: '2026-06-15', tags: ['交易', '撤单'],
+  },
+  {
+    id: 'API-005', name: '充值地址', path: '/v1/wallet/deposit-address', method: 'GET', category: 'wallet',
+    status: 'stable', version: 'v1.0', description: '获取币种充值地址',
+    rateLimit: '120/min', auth: 'API Key + Signature', calls24h: 86_000, p95LatencyMs: 142, errorRate: 0.22,
+    updatedAt: '2026-05-28', tags: ['钱包', '充值'],
+  },
+  {
+    id: 'API-006', name: '提现申请', path: '/v1/wallet/withdraw', method: 'POST', category: 'wallet',
+    status: 'beta', version: 'v0.9', description: '提交提现申请（含白名单校验）',
+    rateLimit: '60/min', auth: 'API Key + Signature + 2FA', calls24h: 24_000, p95LatencyMs: 218, errorRate: 0.45,
+    updatedAt: '2026-07-18', tags: ['钱包', '提现', '公测'],
+  },
+  {
+    id: 'API-007', name: '机构信用额度', path: '/v1/institution/credit', method: 'GET', category: 'institution',
+    status: 'beta', version: 'v0.8', description: '查询机构账户信用额度与已用占比',
+    rateLimit: '120/min', auth: 'API Key + Signature + KYB', calls24h: 18_400, p95LatencyMs: 186, errorRate: 0.28,
+    updatedAt: '2026-07-12', tags: ['机构', '信用'],
+  },
+  {
+    id: 'API-008', name: '策略信号', path: '/v1/strategy/signal', method: 'WS', category: 'strategy',
+    status: 'new', version: 'v0.1', description: '订阅量化策略实时交易信号（WebSocket）',
+    rateLimit: '200 conn', auth: 'API Key + Subscribe Token', calls24h: 6_400_000, p95LatencyMs: 28, errorRate: 0.05,
+    updatedAt: '2026-07-19', tags: ['策略', '信号', 'WebSocket', '新增'],
+  },
+  {
+    id: 'API-009', name: '风控预检', path: '/v1/risk/precheck', method: 'POST', category: 'risk',
+    status: 'stable', version: 'v1.1', description: '下单前风控合规预检',
+    rateLimit: '600/min', auth: 'API Key + Signature', calls24h: 920_000, p95LatencyMs: 38, errorRate: 0.04,
+    updatedAt: '2026-07-08', tags: ['风控', '预检'],
+  },
+  {
+    id: 'API-010', name: 'Webhook 注册', path: '/v1/webhook/register', method: 'POST', category: 'webhook',
+    status: 'stable', version: 'v1.0', description: '注册 Webhook 端点与订阅事件',
+    rateLimit: '60/min', auth: 'API Key + Signature', calls24h: 4_200, p95LatencyMs: 96, errorRate: 0.18,
+    updatedAt: '2026-06-10', tags: ['回调', '注册'],
+  },
+  {
+    id: 'API-011', name: 'KYC 状态', path: '/v1/account/kyc-status', method: 'GET', category: 'account',
+    status: 'stable', version: 'v1.0', description: '查询用户/机构 KYC 审核状态',
+    rateLimit: '300/min', auth: 'API Key', calls24h: 142_000, p95LatencyMs: 84, errorRate: 0.16,
+    updatedAt: '2026-05-30', tags: ['账户', 'KYC', '合规'],
+  },
+  {
+    id: 'API-012', name: '深度行情', path: '/v1/market/depth', method: 'GET', category: 'market',
+    status: 'stable', version: 'v1.0', description: '获取订单簿深度数据',
+    rateLimit: '1200/min', auth: 'API Key', calls24h: 3_640_000, p95LatencyMs: 32, errorRate: 0.06,
+    updatedAt: '2026-07-05', tags: ['行情', '深度'],
+  },
+  {
+    id: 'API-013', name: '资产组合', path: '/v1/portfolio/holdings', method: 'GET', category: 'account',
+    status: 'beta', version: 'v0.6', description: '查询智能投顾资产组合明细',
+    rateLimit: '300/min', auth: 'API Key + Signature', calls24h: 48_000, p95LatencyMs: 156, errorRate: 0.22,
+    updatedAt: '2026-07-16', tags: ['资产', '组合', '投顾'],
+  },
+  {
+    id: 'API-014', name: '历史成交', path: '/v1/order/trades', method: 'GET', category: 'trade',
+    status: 'deprecated', version: 'v0.9', description: '查询历史成交记录（即将下线）',
+    rateLimit: '600/min', auth: 'API Key + Signature', calls24h: 12_000, p95LatencyMs: 248, errorRate: 0.42,
+    updatedAt: '2025-12-01', deprecatedAt: '2026-09-30', tags: ['交易', '历史', '弃用'],
+  },
+];
+
+// === SDK 包（9 语言） ===
+const SDK_PACKAGES: SdkPackage[] = [
+  {
+    id: 'SDK-TS', name: '@zsdex/sdk-typescript', lang: 'typescript', version: '2.4.1', status: 'stable',
+    size: 248_000, downloads: 286_000, stars: 1_240, openIssues: 18, lastRelease: '2026-07-15',
+    repo: 'github.com/zsdex/sdk-typescript', docs: 'docs.zsdex.io/sdk/ts',
+    description: '官方 TypeScript SDK，支持浏览器 / Node.js / Deno / Bun，含完整类型定义',
+    installCmd: 'npm install @zsdex/sdk-typescript',
+    features: ['完整 TS 类型', 'WebSocket 自动重连', 'HMAC 签名', '错误重试', '沙箱模式'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-PY', name: 'zsdex-sdk-python', lang: 'python', version: '1.8.2', status: 'stable',
+    size: 184_000, downloads: 196_000, stars: 842, openIssues: 12, lastRelease: '2026-07-12',
+    repo: 'github.com/zsdex/sdk-python', docs: 'docs.zsdex.io/sdk/py',
+    description: '官方 Python SDK，支持 3.9+，异步客户端 + 类型提示',
+    installCmd: 'pip install zsdex-sdk',
+    features: ['asyncio 异步', 'Pydantic 模型', '自动重连', '类型提示完整'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-GO', name: 'github.com/zsdex/zsdex-go', lang: 'go', version: '1.6.0', status: 'stable',
+    size: 96_000, downloads: 142_000, stars: 624, openIssues: 8, lastRelease: '2026-07-10',
+    repo: 'github.com/zsdex/zsdex-go', docs: 'docs.zsdex.io/sdk/go',
+    description: '官方 Go SDK，高性能 + context 上下文支持',
+    installCmd: 'go get github.com/zsdex/zsdex-go',
+    features: ['context 支持', '并发安全', '零依赖', 'go module'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-JV', name: 'com.zsdex:sdk-java', lang: 'java', version: '1.4.0', status: 'stable',
+    size: 312_000, downloads: 84_000, stars: 312, openIssues: 14, lastRelease: '2026-07-08',
+    repo: 'github.com/zsdex/sdk-java', docs: 'docs.zsdex.io/sdk/java',
+    description: '官方 Java SDK，支持 JDK 11+，Maven / Gradle',
+    installCmd: 'implementation \'com.zsdex:sdk-java:1.4.0\'',
+    features: ['JDK 11+', 'Reactive Streams', 'OkHttp 底层', 'Maven Central'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-RS', name: 'zsdex-rust', lang: 'rust', version: '0.9.0', status: 'beta',
+    size: 64_000, downloads: 28_000, stars: 186, openIssues: 22, lastRelease: '2026-07-14',
+    repo: 'github.com/zsdex/zsdex-rust', docs: 'docs.zsdex.io/sdk/rust',
+    description: '官方 Rust SDK（公测），async/await + tokio',
+    installCmd: 'cargo add zsdex',
+    features: ['async/await', 'tokio 异步运行时', '零拷贝', '强类型'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-CS', name: 'Zsdex.Sdk', lang: 'csharp', version: '1.2.0', status: 'stable',
+    size: 156_000, downloads: 38_000, stars: 124, openIssues: 6, lastRelease: '2026-07-06',
+    repo: 'github.com/zsdex/sdk-csharp', docs: 'docs.zsdex.io/sdk/cs',
+    description: '官方 C# SDK，支持 .NET 6+',
+    installCmd: 'dotnet add package Zsdex.Sdk',
+    features: ['.NET 6+', 'async/await', 'NuGet 发布', '强类型'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-PHP', name: 'zsdex/sdk-php', lang: 'php', version: '1.5.0', status: 'stable',
+    size: 88_000, downloads: 42_000, stars: 96, openIssues: 9, lastRelease: '2026-07-04',
+    repo: 'github.com/zsdex/sdk-php', docs: 'docs.zsdex.io/sdk/php',
+    description: '官方 PHP SDK，支持 8.0+',
+    installCmd: 'composer require zsdex/sdk-php',
+    features: ['PHP 8.0+', '类型声明', 'PSR-18', 'Composer 包'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-SW', name: 'ZsdexSDK', lang: 'swift', version: '0.8.0', status: 'alpha',
+    size: 72_000, downloads: 18_000, stars: 68, openIssues: 16, lastRelease: '2026-07-11',
+    repo: 'github.com/zsdex/sdk-swift', docs: 'docs.zsdex.io/sdk/swift',
+    description: '官方 Swift SDK（内测），SwiftPM',
+    installCmd: 'swift package add zsdex/ZsdexSDK',
+    features: ['SwiftPM', 'async/await', 'Codable', 'iOS 15+'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+  {
+    id: 'SDK-KT', name: 'com.zsdex:sdk-kotlin', lang: 'kotlin', version: '0.6.0', status: 'beta',
+    size: 96_000, downloads: 22_000, stars: 84, openIssues: 11, lastRelease: '2026-07-09',
+    repo: 'github.com/zsdex/sdk-kotlin', docs: 'docs.zsdex.io/sdk/kotlin',
+    description: '官方 Kotlin SDK（公测），协程 + 序列化',
+    installCmd: 'implementation(\'com.zsdex:sdk-kotlin:0.6.0\')',
+    features: ['协程', 'kotlinx.serialization', 'KMP 兼容', 'JVM/Android'],
+    maintainer: 'zsdex-core', license: 'Apache-2.0',
+  },
+];
+
+// === 沙箱密钥（6 个） ===
+const SANDBOX_KEYS: SandboxKey[] = [
+  {
+    id: 'SK-001', name: '机构主沙箱', keyPrefix: 'sk_sb_main_8f2a****', env: 'sandbox', status: 'active',
+    tier: 'enterprise', callsToday: 184_000, callsLimit: 5_000_000, rateLimit: '5000/min',
+    expiresAt: '2026-12-31', createdAt: '2024-08-12', lastUsedAt: '2026-07-21 11:18',
+    ipWhitelist: ['203.0.113.0/24', '198.51.100.42'],
+    scopes: ['market:read', 'account:read', 'trade:write', 'wallet:read'],
+    note: '机构主测试沙箱，限内部使用',
+  },
+  {
+    id: 'SK-002', name: '投顾研究沙箱', keyPrefix: 'sk_sb_advisor_3c91****', env: 'sandbox', status: 'active',
+    tier: 'pro', callsToday: 92_000, callsLimit: 1_000_000, rateLimit: '1500/min',
+    expiresAt: '2026-10-15', createdAt: '2025-03-20', lastUsedAt: '2026-07-21 11:24',
+    ipWhitelist: ['203.0.113.18'],
+    scopes: ['market:read', 'strategy:read', 'signal:subscribe'],
+    note: '智能投顾研究专用',
+  },
+  {
+    id: 'SK-003', name: '量化回测沙箱', keyPrefix: 'sk_sb_quant_a47e****', env: 'replay', status: 'active',
+    tier: 'pro', callsToday: 246_000, callsLimit: 2_000_000, rateLimit: '3000/min',
+    expiresAt: '2026-09-30', createdAt: '2024-11-08', lastUsedAt: '2026-07-21 11:30',
+    ipWhitelist: [],
+    scopes: ['market:read', 'trade:replay', 'backtest:run'],
+    note: '历史行情回放模式',
+  },
+  {
+    id: 'SK-004', name: '混沌测试沙箱', keyPrefix: 'sk_sb_chaos_e2d1****', env: 'chaos', status: 'active',
+    tier: 'enterprise', callsToday: 18_000, callsLimit: 500_000, rateLimit: '600/min',
+    expiresAt: '2026-08-20', createdAt: '2026-04-12', lastUsedAt: '2026-07-20 18:42',
+    ipWhitelist: ['203.0.113.5'],
+    scopes: ['market:read', 'trade:write', 'chaos:inject'],
+    note: '故障注入测试专用',
+  },
+  {
+    id: 'SK-005', name: 'Mobile Demo 沙箱', keyPrefix: 'sk_sb_demo_b8f4****', env: 'mock', status: 'active',
+    tier: 'free', callsToday: 8_400, callsLimit: 50_000, rateLimit: '120/min',
+    expiresAt: '2026-08-15', createdAt: '2026-06-01', lastUsedAt: '2026-07-21 10:58',
+    ipWhitelist: [],
+    scopes: ['market:read', 'account:read'],
+    note: '移动端 demo 演示用',
+  },
+  {
+    id: 'SK-006', name: '历史撤销密钥', keyPrefix: 'sk_sb_old_****', env: 'sandbox', status: 'revoked',
+    tier: 'starter', callsToday: 0, callsLimit: 100_000, rateLimit: '300/min',
+    expiresAt: '2025-12-31', createdAt: '2024-05-10', lastUsedAt: '2025-12-28 16:00',
+    ipWhitelist: [],
+    scopes: ['market:read'],
+    note: '已撤销（合规审计）',
+  },
+];
+
+// === Webhook 事件（6 个） ===
+const WEBHOOK_EVENTS: WebhookEvent[] = [
+  {
+    id: 'WH-001', name: '订单状态变更', category: 'order', status: 'active',
+    endpoint: 'https://api.partner.example/hooks/order', secret: 'whsec_****8f2a',
+    deliveries24h: 184_000, successRate: 99.92, avgLatencyMs: 86, retries: 412,
+    events: ['order.created', 'order.filled', 'order.partial', 'order.cancelled'],
+    filters: ['symbol=BTC*,ETH*', 'amount>1000'],
+    description: '订单全生命周期事件，含创建/成交/部分成交/撤销',
+    updatedAt: '2026-07-15',
+  },
+  {
+    id: 'WH-002', name: '持仓变动', category: 'position', status: 'active',
+    endpoint: 'https://api.partner.example/hooks/position', secret: 'whsec_****3c91',
+    deliveries24h: 96_000, successRate: 99.86, avgLatencyMs: 92, retries: 248,
+    events: ['position.opened', 'position.closed', 'position.liquidated'],
+    filters: ['leverage>1'],
+    description: '持仓变化事件，含强平通知',
+    updatedAt: '2026-07-10',
+  },
+  {
+    id: 'WH-003', name: '钱包充值确认', category: 'wallet', status: 'active',
+    endpoint: 'https://api.partner.example/hooks/wallet', secret: 'whsec_****a47e',
+    deliveries24h: 18_400, successRate: 99.94, avgLatencyMs: 124, retries: 28,
+    events: ['deposit.confirmed', 'withdraw.submitted', 'withdraw.completed'],
+    filters: ['chain=ETH,BSC,POLYGON'],
+    description: '链上充值/提现状态变更（≥6 区块确认）',
+    updatedAt: '2026-07-12',
+  },
+  {
+    id: 'WH-004', name: '风控告警', category: 'risk', status: 'active',
+    endpoint: 'https://api.partner.example/hooks/risk', secret: 'whsec_****e2d1',
+    deliveries24h: 4_200, successRate: 99.62, avgLatencyMs: 168, retries: 86,
+    events: ['risk.alert', 'margin.call', 'force.liquidation'],
+    filters: ['severity>=warning'],
+    description: '风控事件告警，含追保/强平通知',
+    updatedAt: '2026-07-08',
+  },
+  {
+    id: 'WH-005', name: '系统公告', category: 'system', status: 'paused',
+    endpoint: 'https://api.partner.example/hooks/system', secret: 'whsec_****b8f4',
+    deliveries24h: 0, successRate: 0, avgLatencyMs: 0, retries: 0,
+    events: ['maintenance.scheduled', 'incident.resolved', 'api.version.deprecated'],
+    filters: [],
+    description: '平台维护/事故/版本弃用通知（当前暂停）',
+    updatedAt: '2026-07-19',
+  },
+  {
+    id: 'WH-006', name: 'KYC 审核结果', category: 'kyc', status: 'active',
+    endpoint: 'https://api.partner.example/hooks/kyc', secret: 'whsec_****d6e9',
+    deliveries24h: 1_200, successRate: 99.18, avgLatencyMs: 218, retries: 42,
+    events: ['kyc.approved', 'kyc.rejected', 'kyc.needs_info'],
+    filters: ['type=individual, institution'],
+    description: '用户/机构 KYC 审核结果回调',
+    updatedAt: '2026-07-14',
+  },
+];
+
+// === 配额使用（5 档） ===
+const QUOTA_USAGES: QuotaUsage[] = [
+  {
+    id: 'QU-FREE', tier: 'free', callsPerMin: 60, callsPerDay: 10_000, websocketConns: 5, webhookDeliveries: 1_000,
+    usedPct: 42, burstPct: 18, resetAt: '每日 00:00 UTC', history: [38, 41, 45, 42, 48, 52, 46, 42, 44, 42],
+    regions: [{ name: '亚太', pct: 48, latencyMs: 32 }, { name: '欧美', pct: 36, latencyMs: 128 }, { name: '中东', pct: 16, latencyMs: 86 }],
+    alerts: 2,
+  },
+  {
+    id: 'QU-START', tier: 'starter', callsPerMin: 300, callsPerDay: 100_000, websocketConns: 20, webhookDeliveries: 10_000,
+    usedPct: 58, burstPct: 32, resetAt: '每日 00:00 UTC', history: [42, 48, 52, 56, 58, 62, 64, 60, 58, 58],
+    regions: [{ name: '亚太', pct: 52, latencyMs: 28 }, { name: '欧美', pct: 32, latencyMs: 124 }, { name: '中东', pct: 16, latencyMs: 82 }],
+    alerts: 4,
+  },
+  {
+    id: 'QU-PRO', tier: 'pro', callsPerMin: 1200, callsPerDay: 1_000_000, websocketConns: 100, webhookDeliveries: 100_000,
+    usedPct: 67, burstPct: 48, resetAt: '每日 00:00 UTC', history: [52, 56, 60, 64, 66, 68, 70, 68, 66, 67],
+    regions: [{ name: '亚太', pct: 58, latencyMs: 26 }, { name: '欧美', pct: 28, latencyMs: 118 }, { name: '中东', pct: 14, latencyMs: 78 }],
+    alerts: 6,
+  },
+  {
+    id: 'QU-ENT', tier: 'enterprise', callsPerMin: 5000, callsPerDay: 10_000_000, websocketConns: 500, webhookDeliveries: 1_000_000,
+    usedPct: 72, burstPct: 56, resetAt: '每日 00:00 UTC', history: [62, 65, 68, 70, 72, 74, 76, 74, 72, 72],
+    regions: [{ name: '亚太', pct: 62, latencyMs: 24 }, { name: '欧美', pct: 24, latencyMs: 112 }, { name: '中东', pct: 14, latencyMs: 72 }],
+    alerts: 8,
+  },
+  {
+    id: 'QU-CUST', tier: 'custom', callsPerMin: 20000, callsPerDay: 100_000_000, websocketConns: 2000, webhookDeliveries: 10_000_000,
+    usedPct: 81, burstPct: 62, resetAt: '协商', history: [72, 75, 78, 80, 82, 84, 85, 83, 81, 81],
+    regions: [{ name: '亚太', pct: 64, latencyMs: 22 }, { name: '欧美', pct: 22, latencyMs: 108 }, { name: '中东', pct: 14, latencyMs: 68 }],
+    alerts: 12,
+  },
+];
+
+// === 错误码（12 个） ===
+const ERROR_CODES: ErrorCode[] = [
+  {
+    id: 'EC-001', code: 'ZS-AUTH-001', message: 'API Key 无效', severity: 'error', category: '鉴权',
+    httpStatus: 401, retryable: false, cause: 'API Key 不存在或已撤销', solution: '检查 API Key 是否正确，确认未撤销',
+    occurrence: 1_240, lastSeen: '2026-07-21 11:18', references: ['/docs/api/auth', '/docs/faq/auth-001'],
+  },
+  {
+    id: 'EC-002', code: 'ZS-AUTH-002', message: '签名验证失败', severity: 'error', category: '鉴权',
+    httpStatus: 401, retryable: false, cause: 'HMAC 签名与服务器不一致', solution: '使用 SDK 自动签名或参考签名示例',
+    occurrence: 824, lastSeen: '2026-07-21 11:24', references: ['/docs/api/signing', '/sdk/examples/sign'],
+  },
+  {
+    id: 'EC-003', code: 'ZS-RATE-001', message: '请求频率超限', severity: 'warning', category: '限流',
+    httpStatus: 429, retryable: true, cause: '超过 callsPerMin 配额', solution: '退避重试或升级套餐',
+    occurrence: 4_820, lastSeen: '2026-07-21 11:30', references: ['/docs/api/rate-limit'],
+  },
+  {
+    id: 'EC-004', code: 'ZS-RATE-002', message: 'WebSocket 连接数超限', severity: 'warning', category: '限流',
+    httpStatus: 429, retryable: true, cause: '超过 websocketConns 配额', solution: '关闭空闲连接或升级套餐',
+    occurrence: 186, lastSeen: '2026-07-21 10:48', references: ['/docs/api/ws-limits'],
+  },
+  {
+    id: 'EC-005', code: 'ZS-ORDER-001', message: '余额不足', severity: 'error', category: '交易',
+    httpStatus: 400, retryable: false, cause: '账户可用余额小于订单金额', solution: '充值或调整订单金额',
+    occurrence: 2_140, lastSeen: '2026-07-21 11:28', references: ['/docs/api/order'],
+  },
+  {
+    id: 'EC-006', code: 'ZS-ORDER-002', message: '最小下单数量不足', severity: 'error', category: '交易',
+    httpStatus: 400, retryable: false, cause: '订单数量小于交易对最小下单量', solution: '查询交易对最小下单量',
+    occurrence: 642, lastSeen: '2026-07-21 11:12', references: ['/docs/api/min-quantity'],
+  },
+  {
+    id: 'EC-007', code: 'ZS-MARKET-001', message: '交易对暂停交易', severity: 'warning', category: '行情',
+    httpStatus: 503, retryable: true, cause: '交易对处于暂停状态', solution: '查询交易对状态或选择其他交易对',
+    occurrence: 128, lastSeen: '2026-07-21 09:42', references: ['/docs/api/symbol-status'],
+  },
+  {
+    id: 'EC-008', code: 'ZS-WALLET-001', message: '提现地址未在白名单', severity: 'error', category: '钱包',
+    httpStatus: 400, retryable: false, cause: '提现地址未通过白名单校验', solution: '先添加白名单，等待 24h 生效',
+    occurrence: 318, lastSeen: '2026-07-21 10:18', references: ['/docs/api/withdraw-whitelist'],
+  },
+  {
+    id: 'EC-009', code: 'ZS-WALLET-002', message: '单日提现额度超限', severity: 'error', category: '钱包',
+    httpStatus: 400, retryable: false, cause: '超过单日提现上限', solution: '分日提现或申请提额',
+    occurrence: 84, lastSeen: '2026-07-21 08:24', references: ['/docs/api/withdraw-limit'],
+  },
+  {
+    id: 'EC-010', code: 'ZS-RISK-001', message: '风控拦截', severity: 'critical', category: '风控',
+    httpStatus: 403, retryable: false, cause: '订单触发风控规则', solution: '联系合规团队查询具体规则',
+    occurrence: 42, lastSeen: '2026-07-20 22:14', references: ['/docs/risk/rules'],
+  },
+  {
+    id: 'EC-011', code: 'ZS-SYS-001', message: '服务暂时不可用', severity: 'critical', category: '系统',
+    httpStatus: 503, retryable: true, cause: '后端服务异常', solution: '退避重试，查看 /status 页',
+    occurrence: 18, lastSeen: '2026-07-21 06:42', references: ['/status'],
+  },
+  {
+    id: 'EC-012', code: 'ZS-PARAM-001', message: '参数校验失败', severity: 'error', category: '参数',
+    httpStatus: 400, retryable: false, cause: '请求参数缺失或类型错误', solution: '参考 OpenAPI Schema',
+    occurrence: 1_840, lastSeen: '2026-07-21 11:32', references: ['/docs/openapi'],
+  },
+];
+
+// === 接入审核（5 个） ===
+const AUDIT_APPLICATIONS: AuditApplication[] = [
+  {
+    id: 'AUD-001', applicant: '陈志远', orgName: 'Apex Sigma Capital Pte. Ltd.', orgType: '做市商',
+    useCase: '加密资产做市 + 跨市场套利', status: 'approved', submittedAt: '2026-06-12', reviewNote: '材料齐全，KYB 通过',
+    kybLevel: 5, expectedRps: 5000, contact: '+86-138-****-1234', email: 'contact@apex-sigma.example',
+    scope: ['market:read', 'trade:write', 'institution:write'],
+    reviewedBy: '合规组-王悦', score: 92,
+  },
+  {
+    id: 'AUD-002', applicant: '林雅琴', orgName: 'Northwind Quant Labs', orgType: '量化团队',
+    useCase: '量化策略研究 + 信号订阅', status: 'reviewing', submittedAt: '2026-07-10', reviewNote: '补充材料审核中',
+    kybLevel: 3, expectedRps: 1200, contact: '+852-****-5678', email: 'research@northwind.example',
+    scope: ['market:read', 'strategy:subscribe', 'backtest:run'],
+    reviewedBy: '合规组-李航', score: 78,
+  },
+  {
+    id: 'AUD-003', applicant: 'Satoshi M.', orgName: '个人开发者 (北美)', orgType: '个人',
+    useCase: '行情分析工具 + 教学示例', status: 'submitted', submittedAt: '2026-07-18', reviewNote: '待初审',
+    kybLevel: 0, expectedRps: 60, contact: '+1-415-****-9012', email: 'satoshi.dev@example',
+    scope: ['market:read'],
+    reviewedBy: '-', score: 0,
+  },
+  {
+    id: 'AUD-004', applicant: '何俊', orgName: '海德拉巴资管', orgType: '资管',
+    useCase: '量化资管 + 自动化交易', status: 'needs_info', submittedAt: '2026-07-05', reviewNote: '需补充股权穿透图与最终受益人声明',
+    kybLevel: 4, expectedRps: 2500, contact: '+91-****-3456', email: 'compliance@hyd-amc.example',
+    scope: ['market:read', 'account:read', 'trade:write', 'portfolio:read'],
+    reviewedBy: '合规组-王悦', score: 64,
+  },
+  {
+    id: 'AUD-005', applicant: '吴敏', orgName: '深圳某科技公司', orgType: '科技',
+    useCase: '终端产品嵌入行情', status: 'rejected', submittedAt: '2026-06-28', reviewNote: '未达机构准入门槛，建议以个人开发者接入',
+    kybLevel: 1, expectedRps: 200, contact: '+86-755-****-7890', email: 'min.wu@example',
+    scope: ['market:read'],
+    reviewedBy: '合规组-李航', score: 42,
+  },
+];
+
+// === 代码示例（8 个） ===
+const CODE_EXAMPLES: CodeExample[] = [
+  {
+    id: 'EX-001', title: '获取 BTC/USDT 实时 K 线', api: 'GET /v1/market/klines', lang: 'curl',
+    scenario: '公共行情', difficulty: 'beginner',
+    code: 'curl -X GET "https://api.zsdex.io/v1/market/klines?symbol=BTCUSDT&interval=1m&limit=100" \\
+  -H "X-API-Key: $ZSDX_API_KEY"',
+    description: '使用 cURL 获取 BTC/USDT 1 分钟 K 线，limit 最大 1000',
+    tags: ['行情', 'K 线', '基础'], updatedAt: '2026-07-15', runs: 12_840,
+  },
+  {
+    id: 'EX-002', title: 'TypeScript 下单', api: 'POST /v1/order/create', lang: 'typescript',
+    scenario: '签名交易', difficulty: 'intermediate',
+    code: 'import { Zsdex } from "@zsdex/sdk-typescript";
+
+const client = new Zsdex({
+  apiKey: process.env.ZSDX_KEY!,
+  apiSecret: process.env.ZSDX_SECRET!,
+});
+
+const order = await client.order.create({
+  symbol: "BTCUSDT",
+  side: "BUY",
+  type: "LIMIT",
+  price: "68000.50",
+  quantity: "0.01",
+  timeInForce: "GTC",
+});
+
+console.log("订单 ID:", order.orderId);',
+    description: '使用 TypeScript SDK 提交限价单，含完整类型提示',
+    tags: ['交易', 'SDK', 'TS'], updatedAt: '2026-07-12', runs: 8_240,
+  },
+  {
+    id: 'EX-003', title: 'Python 异步订阅行情', api: 'WS /v1/market/stream', lang: 'python',
+    scenario: '实时行情', difficulty: 'intermediate',
+    code: 'import asyncio
+from zsdex import AsyncClient
+
+async def main():
+    client = AsyncClient(api_key="...")
+    ws = client.market.stream(symbols=["BTCUSDT", "ETHUSDT"])
+    async for tick in ws:
+        print(f"{tick.symbol}: {tick.price}")
+
+asyncio.run(main())',
+    description: 'Python SDK 异步 WebSocket 订阅多交易对行情',
+    tags: ['行情', 'WS', 'Python'], updatedAt: '2026-07-10', runs: 4_180,
+  },
+  {
+    id: 'EX-004', title: 'Go 并发下单', api: 'POST /v1/order/create', lang: 'go',
+    scenario: '高频交易', difficulty: 'advanced',
+    code: 'package main
+
+import (
+    "context"
+    "github.com/zsdex/zsdex-go/client"
+)
+
+func main() {
+    c := client.New("API_KEY", "API_SECRET")
+    for i := 0; i < 100; i++ {
+        go func() {
+            _, err := c.Order.Create(context.Background(), &client.OrderReq{
+                Symbol: "BTCUSDT", Side: "BUY", Type: "MARKET",
+                Quantity: "0.001",
+            })
+        }()
+    }
+}',
+    description: 'Go SDK 并发 100 个市价单，演示高并发场景',
+    tags: ['交易', 'Go', '高并发'], updatedAt: '2026-07-08', runs: 1_240,
+  },
+  {
+    id: 'EX-005', title: 'Java 充值地址查询', api: 'GET /v1/wallet/deposit-address', lang: 'java',
+    scenario: '钱包操作', difficulty: 'beginner',
+    code: 'ZsdexClient client = new ZsdexClient("API_KEY", "API_SECRET");
+DepositAddress addr = client.wallet().getDepositAddress("USDT", "ETH");
+System.out.println("充值地址: " + addr.getAddress());
+System.out.println("Memo: " + addr.getMemo());',
+    description: 'Java SDK 查询 USDT-ETH 充值地址',
+    tags: ['钱包', 'Java', '基础'], updatedAt: '2026-07-06', runs: 2_640,
+  },
+  {
+    id: 'EX-006', title: 'Webhook 签名验证', api: 'POST /v1/webhook/verify', lang: 'python',
+    scenario: '回调处理', difficulty: 'advanced',
+    code: 'from zsdex.webhook import Webhook
+
+wh = Webhook(secret="whsec_****")
+
+@app.post("/hooks/order")
+async def order_hook(req: Request):
+    payload = await req.body()
+    sig = req.headers["X-Zsdex-Signature"]
+    if not wh.verify(payload, sig):
+        raise HTTPException(403, "Invalid signature")
+    event = wh.parse(payload)
+    handle_event(event)',
+    description: '验证 Webhook 签名并解析事件（HMAC-SHA256）',
+    tags: ['回调', '安全', 'Python'], updatedAt: '2026-07-14', runs: 1_840,
+  },
+  {
+    id: 'EX-007', title: 'Rust 错误重试', api: 'POST /v1/order/create', lang: 'rust',
+    scenario: '容错处理', difficulty: 'advanced',
+    code: 'use zsdex::{Client, Error};
+
+#[tokio::main]
+async fn main() -> Result<(), Error> {
+    let c = Client::new("KEY", "SECRET");
+    let order = c.order().create()
+        .symbol("BTCUSDT")
+        .side("BUY")
+        .send_retry(3)  // 失败重试 3 次
+        .await?;
+    println!("{:?}", order);
+    Ok(())
+}',
+    description: 'Rust SDK 自动重试 + 指数退避',
+    tags: ['错误处理', 'Rust', '重试'], updatedAt: '2026-07-11', runs: 642,
+  },
+  {
+    id: 'EX-008', title: 'cURL 风控预检', api: 'POST /v1/risk/precheck', lang: 'curl',
+    scenario: '风控', difficulty: 'beginner',
+    code: 'curl -X POST "https://api.zsdex.io/v1/risk/precheck" \\
+  -H "X-API-Key: $ZSDX_KEY" \\
+  -H "X-Signature: $SIG" \\
+  -d '{"symbol":"BTCUSDT","side":"BUY","quantity":"0.5"}'',
+    description: '下单前风控预检，拦截可疑订单',
+    tags: ['风控', '基础'], updatedAt: '2026-07-09', runs: 3_280,
+  },
+];
+
+// === 变更日志（10 条） ===
+const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+  {
+    id: 'CL-001', version: 'v2.4.1', type: 'feature', title: '新增策略信号 WebSocket API',
+    description: '新增 /v1/strategy/signal WebSocket 端点，支持实时订阅量化策略信号',
+    releasedAt: '2026-07-19', affects: ['API', 'SDK-TS', 'SDK-PY'], migration: '无需迁移',
+    author: 'zsdex-core', pr: '#1248', reactions: 86,
+  },
+  {
+    id: 'CL-002', version: 'v2.4.0', type: 'feature', title: '机构信用额度 API 公测',
+    description: '新增 /v1/institution/credit 端点，机构用户可查询信用额度与已用占比',
+    releasedAt: '2026-07-12', affects: ['API', 'SDK-TS', 'SDK-GO'], migration: '无需迁移',
+    author: 'zsdex-core', pr: '#1192', reactions: 124,
+  },
+  {
+    id: 'CL-003', version: 'v2.3.5', type: 'fix', title: '修复行情深度数据偶发延迟',
+    description: '修复 /v1/market/depth 在行情高峰时段 p95 延迟突增问题',
+    releasedAt: '2026-07-08', affects: ['API'], migration: '无需迁移',
+    author: 'zsdex-market', pr: '#1178', reactions: 42,
+  },
+  {
+    id: 'CL-004', version: 'v2.3.4', type: 'security', title: '强化 Webhook 签名验证',
+    description: 'Webhook 签名算法升级为 HMAC-SHA256（含时间戳防重放）',
+    releasedAt: '2026-07-05', affects: ['API', 'SDK-TS', 'SDK-PY', 'SDK-GO'], migration: '8 月 1 日前完成升级',
+    author: 'zsdex-security', pr: '#1156', reactions: 96,
+  },
+  {
+    id: 'CL-005', version: 'v2.3.0', type: 'deprecation', title: '弃用 /v1/order/trades',
+    description: '历史成交查询接口弃用，请迁移至 /v1/order/history',
+    releasedAt: '2026-06-15', affects: ['API'], migration: '使用 /v1/order/history 替代',
+    author: 'zsdex-core', pr: '#1102', reactions: 28,
+  },
+  {
+    id: 'CL-006', version: 'v2.2.0', type: 'feature', title: '资产组合 API',
+    description: '新增 /v1/portfolio/holdings 端点，查询智能投顾资产组合',
+    releasedAt: '2026-06-01', affects: ['API', 'SDK-TS'], migration: '无需迁移',
+    author: 'zsdex-core', pr: '#1068', reactions: 68,
+  },
+  {
+    id: 'CL-007', version: 'v2.1.0', type: 'breaking', title: '下单接口 v1 → v2',
+    description: '下单接口从 /v1/order/create 迁移至 /v2/order/create，参数结构调整',
+    releasedAt: '2026-05-20', affects: ['API', '所有 SDK'], migration: '参考迁移指南 /docs/migration/v2-order',
+    author: 'zsdex-core', pr: '#1024', reactions: 184,
+  },
+  {
+    id: 'CL-008', version: 'v2.0.5', type: 'fix', title: '修复沙箱模式偶发签名错误',
+    description: '修复沙箱环境 HMAC 签名在大请求量下偶发失败问题',
+    releasedAt: '2026-05-12', affects: ['API', '所有 SDK'], migration: '无需迁移',
+    author: 'zsdex-core', pr: '#1006', reactions: 36,
+  },
+  {
+    id: 'CL-009', version: 'v2.0.0', type: 'feature', title: 'v2 大版本发布',
+    description: 'API v2 大版本发布，性能提升 40%，支持 9 语言 SDK',
+    releasedAt: '2026-04-01', affects: ['API', '所有 SDK'], migration: '参考 /docs/migration/v2',
+    author: 'zsdex-core', pr: '#948', reactions: 286,
+  },
+  {
+    id: 'CL-010', version: 'v1.8.0', type: 'fix', title: 'KYC 状态查询性能优化',
+    description: 'KYC 状态查询接口增加缓存，p95 延迟从 240ms 降至 84ms',
+    releasedAt: '2026-03-15', affects: ['API'], migration: '无需迁移',
+    author: 'zsdex-core', pr: '#896', reactions: 52,
+  },
+];
+
+// === 服务状态（8 个） ===
+const SERVICE_STATUS: ServiceStatusItem[] = [
+  {
+    id: 'SV-001', name: '市场行情 API', state: 'operational', uptime: 99.98, latencyP50: 18, latencyP95: 42, errorRate: 0.06,
+    region: 'global', lastIncident: '2026-05-08 14:32', incidents30d: 0,
+    description: '行情 / K 线 / 深度 / Ticker 端点', dependencies: ['行情引擎 v3', 'Redis Cluster'],
+  },
+  {
+    id: 'SV-002', name: '账户 API', state: 'operational', uptime: 99.96, latencyP50: 42, latencyP95: 84, errorRate: 0.12,
+    region: 'global', lastIncident: '2026-06-12 09:18', incidents30d: 1,
+    description: '账户 / 余额 / KYC 状态', dependencies: ['账户服务', 'KYC 服务'],
+  },
+  {
+    id: 'SV-003', name: '交易 API', state: 'degraded', uptime: 99.82, latencyP50: 86, latencyP95: 248, errorRate: 0.42,
+    region: '亚太', lastIncident: '2026-07-21 09:42', incidents30d: 2,
+    description: '下单 / 撤单 / 批量操作（当前 p95 升高）', dependencies: ['撮合引擎', '风控服务'],
+  },
+  {
+    id: 'SV-004', name: '钱包 API', state: 'operational', uptime: 99.94, latencyP50: 96, latencyP95: 186, errorRate: 0.22,
+    region: 'global', lastIncident: '2026-07-08 22:14', incidents30d: 1,
+    description: '充值 / 提现 / 链上交互', dependencies: ['链适配器', '签名服务'],
+  },
+  {
+    id: 'SV-005', name: '机构 API', state: 'operational', uptime: 99.92, latencyP50: 124, latencyP95: 218, errorRate: 0.18,
+    region: 'global', lastIncident: '2026-07-02 16:48', incidents30d: 1,
+    description: '机构账户 / 信用额度 / 大宗撮合', dependencies: ['机构服务', '信用引擎'],
+  },
+  {
+    id: 'SV-006', name: '策略信号 WS', state: 'operational', uptime: 99.88, latencyP50: 14, latencyP95: 28, errorRate: 0.05,
+    region: '亚太', lastIncident: '2026-07-15 11:20', incidents30d: 1,
+    description: 'WebSocket 实时信号分发', dependencies: ['消息总线', '策略引擎'],
+  },
+  {
+    id: 'SV-007', name: 'Webhook 投递', state: 'maintenance', uptime: 99.78, latencyP50: 88, latencyP95: 168, errorRate: 0.32,
+    region: 'global', lastIncident: '2026-07-21 11:00', incidents30d: 2,
+    description: '回调事件投递（当前维护中，暂停新增订阅）', dependencies: ['消息队列', '签名服务'],
+  },
+  {
+    id: 'SV-008', name: '管理 API', state: 'operational', uptime: 99.96, latencyP50: 64, latencyP95: 124, errorRate: 0.08,
+    region: 'global', lastIncident: '2026-06-22 18:14', incidents30d: 1,
+    description: '管理员后台 API', dependencies: ['管理服务'],
+  },
+];
