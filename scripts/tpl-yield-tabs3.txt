@@ -1,0 +1,156 @@
+// ============================================================
+// TAB 10: Lock 锁仓
+// ============================================================
+function LockTab({ onSelect }: { onSelect: (l: LockStake) => void }) {
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl p-3 border" style={{ background: 'rgba(20,184,129,0.05)', borderColor: BRAND.primary + '40' }}>
+        <div className="flex items-start gap-2">
+          <Key className="w-4 h-4 mt-0.5" style={{ color: BRAND.primary }} />
+          <div className="flex-1 text-[11px]" style={{ color: BRAND.textSub }}>
+            锁仓周期越长，APR / 加速加成越高。提前解锁将按 5%-30% 不等比例扣除本金，罚没部分归保险池。
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] font-semibold" style={{ color: BRAND.textSub, borderBottom: '1px solid ' + BRAND.border, background: BRAND.bgCard }}>
+          <div className="col-span-3">池子</div>
+          <div className="col-span-1 text-right">数量</div>
+          <div className="col-span-1 text-right">APR</div>
+          <div className="col-span-1 text-right">已赚</div>
+          <div className="col-span-2">到期</div>
+          <div className="col-span-2">状态</div>
+          <div className="col-span-1 text-right">提前解锁</div>
+          <div className="col-span-1 text-right">操作</div>
+        </div>
+        <div className="yd-stagger">
+          {LOCKS.map(l => (
+            <button key={l.id} onClick={() => onSelect(l)} className="w-full grid grid-cols-12 gap-2 px-4 py-2.5 text-left items-center transition-all hover:scale-[1.005]" style={{ borderTop: '1px solid ' + BRAND.border }}>
+              <div className="col-span-3 min-w-0">
+                <div className="text-xs font-semibold truncate" style={{ color: BRAND.text }}>{l.pool}</div>
+                <div className="text-[10px]" style={{ color: BRAND.textSub }}>周期 {l.period} · {l.vesting}</div>
+              </div>
+              <div className="col-span-1 text-right text-xs tabular-nums" style={{ color: BRAND.text }}>{l.amount.toLocaleString()}</div>
+              <div className="col-span-1 text-right text-xs font-bold tabular-nums" style={{ color: BRAND.primary }}>{l.apr.toFixed(1)}%</div>
+              <div className="col-span-1 text-right text-xs tabular-nums" style={{ color: BRAND.success }}>{l.earned.toFixed(1)}</div>
+              <div className="col-span-2 text-[10px]" style={{ color: BRAND.textSub }}>{l.endAt}</div>
+              <div className="col-span-2"><span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: statusBadge(l.status).bg, color: statusBadge(l.status).color }}>{statusBadge(l.status).label}</span></div>
+              <div className="col-span-1 text-right text-[10px] tabular-nums" style={{ color: l.earlyExitFee > 0 ? BRAND.danger : BRAND.textMute }}>{(l.earlyExitFee * 100).toFixed(0)}%</div>
+              <div className="col-span-1 text-right">
+                <span className="text-[10px] px-2 py-1 rounded font-semibold" style={{ background: l.canClaim ? BRAND.success : BRAND.bgCardHover, color: l.canClaim ? BRAND.onPrimary : BRAND.textMute }}>
+                  {l.canClaim ? '领取' : '锁定中'}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 11: History 收益历史
+// ============================================================
+function HistoryTab({ onSelect }: { onSelect: (h: YieldHistory) => void }) {
+  const [filter, setFilter] = useState<string>('all');
+  const filtered = useMemo(() => filter === 'all' ? HISTORIES : HISTORIES.filter(h => h.type === filter), [filter]);
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        {(['all', 'reward', 'claim', 'deposit', 'withdraw', 'lock', 'unlock', 'boost', 'ref_bonus'] as const).map(t => (
+          <button key={t} onClick={() => setFilter(t)} className="px-3 py-1.5 rounded-lg text-xs" style={{ background: filter === t ? BRAND.primaryLt : BRAND.bgCardHover, color: filter === t ? BRAND.primary : BRAND.textSub, border: '1px solid ' + (filter === t ? BRAND.primary : BRAND.border) }}>
+            {t === 'all' ? '全部' : statusBadge(t).label}
+          </button>
+        ))}
+      </div>
+
+      <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] font-semibold" style={{ color: BRAND.textSub, borderBottom: '1px solid ' + BRAND.border, background: BRAND.bgCard }}>
+          <div className="col-span-1">ID</div>
+          <div className="col-span-1">类型</div>
+          <div className="col-span-3">来源</div>
+          <div className="col-span-2 text-right">数量</div>
+          <div className="col-span-2">时间</div>
+          <div className="col-span-1">状态</div>
+          <div className="col-span-2 text-right">操作</div>
+        </div>
+        <div className="yd-stagger">
+          {filtered.map(h => (
+            <button key={h.id} onClick={() => onSelect(h)} className="w-full grid grid-cols-12 gap-2 px-4 py-2.5 text-left items-center transition-all hover:scale-[1.005]" style={{ borderTop: '1px solid ' + BRAND.border }}>
+              <div className="col-span-1 text-[10px] font-mono" style={{ color: BRAND.textMute }}>{h.id}</div>
+              <div className="col-span-1"><span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: statusBadge(h.type).bg, color: statusBadge(h.type).color }}>{statusBadge(h.type).label}</span></div>
+              <div className="col-span-3 min-w-0">
+                <div className="text-xs truncate" style={{ color: BRAND.text }}>{h.source}</div>
+                <div className="text-[10px] font-mono truncate" style={{ color: BRAND.textMute }}>{h.txHash}</div>
+              </div>
+              <div className="col-span-2 text-right text-xs font-bold tabular-nums" style={{ color: statusBadge(h.type).color }}>{h.type === 'withdraw' || h.type === 'claim' || h.type === 'unlock' ? '-' : '+'}{h.amount.toLocaleString()} {h.token}</div>
+              <div className="col-span-2 text-[10px]" style={{ color: BRAND.textSub }}>{h.createdAt}</div>
+              <div className="col-span-1"><span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: statusBadge(h.status).bg, color: statusBadge(h.status).color }}>{statusBadge(h.status).label}</span></div>
+              <div className="col-span-2 text-right text-[10px]" style={{ color: BRAND.primary }}>查看详情 →</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 12: Help 帮助
+// ============================================================
+function HelpTab({ onOpen }: { onOpen: () => void }) {
+  const faqs = [
+    { q: '什么是流动性挖矿？', a: '流动性挖矿指将代币存入智能合约提供流动性，获得交易手续费分成 + 平台代币奖励的收益方式。年化为浮动值，不构成收益承诺。' },
+    { q: 'APR 与 APY 区别？', a: 'APR（年化利率）单利计算，APY（年化收益率）按复利累计。聚合器通常按 APY 展示，需注意再投频率假设。' },
+    { q: '什么是无常损失（IL）？', a: 'LP 持仓相对单边持仓的潜在损失，源于池内资产比例再平衡。稳定币对 IL 接近 0，跨币对 IL 显著（>5%）。' },
+    { q: '双币理财如何结算？', a: '到期按收益较低币种结算（如 ZSDX/USDT 双币到 USDT）。若 ZSDX 表现弱于 USDT，到期本金+收益均按 USDT 计价。' },
+    { q: '锁仓提前解锁会怎样？', a: '按周期扣除 5%-30% 本金作为解锁罚没，罚没部分归保险池用于赔付平台风险事件。已发收益不受影响。' },
+    { q: '加速卡如何使用？', a: '在挖矿活动页面点击"使用加速卡"，对当前持仓叠加。可叠加的卡可同时使用，但同类型只生效最高倍率。' },
+    { q: '推荐奖励何时发放？', a: '月度结算，次月 15 日发放。被推荐人交易后产生的手续费按等级返佣比例（0.1%-1.5%）发放到推荐人账户。' },
+  ];
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl p-4 border" style={{ background: 'linear-gradient(135deg, ' + BRAND.primaryLt + ' 0%, ' + BRAND.bgCard + ' 100%)', borderColor: BRAND.primary + '40' }}>
+        <div className="flex items-center gap-3 mb-2">
+          <HelpCircle className="w-6 h-6" style={{ color: BRAND.primary }} />
+          <h3 className="text-base font-semibold" style={{ color: BRAND.text }}>挖矿与收益聚合常见问题</h3>
+        </div>
+        <p className="text-[11px] mb-3" style={{ color: BRAND.textSub }}>以下内容为技术能力说明，不构成投资建议。挖矿 / 流动性 / 收益聚合均为高风险活动，请评估自身风险承受能力后参与。</p>
+        <button onClick={onOpen} className="px-3 py-1.5 rounded-lg text-xs font-semibold" style={{ background: BRAND.primary, color: BRAND.onPrimary }}>打开帮助中心</button>
+      </div>
+
+      <div className="space-y-2 yd-stagger">
+        {faqs.map((f, i) => (
+          <details key={i} className="rounded-xl p-4 border" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+            <summary className="cursor-pointer text-sm font-semibold flex items-center justify-between" style={{ color: BRAND.text }}>
+              <span className="flex items-center gap-2"><Lightbulb className="w-4 h-4" style={{ color: BRAND.amber }} />{f.q}</span>
+              <ChevronRight className="w-4 h-4" style={{ color: BRAND.textSub }} />
+            </summary>
+            <p className="mt-2 text-[12px] leading-relaxed" style={{ color: BRAND.textSub }}>{f.a}</p>
+          </details>
+        ))}
+      </div>
+
+      <div className="rounded-xl p-4 border grid grid-cols-1 md:grid-cols-3 gap-3" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="rounded-lg p-3" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+          <BookOpen className="w-5 h-5 mb-2" style={{ color: BRAND.primary }} />
+          <div className="text-xs font-semibold mb-1" style={{ color: BRAND.text }}>挖矿入门指南</div>
+          <p className="text-[10px]" style={{ color: BRAND.textSub }}>了解单币挖矿 / LP 挖矿 / 双币 / 锁仓 / 聚合器等基础概念。</p>
+        </div>
+        <div className="rounded-lg p-3" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+          <Shield className="w-5 h-5 mb-2" style={{ color: BRAND.amber }} />
+          <div className="text-xs font-semibold mb-1" style={{ color: BRAND.text }}>风险提示</div>
+          <p className="text-[10px]" style={{ color: BRAND.textSub }}>无常损失 / 智能合约 / 市场波动 / 锁仓流动性等风险说明。</p>
+        </div>
+        <div className="rounded-lg p-3" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+          <Calculator className="w-5 h-5 mb-2" style={{ color: BRAND.info }} />
+          <div className="text-xs font-semibold mb-1" style={{ color: BRAND.text }}>收益计算器</div>
+          <p className="text-[10px]" style={{ color: BRAND.textSub }}>输入本金 / 周期 / APR 自动计算预期收益（仅供参考）。</p>
+        </div>
+      </div>
+    </div>
+  );
+}

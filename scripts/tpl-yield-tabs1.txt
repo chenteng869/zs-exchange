@@ -1,0 +1,280 @@
+// ============================================================
+// Drawer 通用组件
+// ============================================================
+function DrawerHeader({ title, subtitle, onClose }: { title: string; subtitle?: string; onClose: () => void }) {
+  return (
+    <div className="sticky top-0 z-10 flex items-center justify-between p-4" style={{ background: BRAND.bg, borderBottom: '1px solid ' + BRAND.border }}>
+      <div className="min-w-0 flex-1">
+        <h2 className="text-lg font-bold truncate" style={{ color: BRAND.text }}>{title}</h2>
+        {subtitle && <p className="text-[11px] mt-1" style={{ color: BRAND.textSub }}>{subtitle}</p>}
+      </div>
+      <button onClick={onClose} className="ml-3 p-2 rounded-lg hover:scale-110 transition-transform" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+        <X size={16} style={{ color: BRAND.textSub }} />
+      </button>
+    </div>
+  );
+}
+
+function DrawerShell({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.65)' }} onClick={onClose}></div>
+      <div className="ml-auto w-full max-w-2xl h-full overflow-y-auto yd-slide-in" style={{ background: BRAND.bg, borderLeft: '1px solid ' + BRAND.border }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function DrawerKv({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div className="p-3 rounded-lg" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+      <div className="text-[10px] mb-1" style={{ color: BRAND.textSub }}>{label}</div>
+      <div className="text-sm font-bold tabular-nums truncate" style={{ color: color || BRAND.text }}>{value}</div>
+    </div>
+  );
+}
+
+function DrawerSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-xl p-4" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+      <h3 className="text-xs font-semibold mb-3" style={{ color: BRAND.text }}>{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function TokenIcon({ token, size = 40 }: { token: string; size?: number }) {
+  const c = TOKEN_COLOR[token] || BRAND.primary;
+  return (
+    <div className="rounded-lg flex items-center justify-center font-bold text-xs" style={{ width: size, height: size, background: c + '20', color: c, border: '1px solid ' + c + '40' }}>
+      {token.substring(0, 3)}
+    </div>
+  );
+}
+
+function ProgressBar({ value, max, color }: { value: number; max: number; color?: string }) {
+  const pct = Math.min(100, Math.max(0, (value / max) * 100));
+  return (
+    <div className="h-2 rounded-full overflow-hidden" style={{ background: BRAND.bgCardHover }}>
+      <div className="h-full yd-bar" style={{ width: pct + '%', background: color || BRAND.primary }}></div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 1: Overview 总览
+// ============================================================
+function OverviewTab({ onFarm, onPool, onVault, onBoost }: { onFarm: (f: FarmActivity) => void; onPool: (p: LiquidityPool) => void; onVault: (v: YieldVault) => void; onBoost: (b: BoostItem) => void }) {
+  const featuredFarms = FARMS.filter(f => f.status === 'active').slice(0, 4);
+  const featuredPools = POOLS.filter(p => p.status === 'active').slice(0, 4);
+  const featuredVaults = VAULTS.filter(v => v.status === 'active');
+  const featuredBoosts = BOOSTS.filter(b => !b.used).slice(0, 4);
+
+  return (
+    <div className="space-y-4 yd-stagger">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard label="我的挖矿" value="$12,500" sub="ZSDX 单币 · 灵活" icon={<Sprout className="w-4 h-4" />} color={BRAND.primary} />
+        <KpiCard label="累计收益" value="$1,284.6" sub="30d +184.6 USDT" icon={<Coins className="w-4 h-4" />} color={BRAND.success} pulse />
+        <KpiCard label="锁仓资产" value="$48,000" sub="365 天期 24K / 90 天期 18K" icon={<Key className="w-4 h-4" />} color={BRAND.amber} />
+        <KpiCard label="我的等级" value="黄金 V4" sub="30d +$1,248 距铂金 12K" icon={<Crown className="w-4 h-4" />} color={BRAND.amber} />
+      </div>
+
+      <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+            <Flame className="w-4 h-4" style={{ color: BRAND.amber }} />热门挖矿活动
+          </h3>
+          <span className="text-[10px]" style={{ color: BRAND.textMute }}>按 TVL 排序</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {featuredFarms.map(f => (
+            <button key={f.id} onClick={() => onFarm(f)} className="rounded-lg p-3 text-left transition-all hover:scale-[1.02]" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+              <div className="flex items-center gap-2 mb-2">
+                <TokenIcon token={f.tokenA} size={28} />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold truncate" style={{ color: BRAND.text }}>{f.name}</div>
+                  <div className="text-[10px]" style={{ color: BRAND.textSub }}>TVL {formatUsd(f.tvl)}</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-bold tabular-nums" style={{ color: BRAND.primary }}>{f.aprBoosted.toFixed(1)}%</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: statusBadge(f.status).bg, color: statusBadge(f.status).color }}>{statusBadge(f.status).label}</span>
+              </div>
+              <div className="text-[10px] mt-1" style={{ color: BRAND.textMute }}>加速后年化</div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+              <Droplets className="w-4 h-4" style={{ color: BRAND.info }} />深度流动性池
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {featuredPools.map(p => (
+              <button key={p.id} onClick={() => onPool(p)} className="w-full rounded-lg p-2.5 flex items-center gap-3 transition-all hover:scale-[1.01] text-left" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+                <div className="flex -space-x-2">
+                  <TokenIcon token={p.tokenA} size={28} />
+                  <TokenIcon token={p.tokenB} size={28} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold" style={{ color: BRAND.text }}>{p.pair}</div>
+                  <div className="text-[10px]" style={{ color: BRAND.textSub }}>TVL {formatUsd(p.tvl)} · 24h 量 {formatUsd(p.volume24h)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums" style={{ color: BRAND.primary }}>{p.apr.toFixed(1)}%</div>
+                  <div className="text-[10px]" style={{ color: BRAND.textMute }}>APR</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+              <Layers className="w-4 h-4" style={{ color: BRAND.success }} />收益聚合器
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {featuredVaults.map(v => (
+              <button key={v.id} onClick={() => onVault(v)} className="w-full rounded-lg p-2.5 flex items-center gap-3 transition-all hover:scale-[1.01] text-left" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center text-base font-bold" style={{ background: BRAND.primaryLt, color: BRAND.primary, border: '1px solid ' + BRAND.primary + '40' }}>{STRATEGY_ICON[v.strategy]}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs font-semibold" style={{ color: BRAND.text }}>{v.name}</div>
+                  <div className="text-[10px]" style={{ color: BRAND.textSub }}>{statusBadge(v.strategy).label} · TVL {formatUsd(v.tvl)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-bold tabular-nums" style={{ color: BRAND.success }}>{v.apy.toFixed(1)}%</div>
+                  <div className="text-[10px]" style={{ color: BRAND.textMute }}>APY</div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl p-4 border" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: BRAND.text }}>
+            <Zap className="w-4 h-4" style={{ color: BRAND.amber }} />可用加速卡
+          </h3>
+          <span className="text-[10px]" style={{ color: BRAND.textMute }}>点击查看详情</span>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {featuredBoosts.map(b => (
+            <button key={b.id} onClick={() => onBoost(b)} className="rounded-lg p-3 text-left transition-all hover:scale-105" style={{ background: 'linear-gradient(135deg, ' + statusBadge(b.rarity).bg + ' 0%, ' + BRAND.bgCard + ' 100%)', border: '1px solid ' + statusBadge(b.rarity).color + '40' }}>
+              <div className="flex items-center justify-between mb-2">
+                <Zap className="w-4 h-4 yd-coin" style={{ color: statusBadge(b.rarity).color }} />
+                <span className="text-[10px] px-1.5 py-0.5 rounded font-semibold" style={{ background: statusBadge(b.rarity).bg, color: statusBadge(b.rarity).color }}>{statusBadge(b.rarity).label}</span>
+              </div>
+              <div className="text-xs font-semibold mb-1" style={{ color: BRAND.text }}>{b.name}</div>
+              <div className="text-lg font-bold tabular-nums" style={{ color: statusBadge(b.rarity).color }}>{b.value}x</div>
+              <div className="text-[10px] mt-1" style={{ color: BRAND.textMute }}>{statusBadge(b.type).label}</div>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// TAB 2: Farm 挖矿
+// ============================================================
+function FarmTab({ onSelect }: { onSelect: (f: FarmActivity) => void }) {
+  const [q, setQ] = useState('');
+  const [risk, setRisk] = useState<PoolRisk | 'all'>('all');
+  const [status, setStatus] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('apr');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+
+  const filtered = useMemo(() => {
+    let arr = FARMS.filter(f => (q === '' || f.name.toLowerCase().includes(q.toLowerCase()) || f.tokenA.toLowerCase().includes(q.toLowerCase())));
+    if (risk !== 'all') arr = arr.filter(f => f.risk === risk);
+    if (status !== 'all') arr = arr.filter(f => f.status === status);
+    arr.sort((a, b) => {
+      const va = a[sortBy === 'updated' ? 'endAt' : sortBy as keyof FarmActivity] as any;
+      const vb = b[sortBy === 'updated' ? 'endAt' : sortBy as keyof FarmActivity] as any;
+      return sortDir === 'asc' ? (va > vb ? 1 : -1) : (va < vb ? 1 : -1);
+    });
+    return arr;
+  }, [q, risk, status, sortBy, sortDir]);
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-xl p-3 border flex flex-wrap items-center gap-2" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="flex items-center gap-2 flex-1 min-w-[200px] px-3 py-1.5 rounded-lg" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border }}>
+          <Search className="w-3.5 h-3.5" style={{ color: BRAND.textSub }} />
+          <input data-yd-search type="text" placeholder="搜索挖矿活动 / 代币" value={q} onChange={e => setQ(e.target.value)} className="bg-transparent border-none outline-none text-xs flex-1" style={{ color: BRAND.text }} />
+          {q && <button onClick={() => setQ('')}><X className="w-3 h-3" style={{ color: BRAND.textSub }} /></button>}
+        </div>
+        <select value={risk} onChange={e => setRisk(e.target.value as any)} className="px-2 py-1.5 rounded-lg text-xs" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border, color: BRAND.text }}>
+          <option value="all">全部风险</option>
+          <option value="low">低风险</option>
+          <option value="medium">中风险</option>
+          <option value="high">高风险</option>
+        </select>
+        <select value={status} onChange={e => setStatus(e.target.value)} className="px-2 py-1.5 rounded-lg text-xs" style={{ background: BRAND.bgCard, border: '1px solid ' + BRAND.border, color: BRAND.text }}>
+          <option value="all">全部状态</option>
+          <option value="active">进行中</option>
+          <option value="upcoming">即将开始</option>
+          <option value="paused">暂停</option>
+          <option value="ended">已结束</option>
+        </select>
+        <div className="flex items-center gap-1">
+          {(['apr', 'tvl', 'name', 'updated'] as SortBy[]).map(s => (
+            <button key={s} onClick={() => { if (sortBy === s) setSortDir(d => d === 'asc' ? 'desc' : 'asc'); else { setSortBy(s); setSortDir('desc'); } }} className="px-2 py-1 rounded text-[10px]" style={{ background: sortBy === s ? BRAND.primaryLt : 'transparent', color: sortBy === s ? BRAND.primary : BRAND.textSub, border: '1px solid ' + (sortBy === s ? BRAND.primary : BRAND.border) }}>
+              {s === 'apr' ? 'APR' : s === 'tvl' ? 'TVL' : s === 'name' ? '名称' : '时间'}
+              {sortBy === s && (sortDir === 'desc' ? <ChevronDown className="w-3 h-3 inline ml-0.5" /> : <ChevronUp className="w-3 h-3 inline ml-0.5" />)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border overflow-hidden" style={{ background: BRAND.bgCardHover, borderColor: BRAND.border }}>
+        <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] font-semibold" style={{ color: BRAND.textSub, borderBottom: '1px solid ' + BRAND.border, background: BRAND.bgCard }}>
+          <div className="col-span-3">活动</div>
+          <div className="col-span-1 text-right">APR</div>
+          <div className="col-span-1 text-right">加速</div>
+          <div className="col-span-2 text-right">TVL</div>
+          <div className="col-span-1 text-right">参与</div>
+          <div className="col-span-2">状态</div>
+          <div className="col-span-2 text-right">操作</div>
+        </div>
+        <div className="divide-y" style={{ borderColor: BRAND.border }}>
+          {filtered.map(f => (
+            <button key={f.id} onClick={() => onSelect(f)} className="w-full grid grid-cols-12 gap-2 px-4 py-2.5 text-left items-center transition-all hover:scale-[1.005]" style={{ borderTop: '1px solid ' + BRAND.border }}>
+              <div className="col-span-3 flex items-center gap-2 min-w-0">
+                <TokenIcon token={f.tokenA} size={28} />
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold truncate" style={{ color: BRAND.text }}>{f.name}</div>
+                  <div className="text-[10px]" style={{ color: BRAND.textSub }}>{f.tokenA}{f.tokenB ? '/' + f.tokenB : ''} · {statusBadge(f.type).label}</div>
+                </div>
+              </div>
+              <div className="col-span-1 text-right text-sm font-bold tabular-nums" style={{ color: BRAND.primary }}>{f.apr.toFixed(1)}%</div>
+              <div className="col-span-1 text-right text-sm font-bold tabular-nums" style={{ color: BRAND.success }}>{f.aprBoosted.toFixed(1)}%</div>
+              <div className="col-span-2 text-right text-xs tabular-nums" style={{ color: BRAND.text }}>{formatUsd(f.tvl)}<div className="text-[10px]" style={{ color: BRAND.textMute }}>上限 {formatUsd(f.tvlCap)}</div></div>
+              <div className="col-span-1 text-right text-xs tabular-nums" style={{ color: BRAND.text }}>{formatInt(f.stakers)}</div>
+              <div className="col-span-2 flex flex-wrap gap-1">
+                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: statusBadge(f.status).bg, color: statusBadge(f.status).color }}>{statusBadge(f.status).label}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: severityColor(f.risk).bg, color: severityColor(f.risk).color }}>{statusBadge(f.risk).label}</span>
+              </div>
+              <div className="col-span-2 text-right">
+                <span className="text-[10px] px-2 py-1 rounded font-semibold" style={{ background: f.status === 'active' ? BRAND.primary : BRAND.bgCardHover, color: f.status === 'active' ? BRAND.onPrimary : BRAND.textMute }}>
+                  {f.status === 'active' ? '立即挖矿' : f.status === 'upcoming' ? '订阅提醒' : f.status === 'ended' ? '查看历史' : '已暂停'}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="text-[10px] text-center" style={{ color: BRAND.textMute }}>共 {filtered.length} 个挖矿活动 · APR / TVL 数据为浮动值，仅作技术演示</div>
+    </div>
+  );
+}
